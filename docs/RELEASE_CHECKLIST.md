@@ -27,6 +27,11 @@
   - `APPLE_CERTIFICATE_PASSWORD`
   - `KEYCHAIN_PASSWORD`
   - `APPLE_SIGNING_IDENTITY` (optional)
+- [ ] If enabling in-app auto-update, configure updater secrets:
+  - `DAILYTRACK_UPDATER_PUBKEY`
+  - `TAURI_SIGNING_PRIVATE_KEY`
+  - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional)
 - [ ] GitHub Actions `publish` workflow green for target tag.
 - [ ] Draft release contains Windows + macOS artifacts.
+- [ ] If updater secrets are set, draft release contains updater metadata (`latest.json` and signatures).
 - [ ] Draft release notes reviewed before publishing.

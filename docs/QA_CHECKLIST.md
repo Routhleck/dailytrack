@@ -47,3 +47,10 @@
 - [ ] Legacy root layout migrates into `profiles/default` on first profile bootstrap.
 - [ ] Empty new root triggers first-launch template setup modal.
 - [ ] Selecting preset/blank in first-launch modal writes `templates/daily.md` and `templates/weekly.md`.
+
+## In-App Updater
+- [ ] Settings shows updater configured status and current app version.
+- [ ] Manual check shows either latest-version message or available-update state.
+- [ ] Available update can be installed via install-and-restart action.
+- [ ] Auto-check preference persists across app restarts.
+- [ ] If updater secrets are missing in CI, release still succeeds without updater artifacts.

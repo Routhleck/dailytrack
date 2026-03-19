@@ -48,6 +48,14 @@ The format is based on Keep a Changelog.
 - Full reset action in Settings danger zone to wipe tracker data and return to first-run setup.
 - README PNG screenshot placeholder assets under `docs/assets/screenshots/` for public-repo presentation.
 - App logo/icon placeholder integrated into sidebar, favicon, and Tauri icon source.
+- In-app updater workflow:
+  - startup auto-check toggle
+  - manual check in Settings
+  - install-and-restart flow from banner and Settings
+  - updater status and progress messaging
+- Conditional updater release wiring:
+  - optional updater metadata generation (`latest.json`) in publish CI when updater secrets are provided
+  - updater config override file (`src-tauri/tauri.updater.conf.json`) for release builds
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -78,6 +86,8 @@ The format is based on Keep a Changelog.
 - README now documents unsigned macOS install workaround and lower-cost pre-signing distribution options.
 - Body tracking now supports extended numeric metrics (`bodyFat`, `muscleMass`, `chest`, `hip`) with dynamic form/table/chart rendering based on Preferences.
 - Body CSV parser now supports both legacy 4-column and extended 8-column headers for backward-compatible profile data upgrades.
+- Added updater/process plugin permissions and plugin wiring in Tauri runtime.
+- Settings page now includes app update controls and updater configuration visibility.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

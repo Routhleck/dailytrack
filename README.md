@@ -117,6 +117,7 @@ dailytrack-data/
   - migrate-and-switch data root
   - migration safety checks
   - export/import data bundle
+  - in-app updater controls (auto-check, manual check, install + restart)
   - tutorial replay
   - reset to first-run state (danger zone)
 
@@ -166,6 +167,25 @@ Optional (recommended): for trusted macOS installer output (avoid Gatekeeper "ap
 - `APPLE_CERTIFICATE_PASSWORD`
 - `KEYCHAIN_PASSWORD`
 - `APPLE_SIGNING_IDENTITY` (optional but recommended)
+
+Optional (recommended): for in-app auto-update artifacts (`latest.json` + signatures), configure:
+
+- `DAILYTRACK_UPDATER_PUBKEY` (public key embedded into app at build time)
+- `TAURI_SIGNING_PRIVATE_KEY` (private key used to sign updater artifacts)
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional, if private key is password protected)
+
+When updater secrets are missing, CI still publishes installers, but auto-update metadata/signatures are skipped.
+
+### Updater Key Generation (One-Time)
+
+```bash
+npm run tauri signer generate -- --ci --write-keys /tmp/dailytrack-updater.key
+cat /tmp/dailytrack-updater.key.pub
+```
+
+- Put the public key content into `DAILYTRACK_UPDATER_PUBKEY`.
+- Put the private key content into `TAURI_SIGNING_PRIVATE_KEY`.
+- If your key has a password, set `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
 ## macOS Install Notice (Unsigned Builds)
 
