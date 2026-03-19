@@ -77,12 +77,15 @@ Per profile:
 ## Editing Modes
 - Structured mode: edits typed fields, then serializes to Markdown/CSV.
 - Raw mode: edits raw file text directly.
-- Save behavior (MVP): explicit save button only.
+- Save behavior:
+  - Daily/Weekly: debounced autosave + explicit save button.
+  - Body: save on submit/delete.
 
 ## Profile Semantics
 - App supports create/switch/delete profile.
 - Active profile is persisted in localStorage.
 - Deleting active profile is blocked in UI (switch first).
+- UI language preference is persisted in localStorage (`dailytrack.uiLanguage`).
 
 ## Source of Truth Rule
 - Final persisted state always lives in local files.

@@ -27,6 +27,8 @@
 - [ ] Raw mode edit/save works.
 - [ ] Save writes to local file and reloads state.
 - [ ] Dashboard summary matches detail pages.
+- [ ] UI language toggle (`EN` / `中文`) switches core page copy and persists after restart.
+- [ ] Profiles page supports template language switch for preset preview/fill.
 
 ## Regression Safety
 - [ ] Changing data root switches all views correctly.
@@ -35,3 +37,5 @@
 - [ ] Migration rejects same-path or nested source/destination roots.
 - [ ] Existing user files remain readable after app restart.
 - [ ] Legacy root layout migrates into `profiles/default` on first profile bootstrap.
+- [ ] Empty new root triggers first-launch template setup modal.
+- [ ] Selecting preset/blank in first-launch modal writes `templates/daily.md` and `templates/weekly.md`.

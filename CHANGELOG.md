@@ -40,6 +40,9 @@ The format is based on Keep a Changelog.
 - Realtime sync utilities and event bus (`src/lib/liveSync.ts`) for cross-page refresh.
 - Data-root migration command and Settings workflow for one-click copy + switch.
 - GitHub Actions publish pipeline for Windows + macOS release artifacts (`.github/workflows/publish.yml`).
+- First-launch template setup workflow for brand-new empty data roots.
+- Bilingual UI framework with runtime language toggle (`EN` / `中文`) and persisted locale preference.
+- Expanded template preset pack with bilingual variants and Blank Skeleton option.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -56,6 +59,8 @@ The format is based on Keep a Changelog.
 - Settings now explicitly separates root switching (`Save Data Root`) from migration (`Migrate Data Root`).
 - Migration UI now validates unsafe paths early and provides quick "Use This Path for Migration" action.
 - README and release checklist now document tag-based automated release flow.
+- `ensure_data_root` now returns root metadata (`root`, `isFirstRun`) to drive first-launch onboarding behavior.
+- Profiles and onboarding flows now support selecting template language (English/中文).
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

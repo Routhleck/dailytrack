@@ -39,6 +39,7 @@ On startup:
 2. Ensure `profiles/default` exists.
 3. If migrating from legacy layout (`daily/weekly/templates/body.csv` directly under base root), copy legacy files into `profiles/default` once.
 4. Ensure active profile has required files (`daily/`, `weekly/`, `templates/`, `body.csv`).
+5. If base root was initially empty, app enters first-launch template setup flow and rewrites active profile templates based on selected preset/language.
 
 ## Write Policy
 - Daily/Weekly use debounced autosave and still provide explicit Save button.

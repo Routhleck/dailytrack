@@ -92,8 +92,29 @@ At runtime, the app operates on one active profile root at a time.
   - Balanced
   - Minimal
   - Fitness Focus
+  - Deep Work
+  - Creator
+  - Student
+  - Recovery
+  - Social Growth
+  - Blank Skeleton
+- Template preset supports language variants:
+  - English
+  - 中文
 - Templates are editable when creating profile.
 - Current profile templates are also editable directly in `Profiles` page.
+
+## First-launch onboarding
+- If the selected base root is detected as a brand-new empty folder, app shows a blocking initial setup modal.
+- You must choose a template preset (or Blank) and template language before entering the main workflow.
+- Selected templates are written to active profile `templates/daily.md` and `templates/weekly.md`.
+
+## UI language
+- Sidebar provides UI language toggle:
+  - `EN`
+  - `中文`
+- Default language follows system locale (`zh*` => 中文, otherwise English).
+- UI language preference is persisted locally in browser storage (`dailytrack.uiLanguage`).
 
 ## Preferences
 Use `Preferences` page to toggle tracking scope per profile:
@@ -162,6 +183,9 @@ These preferences affect structured UI rendering without changing your core file
 2.
 3.
 ```
+
+Note:
+- Even Chinese template variants keep canonical English markdown headings (`## Daily Core`, `## Optional`, `## One Line`, `## Body`, `## Research`, `## Life`, `## Output`, `## Social`, `## Reflection`) for structured parser compatibility.
 
 ### Body file (`body.csv`)
 ```csv
