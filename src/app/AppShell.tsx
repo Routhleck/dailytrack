@@ -4,6 +4,7 @@ import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupMod
 import { useI18n } from '../features/i18n/I18nContext'
 import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { TutorialGuide } from '../features/tutorial/TutorialGuide'
 
 export function AppShell() {
   const { t } = useI18n()
@@ -25,6 +26,7 @@ export function AppShell() {
         </main>
       </div>
       {needsInitialTemplateSetup ? <InitialTemplateSetupModal /> : null}
+      <TutorialGuide blocked={loading || needsInitialTemplateSetup || Boolean(error)} />
     </div>
   )
 }

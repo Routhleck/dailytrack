@@ -7,14 +7,14 @@ export function Sidebar() {
 
   const navItems = [
     { to: '/', label: t('nav.dashboard') },
-    { to: '/today', label: t('nav.today') },
-    { to: '/week', label: t('nav.thisWeek') },
+    { to: '/today', label: t('nav.today'), tourTarget: 'nav-today' },
+    { to: '/week', label: t('nav.thisWeek'), tourTarget: 'nav-week' },
     { to: '/daily', label: t('nav.dailyNotes') },
     { to: '/weekly', label: t('nav.weeklyNotes') },
-    { to: '/body', label: t('nav.bodyProgress') },
-    { to: '/profiles', label: t('nav.profiles') },
+    { to: '/body', label: t('nav.bodyProgress'), tourTarget: 'nav-body' },
+    { to: '/profiles', label: t('nav.profiles'), tourTarget: 'nav-profiles' },
     { to: '/preferences', label: t('nav.preferences') },
-    { to: '/settings', label: t('nav.settings') },
+    { to: '/settings', label: t('nav.settings'), tourTarget: 'nav-settings' },
   ]
 
   return (
@@ -49,6 +49,7 @@ export function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.to === '/'}
+            data-tour={item.tourTarget}
             className={({ isActive }) =>
               `block rounded-md px-3 py-2 text-sm ${
                 isActive

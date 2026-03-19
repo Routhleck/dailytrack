@@ -43,6 +43,27 @@ export const enMessages = {
   'onboarding.languageEnglish': 'English',
   'onboarding.languageChinese': '中文',
 
+  'tutorial.progress': 'Step {current} of {total}',
+  'tutorial.skip': 'Skip',
+  'tutorial.back': 'Back',
+  'tutorial.next': 'Next',
+  'tutorial.finish': 'Finish',
+  'tutorial.stepTodayTitle': 'Today',
+  'tutorial.stepTodayBody':
+    'Use Today for your daily markdown note. Toggle checkboxes, edit One Line, and keep the raw markdown fallback.',
+  'tutorial.stepWeekTitle': 'This Week',
+  'tutorial.stepWeekBody':
+    'This Week is for weekly checklist and reflection updates. Structured mode and raw markdown stay in sync.',
+  'tutorial.stepBodyTitle': 'Body Progress',
+  'tutorial.stepBodyBody':
+    'Body Progress reads and updates local body.csv. Add records and review trend charts here.',
+  'tutorial.stepProfilesTitle': 'Profiles',
+  'tutorial.stepProfilesBody':
+    'Profiles let you switch personal/work setups and use different templates under the same base data root.',
+  'tutorial.stepSettingsTitle': 'Settings',
+  'tutorial.stepSettingsBody':
+    'Settings manages data root, migration, import/export, and you can replay this tutorial anytime.',
+
   'dashboard.title': 'Dashboard',
   'dashboard.loadingDescription': 'Loading local tracker summary...',
   'dashboard.description': 'Quick overview for today, this week, body progress, and recent notes.',
@@ -174,6 +195,9 @@ export const enMessages = {
     'Configure base data folder and move active profile data between computers via export/import.',
   'settings.activeProfile': 'Active profile',
   'settings.activeProfileRoot': 'Active profile root',
+  'settings.tutorial': 'Tutorial',
+  'settings.tutorialDescription': 'Replay a short guided tour for the main navigation.',
+  'settings.startTutorial': 'Start Tutorial',
   'settings.dataRoot': 'Data Root',
   'settings.dataRootDescription':
     'This only switches the active base root. It does not copy data from the old location.',
@@ -273,6 +297,25 @@ export const zhMessages: Record<MessageKey, string> = {
   'onboarding.applyFailed': '应用模板初始化失败。',
   'onboarding.languageEnglish': 'English',
   'onboarding.languageChinese': '中文',
+
+  'tutorial.progress': '第 {current} / {total} 步',
+  'tutorial.skip': '跳过',
+  'tutorial.back': '上一步',
+  'tutorial.next': '下一步',
+  'tutorial.finish': '完成',
+  'tutorial.stepTodayTitle': '今天',
+  'tutorial.stepTodayBody':
+    '这里是每日记录入口。可以勾选清单、编辑一句话，也可随时切换原始 Markdown 模式。',
+  'tutorial.stepWeekTitle': '本周',
+  'tutorial.stepWeekBody':
+    '这里处理每周清单和复盘内容，结构化编辑与原始 Markdown 会保持一致。',
+  'tutorial.stepBodyTitle': '身体进展',
+  'tutorial.stepBodyBody': '这里读取和更新本地 body.csv，可新增记录并查看趋势图。',
+  'tutorial.stepProfilesTitle': '档案',
+  'tutorial.stepProfilesBody': '这里管理多个档案，支持切换、创建，并给不同档案使用不同模板。',
+  'tutorial.stepSettingsTitle': '系统设置',
+  'tutorial.stepSettingsBody':
+    '这里管理数据根目录、迁移、导入导出，也可以随时重新打开本教程。',
 
   'dashboard.title': '仪表盘',
   'dashboard.loadingDescription': '正在加载本地追踪概览...',
@@ -402,6 +445,9 @@ export const zhMessages: Record<MessageKey, string> = {
   'settings.description': '配置基础数据目录，并通过导出/导入在电脑间迁移当前档案数据。',
   'settings.activeProfile': '当前档案',
   'settings.activeProfileRoot': '当前档案路径',
+  'settings.tutorial': '教程',
+  'settings.tutorialDescription': '可随时重播一轮主导航快速引导。',
+  'settings.startTutorial': '开始教程',
   'settings.dataRoot': '数据根目录',
   'settings.dataRootDescription': '这里只会切换当前根目录，不会自动复制旧目录数据。',
   'settings.baseDataRootPath': '基础数据目录路径',

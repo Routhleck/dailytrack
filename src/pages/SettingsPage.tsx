@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { PageHeader } from '../components/PageHeader'
 import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
 import { exportDataBundle, importDataBundle } from '../lib/fs/fileApi'
 import { emitDataChanged } from '../lib/liveSync'
 
@@ -225,6 +226,17 @@ export function SettingsPage() {
         <p>
           {t('settings.activeProfileRoot')}: <span className="font-medium">{dataRoot || '-'}</span>
         </p>
+        <div className="mt-4 border-t border-slate-200 pt-3">
+          <p className="text-sm font-medium text-slate-900">{t('settings.tutorial')}</p>
+          <p className="mt-1 text-sm text-slate-600">{t('settings.tutorialDescription')}</p>
+          <button
+            type="button"
+            className="mt-3 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-white"
+            onClick={() => emitTutorialOpen('settings')}
+          >
+            {t('settings.startTutorial')}
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleRootSubmit} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
