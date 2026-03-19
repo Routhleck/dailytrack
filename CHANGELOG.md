@@ -69,6 +69,7 @@ The format is based on Keep a Changelog.
 - Settings now includes tutorial replay entry; first-run tutorial auto-trigger uses persisted pending/completed/session-dismiss flags.
 - Settings now includes guarded `Reset Data` flow requiring `RESET` confirmation and re-triggering initial template setup.
 - README reorganized for open-source onboarding: screenshots, value proposition, quick start, data model summary, and CI/release guidance.
+- Replaced placeholder app branding with user-provided `dailytrack.png` across sidebar, favicon, and Tauri desktop icon assets.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

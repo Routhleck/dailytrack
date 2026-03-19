@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
 import { useI18n } from '../features/i18n/I18nContext'
-import logoPlaceholder from '../assets/dailytrack-logo-placeholder.svg'
+import appLogo from '../assets/dailytrack-logo.png'
 
 export function Sidebar() {
   const { language, setLanguage, t } = useI18n()
@@ -21,7 +21,7 @@ export function Sidebar() {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-50 px-4 py-6">
       <div className="mb-6 flex items-center gap-2">
-        <img src={logoPlaceholder} alt="DailyTrack logo" className="h-7 w-7 rounded-md" />
+        <img src={appLogo} alt="DailyTrack logo" className="h-7 w-7 rounded-md" />
         <p className="text-lg font-semibold text-slate-900">DailyTrack</p>
       </div>
       <div className="mb-4 rounded-md border border-slate-200 bg-white p-2">
