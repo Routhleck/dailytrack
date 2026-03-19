@@ -11,10 +11,10 @@ export function AppShell() {
   const { baseDataRoot, dataRoot, activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="mx-auto flex min-h-screen max-w-[1400px] border-x border-slate-200 bg-white shadow-sm">
+    <div className="h-screen overflow-hidden bg-slate-100 text-slate-900">
+      <div className="mx-auto flex h-screen max-w-[1400px] border-x border-slate-200 bg-white shadow-sm">
         <Sidebar />
-        <main className="flex-1 px-8 py-6">
+        <main className="flex-1 overflow-y-auto px-8 py-6">
           <div className="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
             {loading && t('shell.initializing')}
             {!loading &&
