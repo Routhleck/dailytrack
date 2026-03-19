@@ -460,6 +460,62 @@ fn import_data_bundle(
   Ok(target_canonical.to_string_lossy().to_string())
 }
 
+#[tauri::command]
+fn migrate_data_root(
+  source_root: String,
+  destination_root: String,
+  overwrite: Option<bool>,
+) -> Result<String, String> {
+  let source_path = PathBuf::from(source_root);
+  if !source_path.exists() || !source_path.is_dir() {
+    return Err(format!(
+      "Source data root {} does not exist or is not a directory",
+      source_path.display()
+    ));
+  }
+
+  let destination_path = PathBuf::from(destination_root);
+  fs::create_dir_all(destination_path.as_path()).map_err(|err| {
+    format!(
+      "Failed to create destination data root {}: {err}",
+      destination_path.display()
+    )
+  })?;
+
+  let source_canonical = fs::canonicalize(source_path.as_path()).map_err(|err| {
+    format!(
+      "Failed to resolve source data root {}: {err}",
+      source_path.display()
+    )
+  })?;
+  let destination_canonical = fs::canonicalize(destination_path.as_path()).map_err(|err| {
+    format!(
+      "Failed to resolve destination data root {}: {err}",
+      destination_path.display()
+    )
+  })?;
+
+  if source_canonical == destination_canonical {
+    return Err("Destination data root cannot be the same as source data root".to_string());
+  }
+
+  if destination_canonical.starts_with(source_canonical.as_path())
+    || source_canonical.starts_with(destination_canonical.as_path())
+  {
+    return Err("Source and destination data roots cannot be nested".to_string());
+  }
+
+  copy_dir_recursive(
+    source_canonical.as_path(),
+    destination_canonical.as_path(),
+    overwrite.unwrap_or(false),
+  )?;
+
+  ensure_default_profile(destination_canonical.as_path())?;
+
+  Ok(destination_canonical.to_string_lossy().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -473,7 +529,8 @@ pub fn run() {
       write_text_file,
       list_files,
       export_data_bundle,
-      import_data_bundle
+      import_data_bundle,
+      migrate_data_root
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

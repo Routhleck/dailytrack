@@ -16,7 +16,15 @@ function parentPath(path: string): string {
 }
 
 export function SettingsPage() {
-  const { baseDataRoot, dataRoot, activeProfile, updateDataRoot, refresh, loading } = useDataRoot()
+  const {
+    baseDataRoot,
+    dataRoot,
+    activeProfile,
+    updateDataRoot,
+    migrateDataRoot,
+    refresh,
+    loading,
+  } = useDataRoot()
 
   const [draftPath, setDraftPath] = useState(baseDataRoot ?? '')
   const [rootMessage, setRootMessage] = useState('')
@@ -37,6 +45,11 @@ export function SettingsPage() {
   const [importMessage, setImportMessage] = useState('')
   const [importBusy, setImportBusy] = useState(false)
 
+  const [migrateTarget, setMigrateTarget] = useState('')
+  const [overwriteMigrate, setOverwriteMigrate] = useState(false)
+  const [migrateMessage, setMigrateMessage] = useState('')
+  const [migrateBusy, setMigrateBusy] = useState(false)
+
   useEffect(() => {
     setDraftPath(baseDataRoot ?? '')
   }, [baseDataRoot])
@@ -46,6 +59,15 @@ export function SettingsPage() {
       setExportDir(defaultExportDir)
     }
   }, [defaultExportDir, exportDir])
+
+  useEffect(() => {
+    if (!baseDataRoot || migrateTarget) {
+      return
+    }
+
+    const suggested = baseDataRoot.replace(/life-tracker-data$/, 'dailytrack-data')
+    setMigrateTarget(suggested === baseDataRoot ? '' : suggested)
+  }, [baseDataRoot, migrateTarget])
 
   async function handleRootSubmit(event: FormEvent) {
     event.preventDefault()
@@ -90,6 +112,34 @@ export function SettingsPage() {
       setExportMessage(text)
     } finally {
       setExportBusy(false)
+    }
+  }
+
+  async function handleMigrate(event: FormEvent) {
+    event.preventDefault()
+
+    if (!baseDataRoot) {
+      setMigrateMessage('Data root is not ready.')
+      return
+    }
+
+    const destination = migrateTarget.trim()
+    if (!destination) {
+      setMigrateMessage('Migration destination path is required.')
+      return
+    }
+
+    setMigrateBusy(true)
+    setMigrateMessage('')
+
+    try {
+      await migrateDataRoot(destination, overwriteMigrate)
+      setMigrateMessage('Migration completed. Active data root switched to destination.')
+    } catch (error) {
+      const text = error instanceof Error ? error.message : 'Migration failed.'
+      setMigrateMessage(text)
+    } finally {
+      setMigrateBusy(false)
     }
   }
 
@@ -141,6 +191,9 @@ export function SettingsPage() {
 
       <form onSubmit={handleRootSubmit} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">Data Root</h2>
+        <p className="text-sm text-slate-600">
+          This only switches the active base root. It does not copy data from the old location.
+        </p>
         <label className="block text-sm font-medium text-slate-700" htmlFor="data-root">
           Base data root path
         </label>
@@ -160,6 +213,41 @@ export function SettingsPage() {
           Save Data Root
         </button>
         {rootMessage ? <p className="text-sm text-slate-600">{rootMessage}</p> : null}
+      </form>
+
+      <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+        <h2 className="text-base font-semibold text-slate-900">Migrate Data Root</h2>
+        <p className="text-sm text-slate-600">
+          Copy the entire current base root to a new location, then switch app root to the destination.
+        </p>
+        <label className="block text-sm font-medium text-slate-700" htmlFor="migrate-target">
+          Migration destination path
+        </label>
+        <input
+          id="migrate-target"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          value={migrateTarget}
+          onChange={(event) => setMigrateTarget(event.target.value)}
+          placeholder="/Users/you/dailytrack-data"
+          disabled={loading || migrateBusy}
+        />
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={overwriteMigrate}
+            onChange={(event) => setOverwriteMigrate(event.target.checked)}
+            disabled={loading || migrateBusy}
+          />
+          Overwrite destination files when names conflict
+        </label>
+        <button
+          type="submit"
+          disabled={loading || migrateBusy}
+          className="rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        >
+          {migrateBusy ? 'Migrating...' : 'Migrate and Switch'}
+        </button>
+        {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
 
       <form onSubmit={handleExport} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">

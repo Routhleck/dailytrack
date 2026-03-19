@@ -59,3 +59,10 @@ On startup:
   - `true`: replace existing files
   - `false`: keep existing files, copy missing files only
 - Safety guard: export destination cannot be inside current source root.
+
+## Root Switching vs Migration
+- `Save Data Root` changes active base root only and does not copy existing files.
+- `Migrate Data Root` copies current base root to destination and then switches app root.
+- Migration safety:
+  - source and destination cannot be the same path
+  - source and destination cannot be nested

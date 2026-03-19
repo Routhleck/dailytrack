@@ -92,6 +92,11 @@ These preferences affect structured UI rendering without changing your core file
 - Import supports overwrite mode for existing files.
 - This enables moving data between macOS and Windows machines using local file transfer tools.
 
+## Data-root migration
+- `Settings -> Save Data Root`: switch active root only (no file copy).
+- `Settings -> Migrate Data Root`: copy current base root to destination and switch to destination in one step.
+- Migration supports optional overwrite mode for filename conflicts.
+
 ## Markdown schema
 
 ### Daily note (`daily/YYYY-MM-DD.md`)

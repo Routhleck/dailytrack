@@ -59,3 +59,15 @@ export async function importDataBundle(
 ): Promise<string> {
   return invoke<string>('import_data_bundle', { sourceDir, dataRoot, overwrite })
 }
+
+export async function migrateDataRoot(
+  sourceRoot: string,
+  destinationRoot: string,
+  overwrite = false,
+): Promise<string> {
+  return invoke<string>('migrate_data_root', {
+    sourceRoot,
+    destinationRoot,
+    overwrite,
+  })
+}

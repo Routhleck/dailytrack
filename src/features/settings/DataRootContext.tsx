@@ -13,6 +13,7 @@ import {
   ensureDataRoot,
   ensureProfile,
   listProfiles,
+  migrateDataRoot as migrateDataRootApi,
 } from '../../lib/fs/fileApi'
 import {
   loadActiveProfilePreference,
@@ -36,6 +37,7 @@ type DataRootContextValue = {
   error: string | null
   refresh: () => Promise<void>
   updateDataRoot: (nextPath: string) => Promise<void>
+  migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
   deleteProfile: (profileName: string) => Promise<void>
@@ -106,6 +108,15 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
       },
       updateDataRoot: async (nextPath: string) => {
         await bootstrap(nextPath)
+        emitDataChanged({ scope: 'settings' })
+      },
+      migrateDataRoot: async (destinationPath: string, overwrite = false) => {
+        if (!baseDataRoot) {
+          throw new Error('Data root is not initialized')
+        }
+
+        const nextRoot = await migrateDataRootApi(baseDataRoot, destinationPath, overwrite)
+        await bootstrap(nextRoot, activeProfile ?? undefined)
         emitDataChanged({ scope: 'settings' })
       },
       switchProfile: async (profileName: string) => {

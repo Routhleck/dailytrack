@@ -38,6 +38,7 @@ The format is based on Keep a Changelog.
   - `create_profile`
   - `delete_profile`
 - Realtime sync utilities and event bus (`src/lib/liveSync.ts`) for cross-page refresh.
+- Data-root migration command and Settings workflow for one-click copy + switch.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -51,6 +52,7 @@ The format is based on Keep a Changelog.
 - Dashboard and note list pages now refresh from live events + periodic polling.
 - Body page now emits live change events and reloads external file updates via polling.
 - Renamed default base root to `dailytrack-data` and added automatic fallback to legacy `life-tracker-data` when present.
+- Settings now explicitly separates root switching (`Save Data Root`) from migration (`Migrate Data Root`).
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
