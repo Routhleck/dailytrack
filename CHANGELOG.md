@@ -53,6 +53,7 @@ The format is based on Keep a Changelog.
 - Body page now emits live change events and reloads external file updates via polling.
 - Renamed default base root to `dailytrack-data` and added automatic fallback to legacy `life-tracker-data` when present.
 - Settings now explicitly separates root switching (`Save Data Root`) from migration (`Migrate Data Root`).
+- Migration UI now validates unsafe paths early and provides quick "Use This Path for Migration" action.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

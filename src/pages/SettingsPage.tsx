@@ -15,6 +15,20 @@ function parentPath(path: string): string {
   return normalized.slice(0, index)
 }
 
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, '/').replace(/\/+$/, '')
+}
+
+function isNestedPath(parent: string, child: string): boolean {
+  if (!parent || !child) {
+    return false
+  }
+  if (parent === child) {
+    return false
+  }
+  return child.startsWith(`${parent}/`)
+}
+
 export function SettingsPage() {
   const {
     baseDataRoot,
@@ -49,6 +63,24 @@ export function SettingsPage() {
   const [overwriteMigrate, setOverwriteMigrate] = useState(false)
   const [migrateMessage, setMigrateMessage] = useState('')
   const [migrateBusy, setMigrateBusy] = useState(false)
+
+  const normalizedBaseRoot = useMemo(() => normalizePath(baseDataRoot ?? ''), [baseDataRoot])
+  const normalizedMigrateTarget = useMemo(() => normalizePath(migrateTarget.trim()), [migrateTarget])
+  const migrateValidationMessage = useMemo(() => {
+    if (!normalizedMigrateTarget || !normalizedBaseRoot) {
+      return ''
+    }
+    if (normalizedMigrateTarget === normalizedBaseRoot) {
+      return 'Migration destination cannot be the same as current data root.'
+    }
+    if (
+      isNestedPath(normalizedBaseRoot, normalizedMigrateTarget) ||
+      isNestedPath(normalizedMigrateTarget, normalizedBaseRoot)
+    ) {
+      return 'Current data root and migration destination cannot be nested.'
+    }
+    return ''
+  }, [normalizedBaseRoot, normalizedMigrateTarget])
 
   useEffect(() => {
     setDraftPath(baseDataRoot ?? '')
@@ -126,6 +158,10 @@ export function SettingsPage() {
     const destination = migrateTarget.trim()
     if (!destination) {
       setMigrateMessage('Migration destination path is required.')
+      return
+    }
+    if (migrateValidationMessage) {
+      setMigrateMessage(migrateValidationMessage)
       return
     }
 
@@ -212,6 +248,17 @@ export function SettingsPage() {
         >
           Save Data Root
         </button>
+        <button
+          type="button"
+          disabled={loading || !draftPath.trim()}
+          onClick={() => {
+            setMigrateTarget(draftPath.trim())
+            setMigrateMessage('')
+          }}
+          className="ml-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-60"
+        >
+          Use This Path for Migration
+        </button>
         {rootMessage ? <p className="text-sm text-slate-600">{rootMessage}</p> : null}
       </form>
 
@@ -242,11 +289,12 @@ export function SettingsPage() {
         </label>
         <button
           type="submit"
-          disabled={loading || migrateBusy}
+          disabled={loading || migrateBusy || !migrateTarget.trim() || Boolean(migrateValidationMessage)}
           className="rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           {migrateBusy ? 'Migrating...' : 'Migrate and Switch'}
         </button>
+        {migrateValidationMessage ? <p className="text-sm text-rose-700">{migrateValidationMessage}</p> : null}
         {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
 

@@ -30,5 +30,8 @@
 
 ## Regression Safety
 - [ ] Changing data root switches all views correctly.
+- [ ] `Save Data Root` only switches root and does not copy previous root data.
+- [ ] `Migrate Data Root` copies data and switches to destination root.
+- [ ] Migration rejects same-path or nested source/destination roots.
 - [ ] Existing user files remain readable after app restart.
 - [ ] Legacy root layout migrates into `profiles/default` on first profile bootstrap.

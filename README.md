@@ -96,6 +96,7 @@ These preferences affect structured UI rendering without changing your core file
 - `Settings -> Save Data Root`: switch active root only (no file copy).
 - `Settings -> Migrate Data Root`: copy current base root to destination and switch to destination in one step.
 - Migration supports optional overwrite mode for filename conflicts.
+- Migration blocks unsafe path pairs (same path or nested source/destination).
 
 ## Markdown schema
 
