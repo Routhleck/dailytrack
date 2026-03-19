@@ -18,11 +18,16 @@ The format is based on Keep a Changelog.
 - Body CSV table/form editing with weight and waist trend charts.
 - Dashboard summaries and daily/weekly file list pages.
 - Parser and CSV roundtrip unit tests via Vitest.
+- Settings page export/import actions for local data portability across computers.
+- New Tauri commands:
+  - `export_data_bundle`
+  - `import_data_bundle`
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
 - Updated README with run/build/test instructions and markdown schema contracts.
 - Switched route pages to lazy-loaded chunks to reduce initial bundle size.
+- Improved default data root resolution for Windows by falling back to `USERPROFILE`.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

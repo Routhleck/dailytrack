@@ -36,3 +36,16 @@ On startup or on data-root switch:
 - Writes are explicit (Save button).
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.
+
+## Export and Import
+- Export command copies the current data root to a timestamped bundle folder:
+  - `dailytrack-export-<timestamp>`
+- Import command copies files from a bundle folder into current data root.
+- Import requires source layout to include:
+  - `daily/`
+  - `weekly/`
+  - `body.csv`
+- Import supports overwrite toggle:
+  - `true`: replace existing files with imported files
+  - `false`: keep existing files and only copy missing files
+- Safety guard: export destination cannot be inside current data root.

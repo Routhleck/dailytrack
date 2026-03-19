@@ -59,6 +59,13 @@ life-tracker-data/
 
 On startup, the app bootstraps missing directories/files/templates.
 
+## Data portability (Export / Import)
+- Use `Settings -> Export Data` to create a backup folder in your chosen destination directory.
+- Export creates a timestamped folder: `dailytrack-export-<timestamp>`.
+- Use `Settings -> Import Data` to import from an exported folder into the current data root.
+- Import supports overwrite mode for existing files.
+- This enables moving data between macOS and Windows machines using local file transfer tools.
+
 ## Markdown schema
 
 ### Daily note (`daily/YYYY-MM-DD.md`)
@@ -129,12 +136,11 @@ date,weight,waist,note
 - Daily notes list
 - Weekly notes list
 - Body progress
-- Settings (data root)
+- Settings (data root + export/import)
 
 ## Current limitations
 - Structured mode is schema-aware and only targets defined headings/fields.
 - Unknown extra markdown content is not preserved by structured save normalization.
-- Chunk size warning exists in production build due chart dependency size.
 - No concurrent file write conflict handling yet.
 
 ## Project docs

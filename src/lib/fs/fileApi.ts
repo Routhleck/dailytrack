@@ -18,3 +18,18 @@ export async function listFiles(
 ): Promise<string[]> {
   return invoke<string[]>('list_files', { dirPath, extension })
 }
+
+export async function exportDataBundle(
+  dataRoot: string,
+  destinationDir: string,
+): Promise<string> {
+  return invoke<string>('export_data_bundle', { dataRoot, destinationDir })
+}
+
+export async function importDataBundle(
+  sourceDir: string,
+  dataRoot: string,
+  overwrite = true,
+): Promise<string> {
+  return invoke<string>('import_data_bundle', { sourceDir, dataRoot, overwrite })
+}
