@@ -126,6 +126,70 @@ export function PreferencesPage() {
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
+            checked={draft.body.bodyFat}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                body: {
+                  ...draft.body,
+                  bodyFat: event.target.checked,
+                },
+              })
+            }}
+          />
+          {t('preferences.trackBodyFat')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.body.muscleMass}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                body: {
+                  ...draft.body,
+                  muscleMass: event.target.checked,
+                },
+              })
+            }}
+          />
+          {t('preferences.trackMuscleMass')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.body.chest}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                body: {
+                  ...draft.body,
+                  chest: event.target.checked,
+                },
+              })
+            }}
+          />
+          {t('preferences.trackChest')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.body.hip}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                body: {
+                  ...draft.body,
+                  hip: event.target.checked,
+                },
+              })
+            }}
+          />
+          {t('preferences.trackHip')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
             checked={draft.body.note}
             onChange={(event) => {
               void update({

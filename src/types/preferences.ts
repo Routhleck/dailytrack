@@ -10,6 +10,10 @@ export type TrackerPreferences = {
   body: {
     weight: boolean
     waist: boolean
+    bodyFat: boolean
+    muscleMass: boolean
+    chest: boolean
+    hip: boolean
     note: boolean
   }
 }

@@ -12,17 +12,32 @@ import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
 import { onDataChanged } from '../lib/liveSync'
+import type { BodyRecord } from '../types/tracker'
+
+const BODY_DASHBOARD_FIELDS: {
+  key: keyof Omit<BodyRecord, 'date' | 'note'>
+  preferenceKey: 'weight' | 'waist' | 'bodyFat' | 'muscleMass' | 'chest' | 'hip'
+  labelKey:
+    | 'dashboard.weight'
+    | 'dashboard.waist'
+    | 'dashboard.bodyFat'
+    | 'dashboard.muscleMass'
+    | 'dashboard.chest'
+    | 'dashboard.hip'
+}[] = [
+  { key: 'weight', preferenceKey: 'weight', labelKey: 'dashboard.weight' },
+  { key: 'waist', preferenceKey: 'waist', labelKey: 'dashboard.waist' },
+  { key: 'bodyFat', preferenceKey: 'bodyFat', labelKey: 'dashboard.bodyFat' },
+  { key: 'muscleMass', preferenceKey: 'muscleMass', labelKey: 'dashboard.muscleMass' },
+  { key: 'chest', preferenceKey: 'chest', labelKey: 'dashboard.chest' },
+  { key: 'hip', preferenceKey: 'hip', labelKey: 'dashboard.hip' },
+]
 
 type DashboardState = {
   todayCore: { checked: number; total: number; percent: number }
   todayOneLine: string
   weekSummary: { checked: number; total: number; percent: number }
-  body: {
-    date: string
-    weight: string
-    waist: string
-    note: string
-  } | null
+  body: BodyRecord | null
   recentDaily: string[]
   recentWeekly: string[]
 }
@@ -57,14 +72,7 @@ export function DashboardPage() {
         todayCore: summarizeChecklist(today.dailyCore),
         todayOneLine: today.oneLine,
         weekSummary: summarizeChecklist(weeklyItems),
-        body: latestBody
-          ? {
-              date: latestBody.date,
-              weight: latestBody.weight == null ? '-' : String(latestBody.weight),
-              waist: latestBody.waist == null ? '-' : String(latestBody.waist),
-              note: latestBody.note || '-',
-            }
-          : null,
+        body: latestBody,
         recentDaily: dailyDates.slice(0, 5),
         recentWeekly: weeklyIds.slice(0, 5),
       })
@@ -162,9 +170,15 @@ export function DashboardPage() {
           {state.body ? (
             <div className="space-y-1 text-sm text-slate-700">
               <p>{t('dashboard.date')}: {state.body.date}</p>
-              {preferences.body.weight ? <p>{t('dashboard.weight')}: {state.body.weight}</p> : null}
-              {preferences.body.waist ? <p>{t('dashboard.waist')}: {state.body.waist}</p> : null}
-              {preferences.body.note ? <p>{t('dashboard.note')}: {state.body.note}</p> : null}
+              {BODY_DASHBOARD_FIELDS.map((field) => {
+                if (!preferences.body[field.preferenceKey]) {
+                  return null
+                }
+
+                const value = state.body?.[field.key]
+                return <p key={field.key}>{t(field.labelKey)}: {value == null ? '-' : String(value)}</p>
+              })}
+              {preferences.body.note ? <p>{t('dashboard.note')}: {state.body.note || '-'}</p> : null}
             </div>
           ) : (
             <p className="text-sm text-slate-600">{t('dashboard.noBodyRecords')}</p>

@@ -21,6 +21,10 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
   body: {
     weight: true,
     waist: true,
+    bodyFat: false,
+    muscleMass: false,
+    chest: false,
+    hip: false,
     note: true,
   },
 }
@@ -65,6 +69,10 @@ function normalizePreferences(raw: unknown): TrackerPreferences {
     body: {
       weight: toBoolean(bodyRaw.weight, DEFAULT_PREFERENCES.body.weight),
       waist: toBoolean(bodyRaw.waist, DEFAULT_PREFERENCES.body.waist),
+      bodyFat: toBoolean(bodyRaw.bodyFat, DEFAULT_PREFERENCES.body.bodyFat),
+      muscleMass: toBoolean(bodyRaw.muscleMass, DEFAULT_PREFERENCES.body.muscleMass),
+      chest: toBoolean(bodyRaw.chest, DEFAULT_PREFERENCES.body.chest),
+      hip: toBoolean(bodyRaw.hip, DEFAULT_PREFERENCES.body.hip),
       note: toBoolean(bodyRaw.note, DEFAULT_PREFERENCES.body.note),
     },
   }

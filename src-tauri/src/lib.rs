@@ -103,7 +103,10 @@ fn ensure_tracker_layout(root: &Path) -> Result<(), String> {
     root.join("templates").join("weekly.md").as_path(),
     DEFAULT_WEEKLY_TEMPLATE,
   )?;
-  ensure_file(root.join("body.csv").as_path(), "date,weight,waist,note\n")?;
+  ensure_file(
+    root.join("body.csv").as_path(),
+    "date,weight,waist,bodyFat,muscleMass,chest,hip,note\n",
+  )?;
 
   Ok(())
 }

@@ -34,5 +34,9 @@ export type BodyRecord = {
   date: string
   weight: number | null
   waist: number | null
+  bodyFat: number | null
+  muscleMass: number | null
+  chest: number | null
+  hip: number | null
   note: string
 }

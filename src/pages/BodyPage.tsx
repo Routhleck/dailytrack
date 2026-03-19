@@ -18,10 +18,47 @@ import { todayDateString } from '../lib/date/date'
 import { emitDataChanged } from '../lib/liveSync'
 import type { BodyRecord } from '../types/tracker'
 
+type BodyNumericMetricKey = 'weight' | 'waist' | 'bodyFat' | 'muscleMass' | 'chest' | 'hip'
+
+const BODY_NUMERIC_METRICS: {
+  key: BodyNumericMetricKey
+  labelKey:
+    | 'body.weight'
+    | 'body.waist'
+    | 'body.bodyFat'
+    | 'body.muscleMass'
+    | 'body.chest'
+    | 'body.hip'
+  trendLabelKey:
+    | 'body.weightTrend'
+    | 'body.waistTrend'
+    | 'body.bodyFatTrend'
+    | 'body.muscleMassTrend'
+    | 'body.chestTrend'
+    | 'body.hipTrend'
+  stroke: string
+}[] = [
+  { key: 'weight', labelKey: 'body.weight', trendLabelKey: 'body.weightTrend', stroke: '#0f766e' },
+  { key: 'waist', labelKey: 'body.waist', trendLabelKey: 'body.waistTrend', stroke: '#334155' },
+  { key: 'bodyFat', labelKey: 'body.bodyFat', trendLabelKey: 'body.bodyFatTrend', stroke: '#dc2626' },
+  {
+    key: 'muscleMass',
+    labelKey: 'body.muscleMass',
+    trendLabelKey: 'body.muscleMassTrend',
+    stroke: '#7c3aed',
+  },
+  { key: 'chest', labelKey: 'body.chest', trendLabelKey: 'body.chestTrend', stroke: '#2563eb' },
+  { key: 'hip', labelKey: 'body.hip', trendLabelKey: 'body.hipTrend', stroke: '#ca8a04' },
+]
+
 type FormState = {
   date: string
   weight: string
   waist: string
+  bodyFat: string
+  muscleMass: string
+  chest: string
+  hip: string
   note: string
 }
 
@@ -37,13 +74,26 @@ function parseNullableNumber(value: string): number | null {
 
 function toFormState(record?: BodyRecord): FormState {
   if (!record) {
-    return { date: todayDateString(), weight: '', waist: '', note: '' }
+    return {
+      date: todayDateString(),
+      weight: '',
+      waist: '',
+      bodyFat: '',
+      muscleMass: '',
+      chest: '',
+      hip: '',
+      note: '',
+    }
   }
 
   return {
     date: record.date,
     weight: record.weight == null ? '' : String(record.weight),
     waist: record.waist == null ? '' : String(record.waist),
+    bodyFat: record.bodyFat == null ? '' : String(record.bodyFat),
+    muscleMass: record.muscleMass == null ? '' : String(record.muscleMass),
+    chest: record.chest == null ? '' : String(record.chest),
+    hip: record.hip == null ? '' : String(record.hip),
     note: record.note,
   }
 }
@@ -143,6 +193,18 @@ export function BodyPage() {
       waist: preferences.body.waist
         ? parseNullableNumber(form.waist)
         : (editingRecord?.waist ?? null),
+      bodyFat: preferences.body.bodyFat
+        ? parseNullableNumber(form.bodyFat)
+        : (editingRecord?.bodyFat ?? null),
+      muscleMass: preferences.body.muscleMass
+        ? parseNullableNumber(form.muscleMass)
+        : (editingRecord?.muscleMass ?? null),
+      chest: preferences.body.chest
+        ? parseNullableNumber(form.chest)
+        : (editingRecord?.chest ?? null),
+      hip: preferences.body.hip
+        ? parseNullableNumber(form.hip)
+        : (editingRecord?.hip ?? null),
       note: preferences.body.note ? form.note.trim() : (editingRecord?.note ?? ''),
     }
 
@@ -183,8 +245,7 @@ export function BodyPage() {
     )
   }
 
-  const showWeight = preferences.body.weight
-  const showWaist = preferences.body.waist
+  const enabledNumericMetrics = BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key])
   const showNote = preferences.body.note
 
   return (
@@ -196,7 +257,7 @@ export function BodyPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-4"
+        className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-3 lg:grid-cols-4"
       >
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -206,27 +267,20 @@ export function BodyPage() {
           required
         />
 
-        {showWeight ? (
+        {enabledNumericMetrics.map((metric) => (
           <input
+            key={metric.key}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             type="number"
             step="0.1"
-            placeholder={t('body.weight')}
-            value={form.weight}
-            onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
+            placeholder={t(metric.labelKey)}
+            value={form[metric.key]}
+            onChange={(event) => {
+              const nextValue = event.target.value
+              setForm((prev) => ({ ...prev, [metric.key]: nextValue }))
+            }}
           />
-        ) : null}
-
-        {showWaist ? (
-          <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            type="number"
-            step="0.1"
-            placeholder={t('body.waist')}
-            value={form.waist}
-            onChange={(event) => setForm((prev) => ({ ...prev, waist: event.target.value }))}
-          />
-        ) : null}
+        ))}
 
         {showNote ? (
           <input
@@ -257,11 +311,11 @@ export function BodyPage() {
         </div>
       </form>
 
-      {showWeight || showWaist ? (
-        <div className={`grid gap-4 ${showWeight && showWaist ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
-          {showWeight ? (
-            <article className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.weightTrend')}</h2>
+      {enabledNumericMetrics.length > 0 ? (
+        <div className={`grid gap-4 ${enabledNumericMetrics.length > 1 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+          {enabledNumericMetrics.map((metric) => (
+            <article key={metric.key} className="rounded-lg border border-slate-200 p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t(metric.trendLabelKey)}</h2>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -269,45 +323,29 @@ export function BodyPage() {
                     <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="weight" stroke="#0f766e" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey={metric.key} stroke={metric.stroke} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </article>
-          ) : null}
-
-          {showWaist ? (
-            <article className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.waistTrend')}</h2>
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="waist" stroke="#334155" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </article>
-          ) : null}
+          ))}
         </div>
-      ) : (
+      ) : !showNote ? (
         <article className="rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
           {t('body.allDisabled')}
         </article>
-      )}
+      ) : null}
 
       <article className="rounded-lg border border-slate-200 p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
         <div className="overflow-auto">
-          <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">
                 <th className="py-2">{t('body.date')}</th>
-                {showWeight ? <th className="py-2">{t('body.weight')}</th> : null}
-                {showWaist ? <th className="py-2">{t('body.waist')}</th> : null}
+                {enabledNumericMetrics.map((metric) => (
+                  <th key={metric.key} className="py-2">{t(metric.labelKey)}</th>
+                ))}
                 {showNote ? <th className="py-2">{t('body.note')}</th> : null}
                 <th className="py-2">{t('common.actions')}</th>
               </tr>
@@ -316,8 +354,11 @@ export function BodyPage() {
               {records.map((record, index) => (
                 <tr key={`${record.date}-${index}`} className="border-b border-slate-100">
                   <td className="py-2">{record.date}</td>
-                  {showWeight ? <td className="py-2">{record.weight ?? '-'}</td> : null}
-                  {showWaist ? <td className="py-2">{record.waist ?? '-'}</td> : null}
+                  {enabledNumericMetrics.map((metric) => (
+                    <td key={metric.key} className="py-2">
+                      {record[metric.key] ?? '-'}
+                    </td>
+                  ))}
                   {showNote ? <td className="py-2">{record.note || '-'}</td> : null}
                   <td className="py-2">
                     <div className="flex gap-2">
@@ -346,6 +387,7 @@ export function BodyPage() {
           </table>
         </div>
       </article>
+
     </section>
   )
 }
