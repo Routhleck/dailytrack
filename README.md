@@ -7,12 +7,12 @@ Markdown and CSV stay as the only source of truth.
 
 ## Screenshots
 
-> Replace these SVG placeholders with real screenshots later, while keeping file names.
+> Replace these PNG placeholders with real screenshots later, while keeping file names.
 
-![Dashboard](docs/assets/screenshots/dashboard.svg)
-![Daily Note](docs/assets/screenshots/daily-note.svg)
-![Weekly Note](docs/assets/screenshots/weekly-note.svg)
-![Settings Reset](docs/assets/screenshots/settings-reset.svg)
+![Dashboard](docs/assets/screenshots/dashboard.png)
+![Daily Note](docs/assets/screenshots/daily-note.png)
+![Weekly Note](docs/assets/screenshots/weekly-note.png)
+![Settings Reset](docs/assets/screenshots/settings-reset.png)
 
 ## Why dailytrack
 

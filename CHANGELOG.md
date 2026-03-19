@@ -46,7 +46,8 @@ The format is based on Keep a Changelog.
 - First-use guided tutorial overlay (5-step sidebar highlight flow) with auto-start after initial template setup.
 - Manual tutorial replay action in Settings (`Start Tutorial`).
 - Full reset action in Settings danger zone to wipe tracker data and return to first-run setup.
-- README screenshot placeholder assets under `docs/assets/screenshots/` for public-repo presentation.
+- README PNG screenshot placeholder assets under `docs/assets/screenshots/` for public-repo presentation.
+- App logo/icon placeholder integrated into sidebar, favicon, and Tauri icon source.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
