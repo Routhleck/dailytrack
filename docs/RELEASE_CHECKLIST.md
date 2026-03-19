@@ -19,6 +19,14 @@
 - [ ] Tauri dev build works locally.
 - [ ] Production build command succeeds.
 - [ ] Default data root bootstrap verified.
+- [ ] macOS signing/notarization secrets configured in GitHub repository:
+  - `APPLE_ID`
+  - `APPLE_PASSWORD`
+  - `APPLE_TEAM_ID`
+  - `APPLE_CERTIFICATE`
+  - `APPLE_CERTIFICATE_PASSWORD`
+  - `KEYCHAIN_PASSWORD`
+  - `APPLE_SIGNING_IDENTITY` (optional)
 - [ ] GitHub Actions `publish` workflow green for target tag.
 - [ ] Draft release contains Windows + macOS artifacts.
 - [ ] Draft release notes reviewed before publishing.

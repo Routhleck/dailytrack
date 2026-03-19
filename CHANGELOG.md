@@ -72,6 +72,7 @@ The format is based on Keep a Changelog.
 - Replaced placeholder app branding with user-provided `dailytrack.png` across sidebar, favicon, and Tauri desktop icon assets.
 - Settings page now uses migration-only root flow (removed direct root-switch form from UI).
 - Sidebar navigation is now sticky and remains fixed while main content scrolls.
+- GitHub release workflow now enforces macOS signing/notarization secrets and imports Apple certificate before Tauri bundling.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
