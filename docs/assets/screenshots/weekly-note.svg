@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">dailytrack weekly note placeholder</title>
+  <desc id="desc">Placeholder screenshot for weekly note page.</desc>
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <rect x="24" y="24" width="260" height="672" rx="12" fill="#e2e8f0"/>
+  <rect x="308" y="24" width="948" height="70" rx="10" fill="#cbd5e1"/>
+  <rect x="308" y="114" width="460" height="260" rx="12" fill="#e2e8f0"/>
+  <rect x="796" y="114" width="460" height="260" rx="12" fill="#e2e8f0"/>
+  <rect x="308" y="396" width="948" height="300" rx="12" fill="#e2e8f0"/>
+  <text x="328" y="66" font-family="Arial, sans-serif" font-size="22" fill="#0f172a">dailytrack Weekly Note (placeholder)</text>
+</svg>

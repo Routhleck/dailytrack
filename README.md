@@ -1,71 +1,86 @@
 # dailytrack
 
-A local desktop markdown-based life tracker editor.
+Local-first desktop life tracker for Markdown users.
 
-## Product principle
-- Markdown and CSV files are the single source of truth.
-- The app only reads/parses/edits local files.
-- No database, no cloud sync, no auth, no remote API.
+`dailytrack` is a Tauri desktop app that reads and writes your local tracker files.
+Markdown and CSV stay as the only source of truth.
 
-## Stack
+## Screenshots
+
+> Replace these SVG placeholders with real screenshots later, while keeping file names.
+
+![Dashboard](docs/assets/screenshots/dashboard.svg)
+![Daily Note](docs/assets/screenshots/daily-note.svg)
+![Weekly Note](docs/assets/screenshots/weekly-note.svg)
+![Settings Reset](docs/assets/screenshots/settings-reset.svg)
+
+## Why dailytrack
+
+- Local-first and private: no cloud, no account, no remote API.
+- Markdown-first: app is an editor/viewer layer, not a hidden database.
+- Structured plus raw: toggle checklists in UI or edit raw Markdown directly.
+- Profile-based workflow: separate personal/work templates and preferences.
+- Real-time feel: debounced autosave with live refresh from disk.
+
+## What It Is
+
+- Desktop app for daily notes, weekly reviews, and body progress.
+- Local file parser/editor for known Markdown schema.
+- Practical personal tool with minimal complexity.
+
+## What It Is Not
+
+- SaaS or team collaboration product.
+- Cloud sync platform.
+- Database-backed note system.
+
+## Tech Stack
+
 - Tauri
 - React
 - TypeScript
 - Tailwind CSS
-- Recharts (body trend charts)
+- Recharts
 
-## Run locally
+## Quick Start
 
 ### Prerequisites
+
 - Node.js LTS
 - Rust toolchain
 - Tauri platform prerequisites
 
-### Commands
+### Run in dev
+
 ```bash
 npm install
 npm run tauri:dev
 ```
 
-### Quality checks
+### Checks
+
 ```bash
 npm run lint
 npm run test
 npm run build
 ```
 
-### Build release
+### Build desktop bundle
+
 ```bash
 npm run tauri:build
 ```
 
-### GitHub Release CI (Windows + macOS)
-- Workflow file: `.github/workflows/publish.yml`
-- Trigger options:
-  - push a tag like `v0.2.0`
-  - manual run via `workflow_dispatch` with `tag_name`
-- Output:
-  - Draft GitHub Release with Windows and macOS bundles uploaded as assets
+## Data Ownership and Storage
 
-Tag-based release example:
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-Notes:
-- This pipeline currently builds unsigned bundles by default.
-- For notarized/signed production installers, add platform signing secrets/certificates later.
-
-## Data storage
 Default base data root:
-- `~/dailytrack-data`
-- Windows fallback: `%USERPROFILE%\dailytrack-data`
-- Legacy compatibility: if `~/life-tracker-data` already exists and the new default does not, app will keep using the legacy folder automatically.
 
-Configurable in Settings page.
+- macOS/Linux: `~/dailytrack-data`
+- Windows: `%USERPROFILE%\\dailytrack-data`
+- Legacy fallback: if `~/life-tracker-data` exists and `dailytrack-data` does not, app uses legacy path.
 
-### Active layout (profile-based)
+Profile layout:
+
 ```text
 dailytrack-data/
   profiles/
@@ -77,80 +92,76 @@ dailytrack-data/
         daily.md
         weekly.md
       preferences.json
-    <another-profile>/
-      ...
 ```
 
-At runtime, the app operates on one active profile root at a time.
+## Core Features
 
-## Profiles and templates
-- Use `Profiles` page to:
-  - create profile
-  - switch profile
-  - delete non-active profile
-- New profile creation supports built-in template presets:
-  - Balanced
-  - Minimal
-  - Fitness Focus
-  - Deep Work
-  - Creator
-  - Student
-  - Recovery
-  - Social Growth
-  - Blank Skeleton
-- Template preset supports language variants:
-  - English
-  - 中文
-- Templates are editable when creating profile.
-- Current profile templates are also editable directly in `Profiles` page.
+- Dashboard summary for today, this week, body, and recent notes.
+- Daily note page:
+  - structured checklist editing
+  - raw Markdown mode
+  - pure autosave mode
+- Weekly note page:
+  - section checklists
+  - reflection fields
+  - raw Markdown mode
+  - pure autosave mode
+- Body progress page:
+  - local `body.csv` table + form
+  - weight/waist trend charts
+- Profiles:
+  - create/switch/delete profile
+  - editable template presets
+- Preferences:
+  - per-profile module toggles
+- Settings:
+  - root switch
+  - one-click root migration
+  - export/import data bundle
+  - tutorial replay
+  - reset to first-run state (danger zone)
 
-## First-launch onboarding
-- If the selected base root is detected as a brand-new empty folder, app shows a blocking initial setup modal.
-- You must choose a template preset (or Blank) and template language before entering the main workflow.
-- Selected templates are written to active profile `templates/daily.md` and `templates/weekly.md`.
-- After template initialization completes, a 5-step guided navigation tutorial auto-starts once.
-- Skipping the auto tutorial stops further automatic prompts; you can replay anytime from `Settings`.
+## Onboarding and Tutorial
 
-## UI language
-- Sidebar provides UI language toggle:
-  - `EN`
-  - `中文`
-- Default language follows system locale (`zh*` => 中文, otherwise English).
-- UI language preference is persisted locally in browser storage (`dailytrack.uiLanguage`).
+- First launch in an empty root opens template setup modal.
+- Template presets support English and Chinese variants.
+- After initial template setup, a 5-step guide starts once.
+- You can replay tutorial in `Settings -> Start Tutorial`.
 
-## Preferences
-Use `Preferences` page to toggle tracking scope per profile:
-- daily optional section visibility
-- weekly section visibility (Body/Research/Life/Output/Social)
-- body fields visibility (weight/waist/note)
+## Save and Sync Behavior
 
-These preferences affect structured UI rendering without changing your core file format contract.
+- Daily/Weekly use debounced autosave only (no manual save button).
+- Body records save on submit/delete.
+- App polls disk and refreshes pages when local draft is clean.
 
-## Data portability (Export / Import)
-- Use `Settings -> Export Data` to create a backup folder in your chosen destination directory.
-- Export creates a timestamped folder: `dailytrack-export-<timestamp>`.
-- Use `Settings -> Import Data` to import from an exported folder into current active profile root.
-- Import supports overwrite mode for existing files.
-- This enables moving data between macOS and Windows machines using local file transfer tools.
+## Portability
 
-## Data-root migration
-- `Settings -> Save Data Root`: switch active root only (no file copy).
-- `Settings -> Migrate Data Root`: copy current base root to destination and switch to destination in one step.
-- Migration supports optional overwrite mode for filename conflicts.
-- Migration blocks unsafe path pairs (same path or nested source/destination).
-- `Settings` also includes `Start Tutorial` to replay the sidebar onboarding guide manually.
+- Export creates `dailytrack-export-<timestamp>` folder.
+- Import merges/copies files into current active profile root.
+- Data root migration copies whole root and switches app root.
 
-## Full reset (first-run rollback)
-- `Settings -> Reset Data (Danger Zone)` lets you wipe tracker data and return to first-run setup.
-- It removes app-managed data under the current base root:
-  - `profiles/`
-  - legacy `daily/`, `weekly/`, `templates/`, `body.csv`
-- You must type `RESET` to confirm.
-- After reset, app re-enters the initial template setup flow.
+## GitHub Release CI
 
-## Markdown schema
+- Workflow: `.github/workflows/publish.yml`
+- Targets:
+  - windows-latest
+  - macOS aarch64
+  - macOS x86_64
+- Trigger:
+  - push tag like `v0.2.0`
+  - or manual `workflow_dispatch`
 
-### Daily note (`daily/YYYY-MM-DD.md`)
+Example:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+## Markdown Schema
+
+Daily note (`daily/YYYY-MM-DD.md`):
+
 ```md
 # 2026-03-18
 
@@ -164,7 +175,8 @@ These preferences affect structured UI rendering without changing your core file
 -
 ```
 
-### Weekly note (`weekly/YYYY-Www.md`)
+Weekly note (`weekly/YYYY-Www.md`):
+
 ```md
 # 2026-W12
 
@@ -195,57 +207,26 @@ These preferences affect structured UI rendering without changing your core file
 3.
 ```
 
-Note:
-- Even Chinese template variants keep canonical English markdown headings (`## Daily Core`, `## Optional`, `## One Line`, `## Body`, `## Research`, `## Life`, `## Output`, `## Social`, `## Reflection`) for structured parser compatibility.
+Body CSV (`body.csv`):
 
-### Body file (`body.csv`)
 ```csv
 date,weight,waist,note
 2026-03-18,71.2,82.0,steady
 ```
 
-## Structured editing <-> file mapping
-- Structured mode:
-  - parse markdown/csv into typed state
-  - update checkboxes and fields in UI
-  - save via serializer into normalized markdown/csv
-- Raw mode (daily/weekly):
-  - edit raw markdown text directly
-  - save raw text directly
-  - app reparses after save to refresh structured view
+## Limitations
 
-## Real-time behavior
-- Daily/Weekly pages:
-  - debounced autosave while editing
-  - no manual save button; saving is fully automatic
-  - external disk changes are pulled in automatically when local draft is not dirty
-- Body page:
-  - saves immediately on submit/delete
-  - polls disk for external updates when not actively editing
-- Dashboard/Daily list/Weekly list:
-  - refresh on in-app data-change events
-  - also refresh on short polling intervals/focus to catch external changes
+- Structured save is schema-aware and normalizes formatting.
+- Unknown custom Markdown blocks may not be preserved in structured mode.
+- Import is file-level merge/overwrite without semantic conflict resolution.
+- No file locking.
 
-## Implemented pages
-- Dashboard
-- Daily note detail
-- Weekly note detail
-- Daily notes list
-- Weekly notes list
-- Body progress
-- Profiles
-- Preferences
-- Settings (base root + export/import)
+## Project Docs
 
-## Current limitations
-- Structured mode is schema-aware and only targets defined headings/fields.
-- Unknown extra markdown content is not preserved by structured save normalization.
-- Import is file-level merge/overwrite and does not do semantic conflict resolution.
-- No file-locking; conflicting concurrent edits are mitigated by polling + dirty-state guards only.
-
-## Project docs
 - [AGENTS.md](./AGENTS.md)
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 - [docs/DATA_MODEL.md](./docs/DATA_MODEL.md)
 - [docs/PARSER_SPEC.md](./docs/PARSER_SPEC.md)
+- [docs/FS_STORAGE.md](./docs/FS_STORAGE.md)
 - [docs/QA_CHECKLIST.md](./docs/QA_CHECKLIST.md)
+- [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
