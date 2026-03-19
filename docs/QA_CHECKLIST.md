@@ -24,6 +24,7 @@
 - [ ] Legacy 4-column `body.csv` (`date,weight,waist,note`) is parsed without data loss.
 - [ ] Expanded body columns (`bodyFat,muscleMass,chest,hip`) roundtrip correctly.
 - [ ] Body metric toggles in Preferences correctly control form/table/chart visibility.
+- [ ] Body metric unit/decimals settings apply to table/dashboard/chart labels and values.
 
 ## UI Workflows
 - [ ] Structured mode toggle/check/edit works.

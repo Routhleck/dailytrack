@@ -107,6 +107,7 @@ dailytrack-data/
 - Body progress page:
   - local `body.csv` table + form
   - preference-based metric toggles (weight/waist/body fat/muscle/chest/hip/note)
+  - per-metric unit + decimal display format
   - per-metric trend charts
 - Profiles:
   - create/switch/delete profile

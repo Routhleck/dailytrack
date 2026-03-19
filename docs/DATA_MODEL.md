@@ -66,6 +66,13 @@ export type TrackerPreferences = {
     chest: boolean;
     hip: boolean;
     note: boolean;
+    display: Record<
+      "weight" | "waist" | "bodyFat" | "muscleMass" | "chest" | "hip",
+      {
+        unit: string;
+        decimals: number; // 0-3
+      }
+    >;
   };
 };
 ```

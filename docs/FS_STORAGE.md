@@ -41,6 +41,9 @@ dailytrack-data/
 - Profile name validation: 1-64 chars, `[a-zA-Z0-9_-]`.
 - At least one profile must always exist.
 - Deleting last profile is blocked.
+- `preferences.json` stores:
+  - section/module visibility toggles
+  - body metric display settings (unit + decimals per metric)
 
 ## Bootstrap Behavior
 On startup:

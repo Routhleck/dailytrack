@@ -56,6 +56,10 @@ The format is based on Keep a Changelog.
 - Conditional updater release wiring:
   - optional updater metadata generation (`latest.json`) in publish CI when updater secrets are provided
   - updater config override file (`src-tauri/tauri.updater.conf.json`) for release builds
+- Body metric display formatting layer with per-metric:
+  - unit text
+  - decimal precision (0-3)
+  - shared formatter helpers + tests
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -88,6 +92,8 @@ The format is based on Keep a Changelog.
 - Body CSV parser now supports both legacy 4-column and extended 8-column headers for backward-compatible profile data upgrades.
 - Added updater/process plugin permissions and plugin wiring in Tauri runtime.
 - Settings page now includes app update controls and updater configuration visibility.
+- Body/Dashboard views now render values and labels using profile-configured metric units and decimal precision.
+- Preferences now includes editable body metric display options (unit + decimals per metric).
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
