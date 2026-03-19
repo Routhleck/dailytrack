@@ -28,6 +28,9 @@ export const enMessages = {
   'common.edit': 'Edit',
   'common.delete': 'Delete',
   'common.cancelEdit': 'Cancel Edit',
+  'common.yes': 'Yes',
+  'common.no': 'No',
+  'common.loading': 'Loading...',
 
   'onboarding.title': 'Initial Template Setup',
   'onboarding.description':
@@ -267,6 +270,14 @@ export const enMessages = {
   'settings.importSourceRequired': 'Import source path is required.',
   'settings.importCompleted': 'Import completed and data root refreshed.',
   'settings.importFailed': 'Import failed.',
+  'settings.updater': 'App Updates',
+  'settings.updaterDescription':
+    'Check for new releases and install them in-app (requires updater signing keys configured in CI).',
+  'settings.currentVersion': 'Current version',
+  'settings.latestVersion': 'Available version',
+  'settings.updaterConfigured': 'Auto-update configured',
+  'settings.autoCheckUpdates': 'Check for updates automatically on startup',
+  'settings.checkUpdatesNow': 'Check for Updates',
 
   'section.Body': 'Body',
   'section.Research': 'Research',
@@ -276,6 +287,18 @@ export const enMessages = {
 
   'template.languageEnglish': 'English',
   'template.languageChinese': '中文',
+
+  'updater.available': 'Update {version} is available.',
+  'updater.installAndRestart': 'Install and Restart',
+  'updater.later': 'Later',
+  'updater.checking': 'Checking for updates...',
+  'updater.upToDate': 'You are on the latest version.',
+  'updater.installing': 'Installing update...',
+  'updater.downloadProgress': 'Downloading update... {percent}%',
+  'updater.notConfigured':
+    'Auto-update is not configured in this build. Configure updater keys in CI first.',
+  'updater.checkFailed': 'Failed to check updates.',
+  'updater.installFailed': 'Failed to install update.',
 
   'error.unknown': 'Unknown error.',
 } as const
@@ -312,6 +335,9 @@ export const zhMessages: Record<MessageKey, string> = {
   'common.edit': '编辑',
   'common.delete': '删除',
   'common.cancelEdit': '取消编辑',
+  'common.yes': '是',
+  'common.no': '否',
+  'common.loading': '加载中...',
 
   'onboarding.title': '首次模板初始化',
   'onboarding.description': '当前根目录未检测到追踪数据。请先选择一个初始模板（或空白骨架）后继续。',
@@ -539,6 +565,14 @@ export const zhMessages: Record<MessageKey, string> = {
   'settings.importSourceRequired': '请填写导入源路径。',
   'settings.importCompleted': '导入完成并已刷新当前数据根目录。',
   'settings.importFailed': '导入失败。',
+  'settings.updater': '应用更新',
+  'settings.updaterDescription':
+    '支持自动检查并一键安装新版本（需要在 CI 中配置 updater 签名密钥）。',
+  'settings.currentVersion': '当前版本',
+  'settings.latestVersion': '可用版本',
+  'settings.updaterConfigured': '自动更新已配置',
+  'settings.autoCheckUpdates': '启动时自动检查更新',
+  'settings.checkUpdatesNow': '立即检查更新',
 
   'section.Body': '身体',
   'section.Research': '研究',
@@ -548,6 +582,17 @@ export const zhMessages: Record<MessageKey, string> = {
 
   'template.languageEnglish': 'English',
   'template.languageChinese': '中文',
+
+  'updater.available': '发现新版本 {version}。',
+  'updater.installAndRestart': '安装并重启',
+  'updater.later': '稍后',
+  'updater.checking': '正在检查更新...',
+  'updater.upToDate': '当前已是最新版本。',
+  'updater.installing': '正在安装更新...',
+  'updater.downloadProgress': '正在下载更新... {percent}%',
+  'updater.notConfigured': '当前构建未配置自动更新。请先在 CI 中配置 updater 密钥。',
+  'updater.checkFailed': '检查更新失败。',
+  'updater.installFailed': '安装更新失败。',
 
   'error.unknown': '未知错误。',
 }

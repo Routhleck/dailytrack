@@ -5,6 +5,10 @@ export type EnsureDataRootInfo = {
   isFirstRun: boolean
 }
 
+export async function isUpdaterConfigured(): Promise<boolean> {
+  return invoke<boolean>('updater_is_configured')
+}
+
 export async function ensureDataRoot(dataRoot?: string): Promise<EnsureDataRootInfo> {
   return invoke<EnsureDataRootInfo>('ensure_data_root', { dataRoot })
 }

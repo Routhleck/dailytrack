@@ -265,6 +265,41 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
   Ok(())
 }
 
+fn updater_configured_from_app(app: &tauri::AppHandle) -> bool {
+  let plugins = &app.config().plugins.0;
+  let updater = match plugins.get("updater") {
+    Some(value) => value,
+    None => return false,
+  };
+
+  let has_endpoints = updater
+    .get("endpoints")
+    .and_then(|value| value.as_array())
+    .is_some_and(|items| !items.is_empty());
+  let has_pubkey = updater
+    .get("pubkey")
+    .and_then(|value| value.as_str())
+    .is_some_and(|value| !value.trim().is_empty());
+
+  has_endpoints && has_pubkey
+}
+
+fn updater_pubkey() -> Option<String> {
+  option_env!("DAILYTRACK_UPDATER_PUBKEY")
+    .map(str::trim)
+    .filter(|value| !value.is_empty())
+    .map(ToOwned::to_owned)
+}
+
+#[tauri::command]
+fn updater_is_configured(app: tauri::AppHandle) -> bool {
+  if updater_pubkey().is_some() {
+    return true;
+  }
+
+  updater_configured_from_app(&app)
+}
+
 fn is_data_root_empty(root: &Path) -> Result<bool, String> {
   if !root.exists() {
     return Ok(true);
@@ -578,7 +613,9 @@ fn reset_tracker_data(data_root: String) -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![
+      updater_is_configured,
       ensure_data_root,
       list_profiles,
       ensure_profile,
@@ -593,6 +630,15 @@ pub fn run() {
       reset_tracker_data
     ])
     .setup(|app| {
+      #[cfg(desktop)]
+      {
+        let mut updater = tauri_plugin_updater::Builder::new();
+        if let Some(pubkey) = updater_pubkey() {
+          updater = updater.pubkey(pubkey);
+        }
+        app.handle().plugin(updater.build())?;
+      }
+
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()

@@ -84,6 +84,19 @@ jobs:
             echo "All macOS signing/notarization secrets are available."
           fi
 
+      - name: Updater mode notice
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          DAILYTRACK_UPDATER_PUBKEY: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && [ -n "$DAILYTRACK_UPDATER_PUBKEY" ]; then
+            echo "::notice::Updater signing key + public key found. Updater artifacts will be generated."
+          else
+            echo "::warning::Updater key configuration missing (TAURI_SIGNING_PRIVATE_KEY or DAILYTRACK_UPDATER_PUBKEY)."
+            echo "::warning::This run will still publish installers, but in-app auto-update metadata/signatures will be skipped."
+          fi
+
       - name: Import Apple signing certificate
         if: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.KEYCHAIN_PASSWORD != '' }}
         shell: bash
@@ -114,6 +127,19 @@ jobs:
           npm run test
           npm run build
 
+      - name: Resolve tauri build args
+        id: tauri_args
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          DAILYTRACK_UPDATER_PUBKEY: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
+        run: |
+          args="${{ matrix.args }}"
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && [ -n "$DAILYTRACK_UPDATER_PUBKEY" ]; then
+            args="$args --config src-tauri/tauri.updater.conf.json"
+          fi
+          echo "args=${args}" >> "$GITHUB_OUTPUT"
+
       - name: Build and upload Tauri bundles
         uses: tauri-apps/tauri-action@v0
         env:
@@ -122,10 +148,13 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          DAILYTRACK_UPDATER_PUBKEY: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
         with:
           tagName: ${{ steps.release_tag.outputs.tag }}
           releaseName: dailytrack ${{ steps.release_tag.outputs.tag }}
           releaseBody: Automated release built by GitHub Actions.
           releaseDraft: true
           prerelease: ${{ contains(steps.release_tag.outputs.tag, '-') }}
-          args: ${{ matrix.args }}
+          args: ${{ steps.tauri_args.outputs.args }}

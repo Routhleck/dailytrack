@@ -4,6 +4,7 @@ import { PageHeader } from '../components/PageHeader'
 import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
+import { useUpdater } from '../features/updater/UpdaterContext'
 import { exportDataBundle, importDataBundle } from '../lib/fs/fileApi'
 import { emitDataChanged } from '../lib/liveSync'
 
@@ -33,6 +34,21 @@ function isNestedPath(parent: string, child: string): boolean {
 
 export function SettingsPage() {
   const { t } = useI18n()
+  const {
+    configured: updaterConfigured,
+    resolved: updaterResolved,
+    currentVersion,
+    autoCheckEnabled,
+    checking: updaterChecking,
+    installing: updaterInstalling,
+    update: availableUpdate,
+    status: updaterStatus,
+    error: updaterError,
+    downloadPercent,
+    setAutoCheckEnabled,
+    checkForUpdates,
+    installUpdate,
+  } = useUpdater()
   const {
     baseDataRoot,
     dataRoot,
@@ -247,6 +263,62 @@ export function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <section className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.updater')}</h2>
+        <p className="text-sm text-slate-600">{t('settings.updaterDescription')}</p>
+        <p className="text-sm text-slate-700">
+          {t('settings.currentVersion')}: <span className="font-medium">{currentVersion}</span>
+        </p>
+        <p className="text-sm text-slate-700">
+          {t('settings.updaterConfigured')}:{' '}
+          <span className={`font-medium ${updaterConfigured ? 'text-teal-700' : 'text-amber-700'}`}>
+            {updaterResolved ? (updaterConfigured ? t('common.yes') : t('common.no')) : t('common.loading')}
+          </span>
+        </p>
+        {!updaterConfigured && updaterResolved ? (
+          <p className="text-sm text-amber-700">{t('updater.notConfigured')}</p>
+        ) : null}
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoCheckEnabled}
+            onChange={(event) => setAutoCheckEnabled(event.target.checked)}
+            disabled={!updaterConfigured || updaterInstalling}
+          />
+          {t('settings.autoCheckUpdates')}
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            disabled={!updaterConfigured || updaterChecking || updaterInstalling}
+            onClick={() => void checkForUpdates(true)}
+          >
+            {updaterChecking ? t('updater.checking') : t('settings.checkUpdatesNow')}
+          </button>
+          {availableUpdate ? (
+            <button
+              type="button"
+              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              disabled={updaterInstalling || updaterChecking}
+              onClick={() => void installUpdate()}
+            >
+              {updaterInstalling ? t('updater.installing') : t('updater.installAndRestart')}
+            </button>
+          ) : null}
+        </div>
+        {downloadPercent != null ? (
+          <p className="text-sm text-slate-700">{t('updater.downloadProgress', { percent: downloadPercent })}</p>
+        ) : null}
+        {availableUpdate ? (
+          <p className="text-sm text-slate-700">
+            {t('settings.latestVersion')}: <span className="font-medium">{availableUpdate.version}</span>
+          </p>
+        ) : null}
+        {updaterStatus ? <p className="text-sm text-slate-700">{updaterStatus}</p> : null}
+        {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
+      </section>
 
       <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
