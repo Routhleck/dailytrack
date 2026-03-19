@@ -33,7 +33,7 @@ export function DashboardPage() {
       return
     }
 
-    setError('')
+    let cancelled = false
 
     void Promise.all([
       getTodayNote(dataRoot),
@@ -43,6 +43,10 @@ export function DashboardPage() {
       listWeeklyIds(dataRoot),
     ])
       .then(([today, week, bodyRecords, dailyDates, weeklyIds]) => {
+        if (cancelled) {
+          return
+        }
+
         const weeklyItems = Object.values(week.sections).flat()
         const latestBody = latestBodyRecord(bodyRecords)
 
@@ -61,10 +65,18 @@ export function DashboardPage() {
           recentDaily: dailyDates.slice(0, 5),
           recentWeekly: weeklyIds.slice(0, 5),
         })
+        setError('')
       })
       .catch(() => {
+        if (cancelled) {
+          return
+        }
         setError('Failed to load dashboard data.')
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [dataRoot])
 
   if (!state) {

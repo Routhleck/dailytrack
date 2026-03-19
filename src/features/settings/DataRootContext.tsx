@@ -63,6 +63,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
   return <DataRootContext.Provider value={value}>{children}</DataRootContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useDataRoot() {
   const ctx = useContext(DataRootContext)
   if (!ctx) {
