@@ -42,6 +42,7 @@ npm run tauri:build
 ## Data storage
 Default base data root:
 - `~/life-tracker-data`
+- Windows fallback: `%USERPROFILE%\life-tracker-data`
 
 Configurable in Settings page.
 
@@ -153,6 +154,18 @@ date,weight,waist,note
   - save raw text directly
   - app reparses after save to refresh structured view
 
+## Real-time behavior
+- Daily/Weekly pages:
+  - debounced autosave while editing
+  - explicit `Save now` button remains available
+  - external disk changes are pulled in automatically when local draft is not dirty
+- Body page:
+  - saves immediately on submit/delete
+  - polls disk for external updates when not actively editing
+- Dashboard/Daily list/Weekly list:
+  - refresh on in-app data-change events
+  - also refresh on short polling intervals/focus to catch external changes
+
 ## Implemented pages
 - Dashboard
 - Daily note detail
@@ -168,7 +181,7 @@ date,weight,waist,note
 - Structured mode is schema-aware and only targets defined headings/fields.
 - Unknown extra markdown content is not preserved by structured save normalization.
 - Import is file-level merge/overwrite and does not do semantic conflict resolution.
-- No concurrent file write conflict handling yet.
+- No file-locking; conflicting concurrent edits are mitigated by polling + dirty-state guards only.
 
 ## Project docs
 - [AGENTS.md](./AGENTS.md)

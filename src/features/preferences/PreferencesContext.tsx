@@ -14,6 +14,7 @@ import {
   getPreferences,
   savePreferences,
 } from './preferences.service'
+import { emitDataChanged } from '../../lib/liveSync'
 
 type PreferencesContextValue = {
   preferences: TrackerPreferences
@@ -69,6 +70,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
         const saved = await savePreferences(dataRoot, next)
         setPreferences(saved)
+        emitDataChanged({ scope: 'preferences' })
       },
     }),
     [dataRoot, error, loading, preferences],

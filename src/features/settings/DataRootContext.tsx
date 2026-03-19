@@ -20,6 +20,7 @@ import {
   saveActiveProfilePreference,
   saveDataRootPreference,
 } from './settings.store'
+import { emitDataChanged } from '../../lib/liveSync'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
@@ -105,12 +106,14 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
       },
       updateDataRoot: async (nextPath: string) => {
         await bootstrap(nextPath)
+        emitDataChanged({ scope: 'settings' })
       },
       switchProfile: async (profileName: string) => {
         if (!baseDataRoot) {
           throw new Error('Data root is not initialized')
         }
         await bootstrap(baseDataRoot, profileName)
+        emitDataChanged({ scope: 'profile', profile: profileName })
       },
       createProfile: async (profileName: string, options?: ProfileCreateOptions) => {
         if (!baseDataRoot) {
@@ -124,6 +127,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
           options?.weeklyTemplate,
         )
         await bootstrap(baseDataRoot, profileName)
+        emitDataChanged({ scope: 'profile', profile: profileName })
       },
       deleteProfile: async (profileName: string) => {
         if (!baseDataRoot) {
@@ -132,6 +136,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
 
         const fallbackProfile = await deleteProfileApi(baseDataRoot, profileName)
         await bootstrap(baseDataRoot, activeProfile === profileName ? fallbackProfile : activeProfile ?? undefined)
+        emitDataChanged({ scope: 'profile', profile: fallbackProfile })
       },
     }),
     [activeProfile, baseDataRoot, dataRoot, error, loading, profiles],

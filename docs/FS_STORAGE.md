@@ -40,9 +40,11 @@ On startup:
 4. Ensure active profile has required files (`daily/`, `weekly/`, `templates/`, `body.csv`).
 
 ## Write Policy
-- Writes are explicit (Save button).
+- Daily/Weekly use debounced autosave and still provide explicit Save button.
+- Body writes on submit/delete.
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.
+- External disk edits are polled and synchronized back into UI only when local drafts are not dirty.
 
 ## Export and Import
 - Export copies current active profile root to timestamped folder:

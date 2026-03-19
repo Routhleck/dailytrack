@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { listWeeklyIds } from '../features/weekly/weekly.service'
+import { onDataChanged } from '../lib/liveSync'
 
 export function WeeklyListPage() {
   const { dataRoot } = useDataRoot()
@@ -11,15 +12,46 @@ export function WeeklyListPage() {
   const [query, setQuery] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const loadWeeklyList = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
-    void listWeeklyIds(dataRoot)
-      .then(setWeeks)
-      .catch(() => setError('Failed to load weekly files.'))
+    try {
+      const next = await listWeeklyIds(dataRoot)
+      setWeeks(next)
+      setError('')
+    } catch {
+      setError('Failed to load weekly files.')
+    }
   }, [dataRoot])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadWeeklyList()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [loadWeeklyList])
+
+  useEffect(() => {
+    const unlisten = onDataChanged((detail) => {
+      if (detail.scope === 'weekly' || detail.scope === 'profile' || detail.scope === 'all') {
+        void loadWeeklyList()
+      }
+    })
+
+    const interval = window.setInterval(() => {
+      void loadWeeklyList()
+    }, 5000)
+
+    return () => {
+      unlisten()
+      window.clearInterval(interval)
+    }
+  }, [loadWeeklyList])
 
   const filtered = weeks.filter((week) => week.includes(query.trim().toUpperCase()))
 

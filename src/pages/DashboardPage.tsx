@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
@@ -10,6 +10,7 @@ import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
+import { onDataChanged } from '../lib/liveSync'
 
 type DashboardState = {
   todayCore: { checked: number; total: number; percent: number }
@@ -31,58 +32,77 @@ export function DashboardPage() {
   const [state, setState] = useState<DashboardState | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
-    let cancelled = false
+    try {
+      const [today, week, bodyRecords, dailyDates, weeklyIds] = await Promise.all([
+        getTodayNote(dataRoot),
+        getCurrentWeekNote(dataRoot),
+        getBodyRecords(dataRoot),
+        listDailyDates(dataRoot),
+        listWeeklyIds(dataRoot),
+      ])
 
-    void Promise.all([
-      getTodayNote(dataRoot),
-      getCurrentWeekNote(dataRoot),
-      getBodyRecords(dataRoot),
-      listDailyDates(dataRoot),
-      listWeeklyIds(dataRoot),
-    ])
-      .then(([today, week, bodyRecords, dailyDates, weeklyIds]) => {
-        if (cancelled) {
-          return
-        }
+      const weeklyItems = WEEKLY_SECTION_ORDER.flatMap((section) =>
+        preferences.weekly.sections[section] ? week.sections[section] : [],
+      )
+      const latestBody = latestBodyRecord(bodyRecords)
 
-        const weeklyItems = WEEKLY_SECTION_ORDER.flatMap((section) =>
-          preferences.weekly.sections[section] ? week.sections[section] : [],
-        )
-        const latestBody = latestBodyRecord(bodyRecords)
-
-        setState({
-          todayCore: summarizeChecklist(today.dailyCore),
-          todayOneLine: today.oneLine,
-          weekSummary: summarizeChecklist(weeklyItems),
-          body: latestBody
-            ? {
-                date: latestBody.date,
-                weight: latestBody.weight == null ? '-' : String(latestBody.weight),
-                waist: latestBody.waist == null ? '-' : String(latestBody.waist),
-                note: latestBody.note || '-',
-              }
-            : null,
-          recentDaily: dailyDates.slice(0, 5),
-          recentWeekly: weeklyIds.slice(0, 5),
-        })
-        setError('')
+      setState({
+        todayCore: summarizeChecklist(today.dailyCore),
+        todayOneLine: today.oneLine,
+        weekSummary: summarizeChecklist(weeklyItems),
+        body: latestBody
+          ? {
+              date: latestBody.date,
+              weight: latestBody.weight == null ? '-' : String(latestBody.weight),
+              waist: latestBody.waist == null ? '-' : String(latestBody.waist),
+              note: latestBody.note || '-',
+            }
+          : null,
+        recentDaily: dailyDates.slice(0, 5),
+        recentWeekly: weeklyIds.slice(0, 5),
       })
-      .catch(() => {
-        if (cancelled) {
-          return
-        }
-        setError('Failed to load dashboard data.')
-      })
-
-    return () => {
-      cancelled = true
+      setError('')
+    } catch {
+      setError('Failed to load dashboard data.')
     }
   }, [dataRoot, preferences])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadDashboard()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [loadDashboard])
+
+  useEffect(() => {
+    const unlisten = onDataChanged(() => {
+      void loadDashboard()
+    })
+
+    const interval = window.setInterval(() => {
+      void loadDashboard()
+    }, 4000)
+
+    const onFocus = () => {
+      void loadDashboard()
+    }
+
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      unlisten()
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [loadDashboard])
 
   if (preferencesLoading || !state) {
     return (

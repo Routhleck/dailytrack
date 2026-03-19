@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
 import { listDailyDates } from '../features/daily/daily.service'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { onDataChanged } from '../lib/liveSync'
 
 export function DailyListPage() {
   const { dataRoot } = useDataRoot()
@@ -11,15 +12,46 @@ export function DailyListPage() {
   const [query, setQuery] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const loadDailyList = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
-    void listDailyDates(dataRoot)
-      .then(setDates)
-      .catch(() => setError('Failed to load daily files.'))
+    try {
+      const next = await listDailyDates(dataRoot)
+      setDates(next)
+      setError('')
+    } catch {
+      setError('Failed to load daily files.')
+    }
   }, [dataRoot])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadDailyList()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [loadDailyList])
+
+  useEffect(() => {
+    const unlisten = onDataChanged((detail) => {
+      if (detail.scope === 'daily' || detail.scope === 'profile' || detail.scope === 'all') {
+        void loadDailyList()
+      }
+    })
+
+    const interval = window.setInterval(() => {
+      void loadDailyList()
+    }, 5000)
+
+    return () => {
+      unlisten()
+      window.clearInterval(interval)
+    }
+  }, [loadDailyList])
 
   const filtered = dates.filter((date) => date.includes(query.trim()))
 

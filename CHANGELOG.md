@@ -37,6 +37,7 @@ The format is based on Keep a Changelog.
   - `ensure_profile`
   - `create_profile`
   - `delete_profile`
+- Realtime sync utilities and event bus (`src/lib/liveSync.ts`) for cross-page refresh.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -46,6 +47,9 @@ The format is based on Keep a Changelog.
 - Migrated runtime storage model to profile-based roots under `profiles/<profile>/`.
 - Dashboard, Daily, Weekly, and Body pages now respect profile preferences.
 - Eslint ignore updated to skip `src-tauri/target/**` artifacts produced by Rust builds.
+- Daily/Weekly pages now autosave with debounce and keep manual `Save now`.
+- Dashboard and note list pages now refresh from live events + periodic polling.
+- Body page now emits live change events and reloads external file updates via polling.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

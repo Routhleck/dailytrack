@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { PageHeader } from '../components/PageHeader'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { exportDataBundle, importDataBundle } from '../lib/fs/fileApi'
+import { emitDataChanged } from '../lib/liveSync'
 
 function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -112,6 +113,7 @@ export function SettingsPage() {
     try {
       await importDataBundle(source, dataRoot, overwriteImport)
       await refresh()
+      emitDataChanged({ scope: 'all' })
       setImportMessage('Import completed and data root refreshed.')
     } catch (error) {
       const text = error instanceof Error ? error.message : 'Import failed.'

@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
+import { serializeDailyMarkdown } from '../features/daily/daily.serializer'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
+import { emitDataChanged } from '../lib/liveSync'
 import type { DailyNote } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -26,6 +28,21 @@ export function DailyNotePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
+  const savedStructuredRef = useRef('')
+  const savedRawRef = useRef('')
+
+  const structuredDraft = useMemo(
+    () => (note ? serializeDailyMarkdown(note) : ''),
+    [note],
+  )
+  const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
+  const rawDirty = rawDraft !== savedRawRef.current
+
+  const markSaved = useCallback((savedNote: DailyNote) => {
+    savedStructuredRef.current = serializeDailyMarkdown(savedNote)
+    savedRawRef.current = savedNote.raw
+  }, [])
+
   useEffect(() => {
     if (!dataRoot) {
       return
@@ -42,6 +59,7 @@ export function DailyNotePage() {
         }
         setNote(next)
         setRawDraft(next.raw)
+        markSaved(next)
       })
       .catch(() => {
         if (!cancelled) {
@@ -57,30 +75,93 @@ export function DailyNotePage() {
     return () => {
       cancelled = true
     }
-  }, [activeDate, dataRoot])
+  }, [activeDate, dataRoot, markSaved])
 
-  async function handleSave() {
+  const performSave = useCallback(
+    async (source: 'manual' | 'auto') => {
+      if (!dataRoot || !note || saving) {
+        return
+      }
+
+      setSaving(true)
+      if (source === 'manual') {
+        setMessage('')
+      }
+
+      try {
+        const saved =
+          mode === 'raw'
+            ? await saveDailyRaw(dataRoot, activeDate, rawDraft)
+            : await saveDailyStructured(dataRoot, note)
+        setNote(saved)
+        setRawDraft(saved.raw)
+        markSaved(saved)
+        setMessage(source === 'manual' ? 'Saved.' : 'Autosaved.')
+        emitDataChanged({ scope: 'daily', path: saved.date })
+      } catch {
+        setMessage(source === 'manual' ? 'Save failed.' : 'Autosave failed.')
+      } finally {
+        setSaving(false)
+      }
+    },
+    [activeDate, dataRoot, markSaved, mode, note, rawDraft, saving],
+  )
+
+  useEffect(() => {
+    if (!dataRoot || !note || loading || saving) {
+      return
+    }
+
+    const dirty = mode === 'structured' ? structuredDirty : rawDirty
+    if (!dirty) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      void performSave('auto')
+    }, mode === 'structured' ? 800 : 1200)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
+
+  useEffect(() => {
     if (!dataRoot || !note) {
       return
     }
 
-    setSaving(true)
-    setMessage('')
+    const timer = window.setInterval(() => {
+      if (saving) {
+        return
+      }
 
-    try {
-      const saved =
-        mode === 'raw'
-          ? await saveDailyRaw(dataRoot, activeDate, rawDraft)
-          : await saveDailyStructured(dataRoot, note)
-      setNote(saved)
-      setRawDraft(saved.raw)
-      setMessage('Saved.')
-    } catch {
-      setMessage('Save failed.')
-    } finally {
-      setSaving(false)
+      const dirty = mode === 'structured' ? structuredDirty : rawDirty
+      if (dirty) {
+        return
+      }
+
+      void getDailyNote(dataRoot, activeDate)
+        .then((remote) => {
+          if (remote.raw === savedRawRef.current) {
+            return
+          }
+
+          setNote(remote)
+          setRawDraft(remote.raw)
+          markSaved(remote)
+          setMessage('Updated from disk.')
+          emitDataChanged({ scope: 'daily', path: remote.date })
+        })
+        .catch(() => {
+          // ignore polling failures to avoid noisy UI updates
+        })
+    }, 2500)
+
+    return () => {
+      window.clearInterval(timer)
     }
-  }
+  }, [activeDate, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty])
 
   function updateChecklist(
     section: 'dailyCore' | 'optional',
@@ -126,7 +207,7 @@ export function DailyNotePage() {
     <section className="space-y-4">
       <PageHeader
         title={`Daily: ${note.date}`}
-        description="Toggle checklist items in structured mode, or switch to raw markdown mode."
+        description="Structured edits and raw markdown are autosaved; external file changes are pulled in when no local unsaved edits exist."
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -147,11 +228,11 @@ export function DailyNotePage() {
           Raw Markdown
         </button>
         <button
-          onClick={() => void handleSave()}
+          onClick={() => void performSave('manual')}
           disabled={saving}
           className="rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-70"
         >
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? 'Saving...' : 'Save now'}
         </button>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/daily">

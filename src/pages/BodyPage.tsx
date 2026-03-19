@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -14,6 +14,7 @@ import { getBodyRecords, saveBodyRecords } from '../features/body/body.service'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
+import { emitDataChanged } from '../lib/liveSync'
 import type { BodyRecord } from '../types/tracker'
 
 type FormState = {
@@ -55,6 +56,18 @@ export function BodyPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [message, setMessage] = useState('')
 
+  const recordsRef = useRef<BodyRecord[]>([])
+  const editingIndexRef = useRef<number | null>(null)
+  const syncingRef = useRef(false)
+
+  useEffect(() => {
+    recordsRef.current = records
+  }, [records])
+
+  useEffect(() => {
+    editingIndexRef.current = editingIndex
+  }, [editingIndex])
+
   useEffect(() => {
     if (!dataRoot) {
       return
@@ -76,10 +89,44 @@ export function BodyPage() {
       const saved = await saveBodyRecords(dataRoot, nextRecords)
       setRecords(saved)
       setMessage('Saved.')
+      emitDataChanged({ scope: 'body' })
     } catch {
       setMessage('Save failed.')
     }
   }
+
+  useEffect(() => {
+    if (!dataRoot) {
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      if (editingIndexRef.current != null || syncingRef.current) {
+        return
+      }
+
+      syncingRef.current = true
+      void getBodyRecords(dataRoot)
+        .then((latest) => {
+          const currentSignature = JSON.stringify(recordsRef.current)
+          const latestSignature = JSON.stringify(latest)
+          if (currentSignature !== latestSignature) {
+            setRecords(latest)
+            setMessage('Updated from disk.')
+          }
+        })
+        .catch(() => {
+          // ignore polling failures
+        })
+        .finally(() => {
+          syncingRef.current = false
+        })
+    }, 3000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [dataRoot])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()

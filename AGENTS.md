@@ -35,13 +35,24 @@ Default local data root: `~/life-tracker-data`
 
 ```text
 life-tracker-data/
-  daily/
-  weekly/
-  body.csv
-  templates/
-    daily.md
-    weekly.md
+  profiles/
+    default/
+      daily/
+      weekly/
+      body.csv
+      templates/
+        daily.md
+        weekly.md
+      preferences.json
 ```
+
+On Windows, default base root falls back to `%USERPROFILE%\\life-tracker-data`.
+
+## Sync Behavior Contract
+- Markdown/CSV remains the source of truth on disk.
+- Daily/Weekly editors use debounced autosave and also keep explicit `Save now`.
+- Dashboard/list pages react to in-app data-change events and periodic polling.
+- External file edits are polled and pulled into UI only when there are no unsaved local edits.
 
 ## Development Workflow
 1. Confirm requirement and scope boundaries.

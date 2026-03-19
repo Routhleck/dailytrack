@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { MarkdownEditor } from '../components/MarkdownEditor'
@@ -8,12 +8,14 @@ import { summarizeChecklist } from '../features/dashboard/dashboard.service'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
+import { serializeWeeklyMarkdown } from '../features/weekly/weekly.serializer'
 import {
   getWeeklyNote,
   saveWeeklyRaw,
   saveWeeklyStructured,
 } from '../features/weekly/weekly.service'
 import { currentWeekId } from '../lib/date/week'
+import { emitDataChanged } from '../lib/liveSync'
 import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -31,6 +33,21 @@ export function WeeklyNotePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
+  const savedStructuredRef = useRef('')
+  const savedRawRef = useRef('')
+
+  const structuredDraft = useMemo(
+    () => (note ? serializeWeeklyMarkdown(note) : ''),
+    [note],
+  )
+  const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
+  const rawDirty = rawDraft !== savedRawRef.current
+
+  const markSaved = useCallback((savedNote: WeeklyNote) => {
+    savedStructuredRef.current = serializeWeeklyMarkdown(savedNote)
+    savedRawRef.current = savedNote.raw
+  }, [])
+
   useEffect(() => {
     if (!dataRoot) {
       return
@@ -47,6 +64,7 @@ export function WeeklyNotePage() {
         }
         setNote(next)
         setRawDraft(next.raw)
+        markSaved(next)
       })
       .catch(() => {
         if (!cancelled) {
@@ -62,30 +80,93 @@ export function WeeklyNotePage() {
     return () => {
       cancelled = true
     }
-  }, [activeWeekId, dataRoot])
+  }, [activeWeekId, dataRoot, markSaved])
 
-  async function handleSave() {
+  const performSave = useCallback(
+    async (source: 'manual' | 'auto') => {
+      if (!dataRoot || !note || saving) {
+        return
+      }
+
+      setSaving(true)
+      if (source === 'manual') {
+        setMessage('')
+      }
+
+      try {
+        const saved =
+          mode === 'raw'
+            ? await saveWeeklyRaw(dataRoot, activeWeekId, rawDraft)
+            : await saveWeeklyStructured(dataRoot, note)
+        setNote(saved)
+        setRawDraft(saved.raw)
+        markSaved(saved)
+        setMessage(source === 'manual' ? 'Saved.' : 'Autosaved.')
+        emitDataChanged({ scope: 'weekly', path: saved.weekId })
+      } catch {
+        setMessage(source === 'manual' ? 'Save failed.' : 'Autosave failed.')
+      } finally {
+        setSaving(false)
+      }
+    },
+    [activeWeekId, dataRoot, markSaved, mode, note, rawDraft, saving],
+  )
+
+  useEffect(() => {
+    if (!dataRoot || !note || loading || saving) {
+      return
+    }
+
+    const dirty = mode === 'structured' ? structuredDirty : rawDirty
+    if (!dirty) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      void performSave('auto')
+    }, mode === 'structured' ? 800 : 1200)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
+
+  useEffect(() => {
     if (!dataRoot || !note) {
       return
     }
 
-    setSaving(true)
-    setMessage('')
+    const timer = window.setInterval(() => {
+      if (saving) {
+        return
+      }
 
-    try {
-      const saved =
-        mode === 'raw'
-          ? await saveWeeklyRaw(dataRoot, activeWeekId, rawDraft)
-          : await saveWeeklyStructured(dataRoot, note)
-      setNote(saved)
-      setRawDraft(saved.raw)
-      setMessage('Saved.')
-    } catch {
-      setMessage('Save failed.')
-    } finally {
-      setSaving(false)
+      const dirty = mode === 'structured' ? structuredDirty : rawDirty
+      if (dirty) {
+        return
+      }
+
+      void getWeeklyNote(dataRoot, activeWeekId)
+        .then((remote) => {
+          if (remote.raw === savedRawRef.current) {
+            return
+          }
+
+          setNote(remote)
+          setRawDraft(remote.raw)
+          markSaved(remote)
+          setMessage('Updated from disk.')
+          emitDataChanged({ scope: 'weekly', path: remote.weekId })
+        })
+        .catch(() => {
+          // ignore polling failures to avoid noisy UI updates
+        })
+    }, 2500)
+
+    return () => {
+      window.clearInterval(timer)
     }
-  }
+  }, [activeWeekId, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty])
 
   function updateChecklist(
     section: WeeklySectionKey,
@@ -155,7 +236,7 @@ export function WeeklyNotePage() {
     <section className="space-y-4">
       <PageHeader
         title={`Weekly: ${note.weekId}`}
-        description="Track section checklists and weekly reflection, with raw markdown fallback."
+        description="Structured edits and raw markdown are autosaved; external file changes are pulled in when no local unsaved edits exist."
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -176,11 +257,11 @@ export function WeeklyNotePage() {
           Raw Markdown
         </button>
         <button
-          onClick={() => void handleSave()}
+          onClick={() => void performSave('manual')}
           disabled={saving}
           className="rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-70"
         >
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? 'Saving...' : 'Save now'}
         </button>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/weekly">
