@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 
+import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import {
   TEMPLATE_PRESETS,
@@ -10,6 +11,7 @@ import {
 } from '../features/settings/templatePresets'
 
 export function InitialTemplateSetupModal() {
+  const { t } = useI18n()
   const { dataRoot, completeInitialTemplateSetup } = useDataRoot()
   const [presetId, setPresetId] = useState('balanced')
   const [templateLanguage, setTemplateLanguage] = useState<TemplateLanguage>(
@@ -33,7 +35,7 @@ export function InitialTemplateSetupModal() {
         selectedVariant.weeklyTemplate,
       )
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Failed to apply template setup.')
+      setMessage(error instanceof Error ? error.message : t('onboarding.applyFailed'))
     } finally {
       setBusy(false)
     }
@@ -42,17 +44,18 @@ export function InitialTemplateSetupModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
       <div className="w-full max-w-4xl rounded-xl bg-white p-5 shadow-xl">
-        <h2 className="text-xl font-semibold text-slate-900">Initial Template Setup</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('onboarding.title')}</h2>
         <p className="mt-2 text-sm text-slate-600">
-          No tracker data was found in this root. Choose a starting template (or Blank) before
-          continuing.
+          {t('onboarding.description')}
         </p>
-        <p className="mt-1 break-all text-xs text-slate-500">Root: {dataRoot || '-'}</p>
+        <p className="mt-1 break-all text-xs text-slate-500">
+          {t('onboarding.root')}: {dataRoot || '-'}
+        </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700" htmlFor="initial-preset">
-              Template preset
+              {t('onboarding.templatePreset')}
             </label>
             <select
               id="initial-preset"
@@ -71,7 +74,7 @@ export function InitialTemplateSetupModal() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700" htmlFor="initial-language">
-              Template language
+              {t('onboarding.templateLanguage')}
             </label>
             <select
               id="initial-language"
@@ -80,15 +83,15 @@ export function InitialTemplateSetupModal() {
               onChange={(event) => setTemplateLanguage(event.target.value as TemplateLanguage)}
               disabled={busy}
             >
-              <option value="en">English</option>
-              <option value="zh">中文</option>
+              <option value="en">{t('onboarding.languageEnglish')}</option>
+              <option value="zh">{t('onboarding.languageChinese')}</option>
             </select>
           </div>
         </div>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <div>
-            <p className="mb-1 text-sm font-medium text-slate-700">Daily template preview</p>
+            <p className="mb-1 text-sm font-medium text-slate-700">{t('onboarding.dailyPreview')}</p>
             <textarea
               className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
               value={selectedVariant.dailyTemplate}
@@ -97,7 +100,7 @@ export function InitialTemplateSetupModal() {
             />
           </div>
           <div>
-            <p className="mb-1 text-sm font-medium text-slate-700">Weekly template preview</p>
+            <p className="mb-1 text-sm font-medium text-slate-700">{t('onboarding.weeklyPreview')}</p>
             <textarea
               className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
               value={selectedVariant.weeklyTemplate}
@@ -114,7 +117,7 @@ export function InitialTemplateSetupModal() {
             disabled={busy}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
-            {busy ? 'Applying...' : 'Apply and Continue'}
+            {busy ? t('onboarding.applying') : t('onboarding.applyAndContinue')}
           </button>
           {message ? <p className="text-sm text-rose-700">{message}</p> : null}
         </div>

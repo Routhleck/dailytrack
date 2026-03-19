@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
+import { useI18n } from '../features/i18n/I18nContext'
 import { getBodyRecords } from '../features/body/body.service'
 import { getTodayNote, listDailyDates } from '../features/daily/daily.service'
 import { latestBodyRecord, summarizeChecklist } from '../features/dashboard/dashboard.service'
@@ -27,6 +28,7 @@ type DashboardState = {
 }
 
 export function DashboardPage() {
+  const { t } = useI18n()
   const { dataRoot } = useDataRoot()
   const { preferences, loading: preferencesLoading } = usePreferences()
   const [state, setState] = useState<DashboardState | null>(null)
@@ -68,9 +70,9 @@ export function DashboardPage() {
       })
       setError('')
     } catch {
-      setError('Failed to load dashboard data.')
+      setError(t('dashboard.loadFailed'))
     }
-  }, [dataRoot, preferences])
+  }, [dataRoot, preferences, t])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -107,7 +109,7 @@ export function DashboardPage() {
   if (preferencesLoading || !state) {
     return (
       <section>
-        <PageHeader title="Dashboard" description="Loading local tracker summary..." />
+        <PageHeader title={t('dashboard.title')} description={t('dashboard.loadingDescription')} />
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       </section>
     )
@@ -116,61 +118,63 @@ export function DashboardPage() {
   return (
     <section className="space-y-4">
       <PageHeader
-        title="Dashboard"
-        description="Quick overview for today, this week, body progress, and recent notes."
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <article className="rounded-lg border border-slate-200 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">Today</h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('dashboard.today')}</h2>
             <Link className="text-sm text-teal-700 hover:underline" to="/today">
-              Open
+              {t('common.open')}
             </Link>
           </div>
           <p className="mb-2 text-xs text-slate-600">
-            Daily Core {state.todayCore.checked}/{state.todayCore.total}
+            {t('dashboard.dailyCoreProgress')} {state.todayCore.checked}/{state.todayCore.total}
           </p>
           <ProgressBar value={state.todayCore.percent} />
-          <p className="mt-3 text-sm text-slate-700">One Line: {state.todayOneLine || '-'}</p>
+          <p className="mt-3 text-sm text-slate-700">
+            {t('dashboard.oneLine')}: {state.todayOneLine || '-'}
+          </p>
         </article>
 
         <article className="rounded-lg border border-slate-200 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">This Week</h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('dashboard.thisWeek')}</h2>
             <Link className="text-sm text-teal-700 hover:underline" to="/week">
-              Open
+              {t('common.open')}
             </Link>
           </div>
           <p className="mb-2 text-xs text-slate-600">
-            Weekly Checklist {state.weekSummary.checked}/{state.weekSummary.total}
+            {t('dashboard.weeklyChecklist')} {state.weekSummary.checked}/{state.weekSummary.total}
           </p>
           <ProgressBar value={state.weekSummary.percent} />
         </article>
 
         <article className="rounded-lg border border-slate-200 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">Body</h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('dashboard.body')}</h2>
             <Link className="text-sm text-teal-700 hover:underline" to="/body">
-              Open
+              {t('common.open')}
             </Link>
           </div>
           {state.body ? (
             <div className="space-y-1 text-sm text-slate-700">
-              <p>Date: {state.body.date}</p>
-              {preferences.body.weight ? <p>Weight: {state.body.weight}</p> : null}
-              {preferences.body.waist ? <p>Waist: {state.body.waist}</p> : null}
-              {preferences.body.note ? <p>Note: {state.body.note}</p> : null}
+              <p>{t('dashboard.date')}: {state.body.date}</p>
+              {preferences.body.weight ? <p>{t('dashboard.weight')}: {state.body.weight}</p> : null}
+              {preferences.body.waist ? <p>{t('dashboard.waist')}: {state.body.waist}</p> : null}
+              {preferences.body.note ? <p>{t('dashboard.note')}: {state.body.note}</p> : null}
             </div>
           ) : (
-            <p className="text-sm text-slate-600">No body records yet.</p>
+            <p className="text-sm text-slate-600">{t('dashboard.noBodyRecords')}</p>
           )}
         </article>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <article className="rounded-lg border border-slate-200 p-4">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">Recent Daily Notes</h2>
+          <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dashboard.recentDaily')}</h2>
           <ul className="space-y-1 text-sm">
             {state.recentDaily.map((date) => (
               <li key={date}>
@@ -183,7 +187,7 @@ export function DashboardPage() {
         </article>
 
         <article className="rounded-lg border border-slate-200 p-4">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">Recent Weekly Notes</h2>
+          <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dashboard.recentWeekly')}</h2>
           <ul className="space-y-1 text-sm">
             {state.recentWeekly.map((week) => (
               <li key={week}>

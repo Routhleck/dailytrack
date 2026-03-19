@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { useI18n } from '../features/i18n/I18nContext'
 import {
   TEMPLATE_PRESETS,
   getTemplatePresetById,
@@ -17,6 +18,7 @@ function safeName(name: string): string {
 }
 
 export function ProfilesPage() {
+  const { t } = useI18n()
   const {
     baseDataRoot,
     dataRoot,
@@ -80,20 +82,20 @@ export function ProfilesPage() {
         if (cancelled) {
           return
         }
-        setTemplateMessage('Failed to load current profile templates.')
+        setTemplateMessage(t('profiles.currentTemplateLoadFailed'))
       })
 
     return () => {
       cancelled = true
     }
-  }, [dataRoot])
+  }, [dataRoot, t])
 
   async function handleCreateProfile(event: FormEvent) {
     event.preventDefault()
 
     const profileName = safeName(createName)
     if (!profileName) {
-      setCreateMessage('Profile name is required.')
+      setCreateMessage(t('profiles.profileNameRequired'))
       return
     }
 
@@ -106,9 +108,9 @@ export function ProfilesPage() {
         weeklyTemplate: newWeeklyTemplate,
       })
       setCreateName('')
-      setCreateMessage(`Profile ${profileName} created and activated.`)
+      setCreateMessage(t('profiles.profileCreated', { name: profileName }))
     } catch (error) {
-      setCreateMessage(error instanceof Error ? error.message : 'Failed to create profile.')
+      setCreateMessage(error instanceof Error ? error.message : t('profiles.createFailed'))
     } finally {
       setCreateBusy(false)
     }
@@ -118,7 +120,7 @@ export function ProfilesPage() {
     event.preventDefault()
 
     if (!dataRoot) {
-      setTemplateMessage('Active profile is not ready.')
+      setTemplateMessage(t('profiles.activeProfileNotReady'))
       return
     }
 
@@ -128,9 +130,9 @@ export function ProfilesPage() {
     try {
       await writeTextFile(joinPath(dataRoot, 'templates', 'daily.md'), currentDailyTemplate)
       await writeTextFile(joinPath(dataRoot, 'templates', 'weekly.md'), currentWeeklyTemplate)
-      setTemplateMessage('Current profile templates saved.')
+      setTemplateMessage(t('profiles.currentTemplatesSaved'))
     } catch (error) {
-      setTemplateMessage(error instanceof Error ? error.message : 'Failed to save templates.')
+      setTemplateMessage(error instanceof Error ? error.message : t('profiles.currentTemplateSaveFailed'))
     } finally {
       setTemplateBusy(false)
     }
@@ -139,21 +141,21 @@ export function ProfilesPage() {
   return (
     <section className="space-y-6">
       <PageHeader
-        title="Profiles"
-        description="Create, switch, delete profiles, and customize profile templates."
+        title={t('profiles.title')}
+        description={t('profiles.description')}
       />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
         <p>
-          Base root: <span className="font-medium">{baseDataRoot || '-'}</span>
+          {t('profiles.baseRoot')}: <span className="font-medium">{baseDataRoot || '-'}</span>
         </p>
         <p>
-          Active profile: <span className="font-medium">{activeProfile || '-'}</span>
+          {t('profiles.activeProfile')}: <span className="font-medium">{activeProfile || '-'}</span>
         </p>
       </div>
 
       <article className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Profile List</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('profiles.profileList')}</h2>
 
         <ul className="space-y-2">
           {profiles.map((profile) => (
@@ -162,7 +164,7 @@ export function ProfilesPage() {
               className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2"
             >
               <span className="text-sm text-slate-800">
-                {profile} {profile === activeProfile ? '(active)' : ''}
+                {profile} {profile === activeProfile ? t('profiles.activeTag') : ''}
               </span>
               <div className="flex gap-2">
                 <button
@@ -171,7 +173,7 @@ export function ProfilesPage() {
                   onClick={() => void switchProfile(profile)}
                   disabled={loading || profile === activeProfile}
                 >
-                  Switch
+                  {t('profiles.switch')}
                 </button>
                 <button
                   type="button"
@@ -179,34 +181,34 @@ export function ProfilesPage() {
                   onClick={() => void deleteProfile(profile)}
                   disabled={loading || profiles.length <= 1 || profile === activeProfile}
                 >
-                  Delete
+                  {t('profiles.delete')}
                 </button>
               </div>
             </li>
           ))}
         </ul>
         <p className="text-xs text-slate-500">
-          To delete an active profile, switch to another profile first.
+          {t('profiles.deleteHint')}
         </p>
       </article>
 
       <form onSubmit={handleCreateProfile} className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Create Profile</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('profiles.createProfile')}</h2>
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="profile-name">
-          Profile name
+          {t('profiles.profileName')}
         </label>
         <input
           id="profile-name"
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          placeholder="e.g. personal, fitness, work"
+          placeholder={t('profiles.profileNamePlaceholder')}
           value={createName}
           onChange={(event) => setCreateName(event.target.value)}
           disabled={createBusy}
         />
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="profile-preset">
-          Template preset
+          {t('profiles.templatePreset')}
         </label>
         <select
           id="profile-preset"
@@ -226,7 +228,7 @@ export function ProfilesPage() {
         ) : null}
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="template-language">
-          Template language
+          {t('profiles.templateLanguage')}
         </label>
         <select
           id="template-language"
@@ -235,11 +237,11 @@ export function ProfilesPage() {
           onChange={(event) => setTemplateLanguage(event.target.value as TemplateLanguage)}
           disabled={createBusy}
         >
-          <option value="en">English</option>
-          <option value="zh">中文</option>
+          <option value="en">{t('template.languageEnglish')}</option>
+          <option value="zh">{t('template.languageChinese')}</option>
         </select>
 
-        <label className="block text-sm font-medium text-slate-700">Daily template (editable)</label>
+        <label className="block text-sm font-medium text-slate-700">{t('profiles.dailyTemplateEditable')}</label>
         <textarea
           className="h-48 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
           value={newDailyTemplate}
@@ -248,7 +250,7 @@ export function ProfilesPage() {
           spellCheck={false}
         />
 
-        <label className="block text-sm font-medium text-slate-700">Weekly template (editable)</label>
+        <label className="block text-sm font-medium text-slate-700">{t('profiles.weeklyTemplateEditable')}</label>
         <textarea
           className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
           value={newWeeklyTemplate}
@@ -262,15 +264,15 @@ export function ProfilesPage() {
           disabled={createBusy}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          {createBusy ? 'Creating...' : 'Create Profile'}
+          {createBusy ? t('profiles.creating') : t('profiles.createProfileButton')}
         </button>
         {createMessage ? <p className="text-sm text-slate-600">{createMessage}</p> : null}
       </form>
 
       <form onSubmit={handleSaveCurrentTemplates} className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Current Profile Templates</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('profiles.currentTemplates')}</h2>
 
-        <label className="block text-sm font-medium text-slate-700">Daily template</label>
+        <label className="block text-sm font-medium text-slate-700">{t('profiles.dailyTemplate')}</label>
         <textarea
           className="h-48 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
           value={currentDailyTemplate}
@@ -279,7 +281,7 @@ export function ProfilesPage() {
           spellCheck={false}
         />
 
-        <label className="block text-sm font-medium text-slate-700">Weekly template</label>
+        <label className="block text-sm font-medium text-slate-700">{t('profiles.weeklyTemplate')}</label>
         <textarea
           className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
           value={currentWeeklyTemplate}
@@ -291,9 +293,9 @@ export function ProfilesPage() {
         <button
           type="submit"
           disabled={templateBusy || !dataRoot}
-          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          {templateBusy ? 'Saving...' : 'Save Current Templates'}
+          {templateBusy ? t('profiles.saving') : t('profiles.saveCurrentTemplates')}
         </button>
         {templateMessage ? <p className="text-sm text-slate-600">{templateMessage}</p> : null}
       </form>

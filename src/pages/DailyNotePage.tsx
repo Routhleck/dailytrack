@@ -7,6 +7,7 @@ import { ProgressBar } from '../components/ProgressBar'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
 import { serializeDailyMarkdown } from '../features/daily/daily.serializer'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
@@ -16,6 +17,7 @@ import type { DailyNote } from '../types/tracker'
 type Mode = 'structured' | 'raw'
 
 export function DailyNotePage() {
+  const { t } = useI18n()
   const { date } = useParams()
   const activeDate = useMemo(() => date ?? todayDateString(), [date])
   const { dataRoot, loading: rootLoading } = useDataRoot()
@@ -63,7 +65,7 @@ export function DailyNotePage() {
       })
       .catch(() => {
         if (!cancelled) {
-          setMessage('Failed to load note.')
+          setMessage(t('dailyNote.loadFailed'))
         }
       })
       .finally(() => {
@@ -75,7 +77,7 @@ export function DailyNotePage() {
     return () => {
       cancelled = true
     }
-  }, [activeDate, dataRoot, markSaved])
+  }, [activeDate, dataRoot, markSaved, t])
 
   const performSave = useCallback(
     async (source: 'manual' | 'auto') => {
@@ -96,15 +98,15 @@ export function DailyNotePage() {
         setNote(saved)
         setRawDraft(saved.raw)
         markSaved(saved)
-        setMessage(source === 'manual' ? 'Saved.' : 'Autosaved.')
+        setMessage(source === 'manual' ? t('dailyNote.saved') : t('dailyNote.autosaved'))
         emitDataChanged({ scope: 'daily', path: saved.date })
       } catch {
-        setMessage(source === 'manual' ? 'Save failed.' : 'Autosave failed.')
+        setMessage(source === 'manual' ? t('dailyNote.saveFailed') : t('dailyNote.autosaveFailed'))
       } finally {
         setSaving(false)
       }
     },
-    [activeDate, dataRoot, markSaved, mode, note, rawDraft, saving],
+    [activeDate, dataRoot, markSaved, mode, note, rawDraft, saving, t],
   )
 
   useEffect(() => {
@@ -150,7 +152,7 @@ export function DailyNotePage() {
           setNote(remote)
           setRawDraft(remote.raw)
           markSaved(remote)
-          setMessage('Updated from disk.')
+          setMessage(t('dailyNote.updatedFromDisk'))
           emitDataChanged({ scope: 'daily', path: remote.date })
         })
         .catch(() => {
@@ -161,7 +163,7 @@ export function DailyNotePage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeDate, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty])
+  }, [activeDate, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty, t])
 
   function updateChecklist(
     section: 'dailyCore' | 'optional',
@@ -187,7 +189,7 @@ export function DailyNotePage() {
   if (rootLoading || preferencesLoading || loading) {
     return (
       <section>
-        <PageHeader title="Daily" description="Loading local markdown note..." />
+        <PageHeader title={t('dailyNote.title')} description={t('dailyNote.loadingDescription')} />
       </section>
     )
   }
@@ -195,8 +197,8 @@ export function DailyNotePage() {
   if (!note) {
     return (
       <section>
-        <PageHeader title="Daily" description="Unable to load note." />
-        <p className="text-sm text-rose-700">{message || 'Unknown error.'}</p>
+        <PageHeader title={t('dailyNote.title')} description={t('dailyNote.unableDescription')} />
+        <p className="text-sm text-rose-700">{message || t('error.unknown')}</p>
       </section>
     )
   }
@@ -206,8 +208,8 @@ export function DailyNotePage() {
   return (
     <section className="space-y-4">
       <PageHeader
-        title={`Daily: ${note.date}`}
-        description="Structured edits and raw markdown are autosaved; external file changes are pulled in when no local unsaved edits exist."
+        title={t('dailyNote.pageTitle', { date: note.date })}
+        description={t('dailyNote.pageDescription')}
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -217,7 +219,7 @@ export function DailyNotePage() {
           }`}
           onClick={() => setMode('structured')}
         >
-          Structured
+          {t('common.structured')}
         </button>
         <button
           className={`rounded-md px-3 py-1.5 text-sm ${
@@ -225,18 +227,18 @@ export function DailyNotePage() {
           }`}
           onClick={() => setMode('raw')}
         >
-          Raw Markdown
+          {t('common.rawMarkdown')}
         </button>
         <button
           onClick={() => void performSave('manual')}
           disabled={saving}
           className="rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-70"
         >
-          {saving ? 'Saving...' : 'Save now'}
+          {saving ? t('common.saving') : t('common.saveNow')}
         </button>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/daily">
-          Back to Daily List
+          {t('dailyNote.backToList')}
         </Link>
       </div>
 
@@ -244,7 +246,7 @@ export function DailyNotePage() {
         <div className="space-y-6">
           <article className="rounded-lg border border-slate-200 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">Daily Core</h2>
+              <h2 className="text-base font-semibold text-slate-900">{t('dailyNote.dailyCore')}</h2>
               <span className="text-xs text-slate-600">
                 {coreSummary.checked}/{coreSummary.total}
               </span>
@@ -274,7 +276,7 @@ export function DailyNotePage() {
 
           {preferences.daily.showOptional ? (
             <article className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">Optional</h2>
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.optional')}</h2>
               <div className="space-y-2">
                 {note.optional.map((item, index) => (
                   <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
@@ -299,14 +301,14 @@ export function DailyNotePage() {
           ) : null}
 
           <article className="rounded-lg border border-slate-200 p-4">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">One Line</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.oneLine')}</h2>
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               value={note.oneLine}
               onChange={(event) => {
                 setNote((prev) => (prev ? { ...prev, oneLine: event.target.value } : prev))
               }}
-              placeholder="Capture one line for today"
+              placeholder={t('dailyNote.oneLinePlaceholder')}
             />
           </article>
         </div>

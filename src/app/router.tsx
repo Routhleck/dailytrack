@@ -2,6 +2,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { createHashRouter } from 'react-router-dom'
 
+import { useI18n } from '../features/i18n/I18nContext'
 import { AppShell } from './AppShell'
 
 const DashboardPage = lazy(async () => ({
@@ -32,9 +33,14 @@ const PreferencesPage = lazy(async () => ({
   default: (await import('../pages/PreferencesPage')).PreferencesPage,
 }))
 
+function RouteFallback() {
+  const { t } = useI18n()
+  return <div className="text-sm text-slate-500">{t('common.loadingPage')}</div>
+}
+
 function withSuspense(node: ReactNode) {
   return (
-    <Suspense fallback={<div className="text-sm text-slate-500">Loading page...</div>}>
+    <Suspense fallback={<RouteFallback />}>
       {node}
     </Suspense>
   )

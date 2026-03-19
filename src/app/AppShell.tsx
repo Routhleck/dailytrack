@@ -1,10 +1,12 @@
 import { Outlet } from 'react-router-dom'
 
 import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
+import { useI18n } from '../features/i18n/I18nContext'
 import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
 
 export function AppShell() {
+  const { t } = useI18n()
   const { baseDataRoot, dataRoot, activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
 
   return (
@@ -13,11 +15,11 @@ export function AppShell() {
         <Sidebar />
         <main className="flex-1 px-8 py-6">
           <div className="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-            {loading && 'Initializing local data folder...'}
+            {loading && t('shell.initializing')}
             {!loading &&
               !error &&
-              `Base: ${baseDataRoot} | Profile: ${activeProfile} | Active root: ${dataRoot}`}
-            {!loading && error && `Initialization error: ${error}`}
+              `${t('shell.base')}: ${baseDataRoot} | ${t('shell.profile')}: ${activeProfile} | ${t('shell.activeRoot')}: ${dataRoot}`}
+            {!loading && error && `${t('shell.initError')}: ${error}`}
           </div>
           <Outlet />
         </main>

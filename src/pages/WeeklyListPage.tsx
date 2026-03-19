@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
+import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { listWeeklyIds } from '../features/weekly/weekly.service'
 import { onDataChanged } from '../lib/liveSync'
 
 export function WeeklyListPage() {
+  const { t } = useI18n()
   const { dataRoot } = useDataRoot()
   const [weeks, setWeeks] = useState<string[]>([])
   const [query, setQuery] = useState('')
@@ -22,9 +24,9 @@ export function WeeklyListPage() {
       setWeeks(next)
       setError('')
     } catch {
-      setError('Failed to load weekly files.')
+      setError(t('weeklyList.loadFailed'))
     }
-  }, [dataRoot])
+  }, [dataRoot, t])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -57,14 +59,14 @@ export function WeeklyListPage() {
 
   return (
     <section className="space-y-4">
-      <PageHeader title="Weekly Notes" description="Browse local weekly markdown files." />
+      <PageHeader title={t('weeklyList.title')} description={t('weeklyList.description')} />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <input
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Filter by week, e.g. 2026-W12"
+          placeholder={t('weeklyList.filterPlaceholder')}
         />
       </div>
 

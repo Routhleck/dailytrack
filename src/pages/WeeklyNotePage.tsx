@@ -5,6 +5,7 @@ import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
@@ -21,6 +22,7 @@ import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 type Mode = 'structured' | 'raw'
 
 export function WeeklyNotePage() {
+  const { t } = useI18n()
   const { weekId } = useParams()
   const activeWeekId = useMemo(() => weekId ?? currentWeekId(), [weekId])
   const { dataRoot, loading: rootLoading } = useDataRoot()
@@ -68,7 +70,7 @@ export function WeeklyNotePage() {
       })
       .catch(() => {
         if (!cancelled) {
-          setMessage('Failed to load note.')
+          setMessage(t('weeklyNote.loadFailed'))
         }
       })
       .finally(() => {
@@ -80,7 +82,7 @@ export function WeeklyNotePage() {
     return () => {
       cancelled = true
     }
-  }, [activeWeekId, dataRoot, markSaved])
+  }, [activeWeekId, dataRoot, markSaved, t])
 
   const performSave = useCallback(
     async (source: 'manual' | 'auto') => {
@@ -101,15 +103,15 @@ export function WeeklyNotePage() {
         setNote(saved)
         setRawDraft(saved.raw)
         markSaved(saved)
-        setMessage(source === 'manual' ? 'Saved.' : 'Autosaved.')
+        setMessage(source === 'manual' ? t('weeklyNote.saved') : t('weeklyNote.autosaved'))
         emitDataChanged({ scope: 'weekly', path: saved.weekId })
       } catch {
-        setMessage(source === 'manual' ? 'Save failed.' : 'Autosave failed.')
+        setMessage(source === 'manual' ? t('weeklyNote.saveFailed') : t('weeklyNote.autosaveFailed'))
       } finally {
         setSaving(false)
       }
     },
-    [activeWeekId, dataRoot, markSaved, mode, note, rawDraft, saving],
+    [activeWeekId, dataRoot, markSaved, mode, note, rawDraft, saving, t],
   )
 
   useEffect(() => {
@@ -155,7 +157,7 @@ export function WeeklyNotePage() {
           setNote(remote)
           setRawDraft(remote.raw)
           markSaved(remote)
-          setMessage('Updated from disk.')
+          setMessage(t('weeklyNote.updatedFromDisk'))
           emitDataChanged({ scope: 'weekly', path: remote.weekId })
         })
         .catch(() => {
@@ -166,7 +168,7 @@ export function WeeklyNotePage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeWeekId, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty])
+  }, [activeWeekId, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty, t])
 
   function updateChecklist(
     section: WeeklySectionKey,
@@ -216,7 +218,7 @@ export function WeeklyNotePage() {
   if (rootLoading || preferencesLoading || loading) {
     return (
       <section>
-        <PageHeader title="Weekly" description="Loading local markdown note..." />
+        <PageHeader title={t('weeklyNote.title')} description={t('weeklyNote.loadingDescription')} />
       </section>
     )
   }
@@ -224,8 +226,8 @@ export function WeeklyNotePage() {
   if (!note) {
     return (
       <section>
-        <PageHeader title="Weekly" description="Unable to load note." />
-        <p className="text-sm text-rose-700">{message || 'Unknown error.'}</p>
+        <PageHeader title={t('weeklyNote.title')} description={t('weeklyNote.unableDescription')} />
+        <p className="text-sm text-rose-700">{message || t('error.unknown')}</p>
       </section>
     )
   }
@@ -235,8 +237,8 @@ export function WeeklyNotePage() {
   return (
     <section className="space-y-4">
       <PageHeader
-        title={`Weekly: ${note.weekId}`}
-        description="Structured edits and raw markdown are autosaved; external file changes are pulled in when no local unsaved edits exist."
+        title={t('weeklyNote.pageTitle', { week: note.weekId })}
+        description={t('weeklyNote.pageDescription')}
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -246,7 +248,7 @@ export function WeeklyNotePage() {
           }`}
           onClick={() => setMode('structured')}
         >
-          Structured
+          {t('common.structured')}
         </button>
         <button
           className={`rounded-md px-3 py-1.5 text-sm ${
@@ -254,18 +256,18 @@ export function WeeklyNotePage() {
           }`}
           onClick={() => setMode('raw')}
         >
-          Raw Markdown
+          {t('common.rawMarkdown')}
         </button>
         <button
           onClick={() => void performSave('manual')}
           disabled={saving}
           className="rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-70"
         >
-          {saving ? 'Saving...' : 'Save now'}
+          {saving ? t('common.saving') : t('common.saveNow')}
         </button>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/weekly">
-          Back to Weekly List
+          {t('weeklyNote.backToList')}
         </Link>
       </div>
 
@@ -278,7 +280,7 @@ export function WeeklyNotePage() {
             return (
               <article key={section} className="rounded-lg border border-slate-200 p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-slate-900">{section}</h2>
+                  <h2 className="text-base font-semibold text-slate-900">{t(`section.${section}` as 'section.Body')}</h2>
                   <span className="text-xs text-slate-600">
                     {summary.checked}/{summary.total}
                   </span>
@@ -312,11 +314,11 @@ export function WeeklyNotePage() {
           })}
 
           <article className="rounded-lg border border-slate-200 p-4 lg:col-span-2">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Reflection</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">{t('weeklyNote.reflection')}</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 rounded-md bg-slate-50 p-3">
-                <h3 className="text-sm font-medium text-slate-700">3 good things this week</h3>
+                <h3 className="text-sm font-medium text-slate-700">{t('weeklyNote.goodThings')}</h3>
                 {note.reflection.goodThings.map((value, index) => (
                   <input
                     key={`good-${index}`}
@@ -332,7 +334,7 @@ export function WeeklyNotePage() {
 
               <div className="space-y-2 rounded-md bg-slate-50 p-3">
                 <h3 className="text-sm font-medium text-slate-700">
-                  3 most important things next week
+                  {t('weeklyNote.nextTop3')}
                 </h3>
                 {note.reflection.nextWeekTop3.map((value, index) => (
                   <input

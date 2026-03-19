@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
+import { useI18n } from '../features/i18n/I18nContext'
 import { listDailyDates } from '../features/daily/daily.service'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { onDataChanged } from '../lib/liveSync'
 
 export function DailyListPage() {
+  const { t } = useI18n()
   const { dataRoot } = useDataRoot()
   const [dates, setDates] = useState<string[]>([])
   const [query, setQuery] = useState('')
@@ -22,9 +24,9 @@ export function DailyListPage() {
       setDates(next)
       setError('')
     } catch {
-      setError('Failed to load daily files.')
+      setError(t('dailyList.loadFailed'))
     }
-  }, [dataRoot])
+  }, [dataRoot, t])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -57,14 +59,14 @@ export function DailyListPage() {
 
   return (
     <section className="space-y-4">
-      <PageHeader title="Daily Notes" description="Browse local daily markdown files." />
+      <PageHeader title={t('dailyList.title')} description={t('dailyList.description')} />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <input
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Filter by date, e.g. 2026-03"
+          placeholder={t('dailyList.filterPlaceholder')}
         />
       </div>
 

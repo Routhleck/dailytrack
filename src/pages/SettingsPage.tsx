@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { exportDataBundle, importDataBundle } from '../lib/fs/fileApi'
 import { emitDataChanged } from '../lib/liveSync'
@@ -30,6 +31,7 @@ function isNestedPath(parent: string, child: string): boolean {
 }
 
 export function SettingsPage() {
+  const { t } = useI18n()
   const {
     baseDataRoot,
     dataRoot,
@@ -71,16 +73,16 @@ export function SettingsPage() {
       return ''
     }
     if (normalizedMigrateTarget === normalizedBaseRoot) {
-      return 'Migration destination cannot be the same as current data root.'
+      return t('settings.migrateSame')
     }
     if (
       isNestedPath(normalizedBaseRoot, normalizedMigrateTarget) ||
       isNestedPath(normalizedMigrateTarget, normalizedBaseRoot)
     ) {
-      return 'Current data root and migration destination cannot be nested.'
+      return t('settings.migrateNested')
     }
     return ''
-  }, [normalizedBaseRoot, normalizedMigrateTarget])
+  }, [normalizedBaseRoot, normalizedMigrateTarget, t])
 
   useEffect(() => {
     setDraftPath(baseDataRoot ?? '')
@@ -107,15 +109,15 @@ export function SettingsPage() {
 
     const nextPath = draftPath.trim()
     if (!nextPath) {
-      setRootMessage('Path cannot be empty.')
+      setRootMessage(t('settings.pathEmpty'))
       return
     }
 
     try {
       await updateDataRoot(nextPath)
-      setRootMessage('Data root updated.')
+      setRootMessage(t('settings.dataRootUpdated'))
     } catch {
-      setRootMessage('Failed to update data root.')
+      setRootMessage(t('settings.dataRootUpdateFailed'))
     }
   }
 
@@ -123,13 +125,13 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!dataRoot) {
-      setExportMessage('Data root is not ready.')
+      setExportMessage(t('settings.dataRootNotReady'))
       return
     }
 
     const destination = exportDir.trim()
     if (!destination) {
-      setExportMessage('Export destination path is required.')
+      setExportMessage(t('settings.exportDestinationRequired'))
       return
     }
 
@@ -138,9 +140,9 @@ export function SettingsPage() {
 
     try {
       const bundlePath = await exportDataBundle(dataRoot, destination)
-      setExportMessage(`Export completed: ${bundlePath}`)
+      setExportMessage(t('settings.exportCompleted', { path: bundlePath }))
     } catch (error) {
-      const text = error instanceof Error ? error.message : 'Export failed.'
+      const text = error instanceof Error ? error.message : t('settings.exportFailed')
       setExportMessage(text)
     } finally {
       setExportBusy(false)
@@ -151,13 +153,13 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!baseDataRoot) {
-      setMigrateMessage('Data root is not ready.')
+      setMigrateMessage(t('settings.dataRootNotReady'))
       return
     }
 
     const destination = migrateTarget.trim()
     if (!destination) {
-      setMigrateMessage('Migration destination path is required.')
+      setMigrateMessage(t('settings.migrateDestinationRequired'))
       return
     }
     if (migrateValidationMessage) {
@@ -170,9 +172,9 @@ export function SettingsPage() {
 
     try {
       await migrateDataRoot(destination, overwriteMigrate)
-      setMigrateMessage('Migration completed. Active data root switched to destination.')
+      setMigrateMessage(t('settings.migrateCompleted'))
     } catch (error) {
-      const text = error instanceof Error ? error.message : 'Migration failed.'
+      const text = error instanceof Error ? error.message : t('settings.migrateFailed')
       setMigrateMessage(text)
     } finally {
       setMigrateBusy(false)
@@ -183,13 +185,13 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!dataRoot) {
-      setImportMessage('Data root is not ready.')
+      setImportMessage(t('settings.dataRootNotReady'))
       return
     }
 
     const source = importSource.trim()
     if (!source) {
-      setImportMessage('Import source path is required.')
+      setImportMessage(t('settings.importSourceRequired'))
       return
     }
 
@@ -200,9 +202,9 @@ export function SettingsPage() {
       await importDataBundle(source, dataRoot, overwriteImport)
       await refresh()
       emitDataChanged({ scope: 'all' })
-      setImportMessage('Import completed and data root refreshed.')
+      setImportMessage(t('settings.importCompleted'))
     } catch (error) {
-      const text = error instanceof Error ? error.message : 'Import failed.'
+      const text = error instanceof Error ? error.message : t('settings.importFailed')
       setImportMessage(text)
     } finally {
       setImportBusy(false)
@@ -212,26 +214,26 @@ export function SettingsPage() {
   return (
     <section className="space-y-6">
       <PageHeader
-        title="Settings"
-        description="Configure base data folder and move active profile data between computers via export/import."
+        title={t('settings.title')}
+        description={t('settings.description')}
       />
 
       <div className="max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
         <p>
-          Active profile: <span className="font-medium">{activeProfile || '-'}</span>
+          {t('settings.activeProfile')}: <span className="font-medium">{activeProfile || '-'}</span>
         </p>
         <p>
-          Active profile root: <span className="font-medium">{dataRoot || '-'}</span>
+          {t('settings.activeProfileRoot')}: <span className="font-medium">{dataRoot || '-'}</span>
         </p>
       </div>
 
       <form onSubmit={handleRootSubmit} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Data Root</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.dataRoot')}</h2>
         <p className="text-sm text-slate-600">
-          This only switches the active base root. It does not copy data from the old location.
+          {t('settings.dataRootDescription')}
         </p>
         <label className="block text-sm font-medium text-slate-700" htmlFor="data-root">
-          Base data root path
+          {t('settings.baseDataRootPath')}
         </label>
         <input
           id="data-root"
@@ -246,7 +248,7 @@ export function SettingsPage() {
           disabled={loading}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          Save Data Root
+          {t('settings.saveDataRoot')}
         </button>
         <button
           type="button"
@@ -257,18 +259,18 @@ export function SettingsPage() {
           }}
           className="ml-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-60"
         >
-          Use This Path for Migration
+          {t('settings.usePathForMigration')}
         </button>
         {rootMessage ? <p className="text-sm text-slate-600">{rootMessage}</p> : null}
       </form>
 
       <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Migrate Data Root</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
         <p className="text-sm text-slate-600">
-          Copy the entire current base root to a new location, then switch app root to the destination.
+          {t('settings.migrateDescription')}
         </p>
         <label className="block text-sm font-medium text-slate-700" htmlFor="migrate-target">
-          Migration destination path
+          {t('settings.migrateDestination')}
         </label>
         <input
           id="migrate-target"
@@ -285,26 +287,26 @@ export function SettingsPage() {
             onChange={(event) => setOverwriteMigrate(event.target.checked)}
             disabled={loading || migrateBusy}
           />
-          Overwrite destination files when names conflict
+          {t('settings.overwriteConflicts')}
         </label>
         <button
           type="submit"
           disabled={loading || migrateBusy || !migrateTarget.trim() || Boolean(migrateValidationMessage)}
           className="rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          {migrateBusy ? 'Migrating...' : 'Migrate and Switch'}
+          {migrateBusy ? t('settings.migrating') : t('settings.migrateAndSwitch')}
         </button>
         {migrateValidationMessage ? <p className="text-sm text-rose-700">{migrateValidationMessage}</p> : null}
         {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
 
       <form onSubmit={handleExport} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Export Data</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.exportData')}</h2>
         <p className="text-sm text-slate-600">
-          Creates a new folder like <code>dailytrack-export-&lt;timestamp&gt;</code> in the destination directory.
+          {t('settings.exportDescription')}
         </p>
         <label className="block text-sm font-medium text-slate-700" htmlFor="export-dir">
-          Export destination directory
+          {t('settings.exportDestination')}
         </label>
         <input
           id="export-dir"
@@ -319,18 +321,18 @@ export function SettingsPage() {
           disabled={loading || exportBusy}
           className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          {exportBusy ? 'Exporting...' : 'Export'}
+          {exportBusy ? t('settings.exporting') : t('settings.export')}
         </button>
         {exportMessage ? <p className="break-all text-sm text-slate-600">{exportMessage}</p> : null}
       </form>
 
       <form onSubmit={handleImport} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Import Data</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.importData')}</h2>
         <p className="text-sm text-slate-600">
-          Import from an exported bundle folder into the current data root.
+          {t('settings.importDescription')}
         </p>
         <label className="block text-sm font-medium text-slate-700" htmlFor="import-source">
-          Import source folder path
+          {t('settings.importSource')}
         </label>
         <input
           id="import-source"
@@ -348,7 +350,7 @@ export function SettingsPage() {
             onChange={(event) => setOverwriteImport(event.target.checked)}
             disabled={loading || importBusy}
           />
-          Overwrite existing files with imported files
+          {t('settings.overwriteExisting')}
         </label>
 
         <button
@@ -356,7 +358,7 @@ export function SettingsPage() {
           disabled={loading || importBusy}
           className="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          {importBusy ? 'Importing...' : 'Import'}
+          {importBusy ? t('settings.importing') : t('settings.import')}
         </button>
         {importMessage ? <p className="break-all text-sm text-slate-600">{importMessage}</p> : null}
       </form>

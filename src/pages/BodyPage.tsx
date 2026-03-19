@@ -11,6 +11,7 @@ import {
 
 import { PageHeader } from '../components/PageHeader'
 import { getBodyRecords, saveBodyRecords } from '../features/body/body.service'
+import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
@@ -48,6 +49,7 @@ function toFormState(record?: BodyRecord): FormState {
 }
 
 export function BodyPage() {
+  const { t } = useI18n()
   const { dataRoot } = useDataRoot()
   const { preferences, loading: preferencesLoading } = usePreferences()
 
@@ -77,8 +79,8 @@ export function BodyPage() {
       .then((items) => {
         setRecords(items)
       })
-      .catch(() => setMessage('Failed to load body.csv'))
-  }, [dataRoot])
+      .catch(() => setMessage(t('body.loadFailed')))
+  }, [dataRoot, t])
 
   async function persist(nextRecords: BodyRecord[]) {
     if (!dataRoot) {
@@ -88,10 +90,10 @@ export function BodyPage() {
     try {
       const saved = await saveBodyRecords(dataRoot, nextRecords)
       setRecords(saved)
-      setMessage('Saved.')
+      setMessage(t('body.saved'))
       emitDataChanged({ scope: 'body' })
     } catch {
-      setMessage('Save failed.')
+      setMessage(t('body.saveFailed'))
     }
   }
 
@@ -112,7 +114,7 @@ export function BodyPage() {
           const latestSignature = JSON.stringify(latest)
           if (currentSignature !== latestSignature) {
             setRecords(latest)
-            setMessage('Updated from disk.')
+            setMessage(t('body.updatedFromDisk'))
           }
         })
         .catch(() => {
@@ -126,7 +128,7 @@ export function BodyPage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [dataRoot])
+  }, [dataRoot, t])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -145,7 +147,7 @@ export function BodyPage() {
     }
 
     if (!nextRecord.date) {
-      setMessage('Date is required.')
+      setMessage(t('body.dateRequired'))
       return
     }
 
@@ -176,7 +178,7 @@ export function BodyPage() {
   if (preferencesLoading) {
     return (
       <section>
-        <PageHeader title="Body Progress" description="Loading profile preferences..." />
+        <PageHeader title={t('body.title')} description={t('body.loadingPreferences')} />
       </section>
     )
   }
@@ -188,8 +190,8 @@ export function BodyPage() {
   return (
     <section className="space-y-6">
       <PageHeader
-        title="Body Progress"
-        description="Read and edit local body.csv records with profile preferences applied."
+        title={t('body.title')}
+        description={t('body.description')}
       />
 
       <form
@@ -209,7 +211,7 @@ export function BodyPage() {
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             type="number"
             step="0.1"
-            placeholder="Weight"
+            placeholder={t('body.weight')}
             value={form.weight}
             onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
           />
@@ -220,7 +222,7 @@ export function BodyPage() {
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             type="number"
             step="0.1"
-            placeholder="Waist"
+            placeholder={t('body.waist')}
             value={form.waist}
             onChange={(event) => setForm((prev) => ({ ...prev, waist: event.target.value }))}
           />
@@ -229,7 +231,7 @@ export function BodyPage() {
         {showNote ? (
           <input
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Note"
+            placeholder={t('body.note')}
             value={form.note}
             onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
           />
@@ -237,7 +239,7 @@ export function BodyPage() {
 
         <div className="md:col-span-4 flex items-center gap-2">
           <button className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white" type="submit">
-            {editingIndex == null ? 'Add Record' : 'Update Record'}
+            {editingIndex == null ? t('body.addRecord') : t('body.updateRecord')}
           </button>
           {editingIndex != null ? (
             <button
@@ -248,7 +250,7 @@ export function BodyPage() {
                 setForm(toFormState())
               }}
             >
-              Cancel Edit
+              {t('common.cancelEdit')}
             </button>
           ) : null}
           {message ? <span className="text-sm text-slate-600">{message}</span> : null}
@@ -259,7 +261,7 @@ export function BodyPage() {
         <div className={`grid gap-4 ${showWeight && showWaist ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
           {showWeight ? (
             <article className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">Weight Trend</h2>
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.weightTrend')}</h2>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -276,7 +278,7 @@ export function BodyPage() {
 
           {showWaist ? (
             <article className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">Waist Trend</h2>
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.waistTrend')}</h2>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -293,21 +295,21 @@ export function BodyPage() {
         </div>
       ) : (
         <article className="rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
-          All body metrics are disabled in Preferences.
+          {t('body.allDisabled')}
         </article>
       )}
 
       <article className="rounded-lg border border-slate-200 p-4">
-        <h2 className="mb-3 text-base font-semibold text-slate-900">History</h2>
+        <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
         <div className="overflow-auto">
           <table className="w-full min-w-[680px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">
-                <th className="py-2">Date</th>
-                {showWeight ? <th className="py-2">Weight</th> : null}
-                {showWaist ? <th className="py-2">Waist</th> : null}
-                {showNote ? <th className="py-2">Note</th> : null}
-                <th className="py-2">Actions</th>
+                <th className="py-2">{t('body.date')}</th>
+                {showWeight ? <th className="py-2">{t('body.weight')}</th> : null}
+                {showWaist ? <th className="py-2">{t('body.waist')}</th> : null}
+                {showNote ? <th className="py-2">{t('body.note')}</th> : null}
+                <th className="py-2">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -327,14 +329,14 @@ export function BodyPage() {
                         }}
                         type="button"
                       >
-                        Edit
+                        {t('common.edit')}
                       </button>
                       <button
                         className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
                         onClick={() => void handleDelete(index)}
                         type="button"
                       >
-                        Delete
+                        {t('common.delete')}
                       </button>
                     </div>
                   </td>
