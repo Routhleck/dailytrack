@@ -14,6 +14,7 @@ import {
   ensureProfile,
   listProfiles,
   migrateDataRoot as migrateDataRootApi,
+  resetTrackerData as resetTrackerDataApi,
   writeTextFile,
 } from '../../lib/fs/fileApi'
 import {
@@ -27,7 +28,7 @@ import {
 } from './settings.store'
 import { emitDataChanged } from '../../lib/liveSync'
 import { joinPath } from '../../lib/fs/pathApi'
-import { markTutorialPending } from '../tutorial/tutorial.store'
+import { markTutorialPending, resetTutorialState } from '../tutorial/tutorial.store'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
@@ -45,6 +46,7 @@ type DataRootContextValue = {
   refresh: () => Promise<void>
   updateDataRoot: (nextPath: string) => Promise<void>
   migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<void>
+  resetTrackerData: () => Promise<void>
   completeInitialTemplateSetup: (dailyTemplate: string, weeklyTemplate: string) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
@@ -140,6 +142,17 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         const nextRoot = await migrateDataRootApi(baseDataRoot, destinationPath, overwrite)
         await bootstrap(nextRoot, activeProfile ?? undefined)
         emitDataChanged({ scope: 'settings' })
+      },
+      resetTrackerData: async () => {
+        if (!baseDataRoot) {
+          throw new Error('Data root is not initialized')
+        }
+
+        await resetTrackerDataApi(baseDataRoot)
+        resetTutorialState()
+        savePendingInitialTemplateRoot(baseDataRoot)
+        await bootstrap(baseDataRoot)
+        emitDataChanged({ scope: 'all' })
       },
       completeInitialTemplateSetup: async (dailyTemplate: string, weeklyTemplate: string) => {
         if (!dataRoot || !baseDataRoot) {

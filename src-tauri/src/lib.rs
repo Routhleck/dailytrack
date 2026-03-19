@@ -167,6 +167,21 @@ fn copy_if_exists_file(source: &Path, destination: &Path, overwrite: bool) -> Re
   Ok(())
 }
 
+fn remove_path_if_exists(path: &Path) -> Result<(), String> {
+  if !path.exists() {
+    return Ok(());
+  }
+
+  if path.is_dir() {
+    fs::remove_dir_all(path)
+      .map_err(|err| format!("Failed to remove directory {}: {err}", path.display()))?;
+    return Ok(());
+  }
+
+  fs::remove_file(path).map_err(|err| format!("Failed to remove file {}: {err}", path.display()))?;
+  Ok(())
+}
+
 fn copy_legacy_data_into_profile(base_root: &Path, profile_root_path: &Path) -> Result<(), String> {
   let daily_source = base_root.join("daily");
   let weekly_source = base_root.join("weekly");
@@ -542,6 +557,21 @@ fn migrate_data_root(
   Ok(destination_canonical.to_string_lossy().to_string())
 }
 
+#[tauri::command]
+fn reset_tracker_data(data_root: String) -> Result<String, String> {
+  let root = resolve_data_root(Some(data_root))?;
+  fs::create_dir_all(root.as_path())
+    .map_err(|err| format!("Failed to create data root {}: {err}", root.display()))?;
+
+  remove_path_if_exists(root.join("profiles").as_path())?;
+  remove_path_if_exists(root.join("daily").as_path())?;
+  remove_path_if_exists(root.join("weekly").as_path())?;
+  remove_path_if_exists(root.join("templates").as_path())?;
+  remove_path_if_exists(root.join("body.csv").as_path())?;
+
+  Ok(root.to_string_lossy().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -556,7 +586,8 @@ pub fn run() {
       list_files,
       export_data_bundle,
       import_data_bundle,
-      migrate_data_root
+      migrate_data_root,
+      reset_tracker_data
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

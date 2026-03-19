@@ -39,6 +39,7 @@ export function SettingsPage() {
     activeProfile,
     updateDataRoot,
     migrateDataRoot,
+    resetTrackerData,
     refresh,
     loading,
   } = useDataRoot()
@@ -66,6 +67,9 @@ export function SettingsPage() {
   const [overwriteMigrate, setOverwriteMigrate] = useState(false)
   const [migrateMessage, setMigrateMessage] = useState('')
   const [migrateBusy, setMigrateBusy] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
+  const [resetBusy, setResetBusy] = useState(false)
 
   const normalizedBaseRoot = useMemo(() => normalizePath(baseDataRoot ?? ''), [baseDataRoot])
   const normalizedMigrateTarget = useMemo(() => normalizePath(migrateTarget.trim()), [migrateTarget])
@@ -209,6 +213,33 @@ export function SettingsPage() {
       setImportMessage(text)
     } finally {
       setImportBusy(false)
+    }
+  }
+
+  async function handleReset(event: FormEvent) {
+    event.preventDefault()
+
+    if (!baseDataRoot) {
+      setResetMessage(t('settings.dataRootNotReady'))
+      return
+    }
+    if (resetConfirmText.trim() !== 'RESET') {
+      setResetMessage(t('settings.resetConfirmMismatch'))
+      return
+    }
+
+    setResetBusy(true)
+    setResetMessage('')
+
+    try {
+      await resetTrackerData()
+      setResetConfirmText('')
+      setResetMessage(t('settings.resetCompleted'))
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.resetFailed')
+      setResetMessage(text)
+    } finally {
+      setResetBusy(false)
     }
   }
 
@@ -373,6 +404,35 @@ export function SettingsPage() {
           {importBusy ? t('settings.importing') : t('settings.import')}
         </button>
         {importMessage ? <p className="break-all text-sm text-slate-600">{importMessage}</p> : null}
+      </form>
+
+      <form onSubmit={handleReset} className="max-w-3xl space-y-3 rounded-lg border border-rose-300 bg-rose-50/40 p-4">
+        <h2 className="text-base font-semibold text-rose-800">{t('settings.resetSection')}</h2>
+        <p className="text-sm text-rose-700">{t('settings.resetDescription')}</p>
+        <p className="break-all text-xs text-rose-700">
+          {t('settings.resetTarget')}: {baseDataRoot || '-'}
+        </p>
+
+        <label className="block text-sm font-medium text-rose-800" htmlFor="reset-confirm">
+          {t('settings.resetTypeToConfirm')}
+        </label>
+        <input
+          id="reset-confirm"
+          className="w-full rounded-md border border-rose-300 bg-white px-3 py-2 text-sm shadow-sm"
+          value={resetConfirmText}
+          onChange={(event) => setResetConfirmText(event.target.value)}
+          placeholder="RESET"
+          disabled={loading || resetBusy}
+        />
+
+        <button
+          type="submit"
+          disabled={loading || resetBusy || resetConfirmText.trim() !== 'RESET'}
+          className="rounded-md bg-rose-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        >
+          {resetBusy ? t('settings.resetting') : t('settings.resetAction')}
+        </button>
+        {resetMessage ? <p className="break-all text-sm text-rose-800">{resetMessage}</p> : null}
       </form>
     </section>
   )

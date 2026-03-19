@@ -76,3 +76,7 @@ export async function migrateDataRoot(
     overwrite,
   })
 }
+
+export async function resetTrackerData(dataRoot: string): Promise<string> {
+  return invoke<string>('reset_tracker_data', { dataRoot })
+}

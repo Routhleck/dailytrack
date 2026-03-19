@@ -39,3 +39,9 @@ export function dismissTutorialForSession(): void {
 export function clearTutorialDismissedForSession(): void {
   window.sessionStorage.removeItem(TOUR_SESSION_DISMISSED_KEY)
 }
+
+export function resetTutorialState(): void {
+  window.localStorage.removeItem(TOUR_COMPLETED_KEY)
+  window.localStorage.removeItem(TOUR_PENDING_KEY)
+  window.sessionStorage.removeItem(TOUR_SESSION_DISMISSED_KEY)
+}
