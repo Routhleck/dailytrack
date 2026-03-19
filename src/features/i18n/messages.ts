@@ -19,8 +19,8 @@ export const enMessages = {
   'shell.initError': 'Initialization error',
 
   'common.open': 'Open',
-  'common.saveNow': 'Save now',
   'common.saving': 'Saving...',
+  'common.autoSaveOn': 'Auto-save on',
   'common.structured': 'Structured',
   'common.rawMarkdown': 'Raw Markdown',
   'common.loadingPage': 'Loading page...',
@@ -285,8 +285,8 @@ export const zhMessages: Record<MessageKey, string> = {
   'shell.initError': '初始化错误',
 
   'common.open': '打开',
-  'common.saveNow': '立即保存',
   'common.saving': '保存中...',
+  'common.autoSaveOn': '自动保存已开启',
   'common.structured': '结构化',
   'common.rawMarkdown': '原始 Markdown',
   'common.loadingPage': '页面加载中...',

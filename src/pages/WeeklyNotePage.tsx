@@ -85,15 +85,12 @@ export function WeeklyNotePage() {
   }, [activeWeekId, dataRoot, markSaved, t])
 
   const performSave = useCallback(
-    async (source: 'manual' | 'auto') => {
+    async () => {
       if (!dataRoot || !note || saving) {
         return
       }
 
       setSaving(true)
-      if (source === 'manual') {
-        setMessage('')
-      }
 
       try {
         const saved =
@@ -103,10 +100,10 @@ export function WeeklyNotePage() {
         setNote(saved)
         setRawDraft(saved.raw)
         markSaved(saved)
-        setMessage(source === 'manual' ? t('weeklyNote.saved') : t('weeklyNote.autosaved'))
+        setMessage(t('weeklyNote.autosaved'))
         emitDataChanged({ scope: 'weekly', path: saved.weekId })
       } catch {
-        setMessage(source === 'manual' ? t('weeklyNote.saveFailed') : t('weeklyNote.autosaveFailed'))
+        setMessage(t('weeklyNote.autosaveFailed'))
       } finally {
         setSaving(false)
       }
@@ -125,7 +122,7 @@ export function WeeklyNotePage() {
     }
 
     const timer = window.setTimeout(() => {
-      void performSave('auto')
+      void performSave()
     }, mode === 'structured' ? 800 : 1200)
 
     return () => {
@@ -258,13 +255,9 @@ export function WeeklyNotePage() {
         >
           {t('common.rawMarkdown')}
         </button>
-        <button
-          onClick={() => void performSave('manual')}
-          disabled={saving}
-          className="rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-70"
-        >
-          {saving ? t('common.saving') : t('common.saveNow')}
-        </button>
+        <span className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
+          {saving ? t('common.saving') : t('common.autoSaveOn')}
+        </span>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/weekly">
           {t('weeklyNote.backToList')}
