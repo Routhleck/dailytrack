@@ -27,6 +27,7 @@ import {
 } from './settings.store'
 import { emitDataChanged } from '../../lib/liveSync'
 import { joinPath } from '../../lib/fs/pathApi'
+import { markTutorialPending } from '../tutorial/tutorial.store'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
@@ -155,6 +156,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         )
 
         clearPendingInitialTemplateRoot()
+        markTutorialPending()
         setNeedsInitialTemplateSetup(false)
         emitDataChanged({ scope: 'all' })
       },
