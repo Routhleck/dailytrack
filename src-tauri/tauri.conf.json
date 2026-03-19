@@ -39,7 +39,7 @@
       "endpoints": [
         "https://github.com/Routhleck/dailytrack/releases/latest/download/latest.json"
       ],
-      "pubkey": "",
+      "pubkey": "untrusted comment: minisign public key: 4AB2A42AA2A170DF\nRWTfcKGiKqSySla+7ASD8uI2y4IZOwXj/AT7K5UnxZq+MRwqfibCkB1K",
       "windows": {
         "installMode": "passive"
       }

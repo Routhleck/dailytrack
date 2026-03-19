@@ -38,7 +38,6 @@ jobs:
       APPLE_CERTIFICATE_RAW: ${{ secrets.APPLE_CERTIFICATE }}
       APPLE_CERTIFICATE_PASSWORD_RAW: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       APPLE_SIGNING_IDENTITY_RAW: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      DAILYTRACK_UPDATER_PUBKEY_RAW: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
       TAURI_SIGNING_PRIVATE_KEY_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
@@ -112,59 +111,23 @@ jobs:
       - name: Prepare updater signing env
         shell: bash
         run: |
-          decode_base64_portable() {
-            local input="$1"
-            local decoded=''
-            decoded="$(printf '%s' "$input" | base64 --decode 2>/dev/null || true)"
-            if [ -z "$decoded" ]; then
-              decoded="$(printf '%s' "$input" | base64 -d 2>/dev/null || true)"
-            fi
-            if [ -z "$decoded" ]; then
-              decoded="$(printf '%s' "$input" | base64 -D 2>/dev/null || true)"
-            fi
-            printf '%s' "$decoded"
-          }
-
-          decode_pubkey_if_needed() {
-            local input="$1"
-            if [ -z "$input" ]; then
-              printf ''
-              return
-            fi
-            if [[ "$input" == untrusted\ comment:* ]]; then
-              printf '%s' "$input"
-              return
-            fi
-            local decoded
-            decoded="$(decode_base64_portable "$input")"
-            if [[ "$decoded" == untrusted\ comment:* ]]; then
-              printf '%s' "$decoded"
-            else
-              printf '%s' "$input"
-            fi
-          }
-
-          pubkey="$(decode_pubkey_if_needed "$DAILYTRACK_UPDATER_PUBKEY_RAW")"
           private_key="$TAURI_SIGNING_PRIVATE_KEY_RAW"
           private_key_password="$TAURI_SIGNING_PRIVATE_KEY_PASSWORD_RAW"
 
-          if [ -n "$private_key" ] && [ -n "$pubkey" ]; then
+          if [ -n "$private_key" ]; then
             {
               echo "TAURI_SIGNING_PRIVATE_KEY<<EOF"
               printf '%s\n' "$private_key"
-              echo "EOF"
-              echo "DAILYTRACK_UPDATER_PUBKEY<<EOF"
-              printf '%s\n' "$pubkey"
               echo "EOF"
               echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD<<EOF"
               printf '%s\n' "$private_key_password"
               echo "EOF"
             } >> "$GITHUB_ENV"
             echo "UPDATER_READY=true" >> "$GITHUB_ENV"
-            echo "::notice::Updater signing key + public key found. Updater artifacts will be generated."
+            echo "::notice::Updater signing key found. Updater artifacts will be generated."
           else
             echo "UPDATER_READY=false" >> "$GITHUB_ENV"
-            echo "::warning::Updater key configuration missing (TAURI_SIGNING_PRIVATE_KEY or DAILYTRACK_UPDATER_PUBKEY)."
+            echo "::warning::Updater key configuration missing (TAURI_SIGNING_PRIVATE_KEY)."
             echo "::warning::This run will still publish installers, but in-app auto-update metadata/signatures will be skipped."
           fi
 
@@ -198,7 +161,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          DAILYTRACK_UPDATER_PUBKEY: ${{ env.DAILYTRACK_UPDATER_PUBKEY }}
         with:
           tagName: ${{ steps.release_tag.outputs.tag }}
           releaseName: dailytrack ${{ steps.release_tag.outputs.tag }}
