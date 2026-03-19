@@ -68,8 +68,8 @@ export function ProfilesPage() {
     let cancelled = false
 
     void Promise.all([
-      readTextFile(joinPath(dataRoot, 'templates', 'daily.md')),
-      readTextFile(joinPath(dataRoot, 'templates', 'weekly.md')),
+      readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md')),
+      readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md')),
     ])
       .then(([daily, weekly]) => {
         if (cancelled) {
@@ -128,8 +128,8 @@ export function ProfilesPage() {
     setTemplateMessage('')
 
     try {
-      await writeTextFile(joinPath(dataRoot, 'templates', 'daily.md'), currentDailyTemplate)
-      await writeTextFile(joinPath(dataRoot, 'templates', 'weekly.md'), currentWeeklyTemplate)
+      await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'), currentDailyTemplate)
+      await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md'), currentWeeklyTemplate)
       setTemplateMessage(t('profiles.currentTemplatesSaved'))
     } catch (error) {
       setTemplateMessage(error instanceof Error ? error.message : t('profiles.currentTemplateSaveFailed'))

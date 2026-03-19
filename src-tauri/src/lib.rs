@@ -44,6 +44,85 @@ fn resolve_data_root(data_root: Option<String>) -> Result<PathBuf, String> {
   }
 }
 
+fn canonicalize_data_root_path(data_root: &str) -> Result<PathBuf, String> {
+  if data_root.trim().is_empty() {
+    return Err("Data root path is empty".to_string());
+  }
+
+  let root = PathBuf::from(data_root);
+  let canonical = fs::canonicalize(root.as_path())
+    .map_err(|err| format!("Failed to resolve data root {}: {err}", root.display()))?;
+
+  if !canonical.is_dir() {
+    return Err(format!("Data root {} is not a directory", canonical.display()));
+  }
+
+  Ok(canonical)
+}
+
+fn ensure_path_within_root(root: &Path, candidate: &Path) -> Result<(), String> {
+  if candidate.starts_with(root) {
+    Ok(())
+  } else {
+    Err(format!(
+      "Path {} is outside data root {}",
+      candidate.display(),
+      root.display()
+    ))
+  }
+}
+
+fn validate_existing_file_under_root(root: &Path, path: &str) -> Result<PathBuf, String> {
+  let raw = PathBuf::from(path);
+  let canonical = fs::canonicalize(raw.as_path())
+    .map_err(|err| format!("Failed to resolve file path {}: {err}", raw.display()))?;
+  ensure_path_within_root(root, canonical.as_path())?;
+
+  if !canonical.is_file() {
+    return Err(format!("Path {} is not a file", canonical.display()));
+  }
+
+  Ok(canonical)
+}
+
+fn validate_existing_dir_under_root(root: &Path, path: &str) -> Result<PathBuf, String> {
+  let raw = PathBuf::from(path);
+  let canonical = fs::canonicalize(raw.as_path())
+    .map_err(|err| format!("Failed to resolve directory path {}: {err}", raw.display()))?;
+  ensure_path_within_root(root, canonical.as_path())?;
+
+  if !canonical.is_dir() {
+    return Err(format!("Path {} is not a directory", canonical.display()));
+  }
+
+  Ok(canonical)
+}
+
+fn validate_writable_file_under_root(root: &Path, path: &str) -> Result<PathBuf, String> {
+  let raw = PathBuf::from(path);
+  if raw.exists() {
+    let canonical = fs::canonicalize(raw.as_path())
+      .map_err(|err| format!("Failed to resolve file path {}: {err}", raw.display()))?;
+    ensure_path_within_root(root, canonical.as_path())?;
+    if canonical.is_dir() {
+      return Err(format!("Path {} is a directory", canonical.display()));
+    }
+    return Ok(canonical);
+  }
+
+  let parent = raw
+    .parent()
+    .ok_or_else(|| format!("Path {} has no parent directory", raw.display()))?;
+  let canonical_parent = fs::canonicalize(parent)
+    .map_err(|err| format!("Failed to resolve parent path {}: {err}", parent.display()))?;
+  ensure_path_within_root(root, canonical_parent.as_path())?;
+
+  let file_name = raw
+    .file_name()
+    .ok_or_else(|| format!("Path {} has no file name", raw.display()))?;
+  Ok(canonical_parent.join(file_name))
+}
+
 fn profiles_root(base_root: &Path) -> PathBuf {
   base_root.join("profiles")
 }
@@ -427,19 +506,31 @@ fn delete_profile(data_root: String, profile_name: String) -> Result<String, Str
 }
 
 #[tauri::command]
-fn read_text_file(path: String) -> Result<String, String> {
-  fs::read_to_string(&path).map_err(|err| format!("Failed to read file {path}: {err}"))
+fn read_text_file(path: String, data_root: String) -> Result<String, String> {
+  let root = canonicalize_data_root_path(data_root.as_str())?;
+  let target = validate_existing_file_under_root(root.as_path(), path.as_str())?;
+  fs::read_to_string(target.as_path())
+    .map_err(|err| format!("Failed to read file {}: {err}", target.display()))
 }
 
 #[tauri::command]
-fn write_text_file(path: String, content: String) -> Result<(), String> {
-  fs::write(&path, content).map_err(|err| format!("Failed to write file {path}: {err}"))
+fn write_text_file(path: String, content: String, data_root: String) -> Result<(), String> {
+  let root = canonicalize_data_root_path(data_root.as_str())?;
+  let target = validate_writable_file_under_root(root.as_path(), path.as_str())?;
+  fs::write(target.as_path(), content)
+    .map_err(|err| format!("Failed to write file {}: {err}", target.display()))
 }
 
 #[tauri::command]
-fn list_files(dir_path: String, extension: Option<String>) -> Result<Vec<String>, String> {
-  let entries =
-    fs::read_dir(&dir_path).map_err(|err| format!("Failed to read dir {dir_path}: {err}"))?;
+fn list_files(
+  dir_path: String,
+  extension: Option<String>,
+  data_root: String,
+) -> Result<Vec<String>, String> {
+  let root = canonicalize_data_root_path(data_root.as_str())?;
+  let target_dir = validate_existing_dir_under_root(root.as_path(), dir_path.as_str())?;
+  let entries = fs::read_dir(target_dir.as_path())
+    .map_err(|err| format!("Failed to read dir {}: {err}", target_dir.display()))?;
   let mut files: Vec<String> = entries
     .filter_map(Result::ok)
     .filter(|entry| entry.path().is_file())

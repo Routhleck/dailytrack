@@ -39,19 +39,20 @@ export async function deleteProfile(dataRoot: string, profileName: string): Prom
   return invoke<string>('delete_profile', { dataRoot, profileName })
 }
 
-export async function readTextFile(path: string): Promise<string> {
-  return invoke<string>('read_text_file', { path })
+export async function readTextFile(dataRoot: string, path: string): Promise<string> {
+  return invoke<string>('read_text_file', { path, dataRoot })
 }
 
-export async function writeTextFile(path: string, content: string): Promise<void> {
-  return invoke<void>('write_text_file', { path, content })
+export async function writeTextFile(dataRoot: string, path: string, content: string): Promise<void> {
+  return invoke<void>('write_text_file', { path, content, dataRoot })
 }
 
 export async function listFiles(
+  dataRoot: string,
   dirPath: string,
   extension?: string,
 ): Promise<string[]> {
-  return invoke<string[]>('list_files', { dirPath, extension })
+  return invoke<string[]>('list_files', { dirPath, extension, dataRoot })
 }
 
 export async function exportDataBundle(

@@ -8,12 +8,12 @@ function bodyPath(dataRoot: string): string {
 }
 
 export async function getBodyRecords(dataRoot: string): Promise<BodyRecord[]> {
-  const raw = await readTextFile(bodyPath(dataRoot))
+  const raw = await readTextFile(dataRoot, bodyPath(dataRoot))
   return parseBodyCsv(raw)
 }
 
 export async function saveBodyRecords(dataRoot: string, records: BodyRecord[]): Promise<BodyRecord[]> {
   const normalized = [...records].sort((a, b) => b.date.localeCompare(a.date))
-  await writeTextFile(bodyPath(dataRoot), serializeBodyCsv(normalized))
+  await writeTextFile(dataRoot, bodyPath(dataRoot), serializeBodyCsv(normalized))
   return normalized
 }

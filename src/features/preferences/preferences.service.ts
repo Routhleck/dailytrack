@@ -106,14 +106,14 @@ export async function getPreferences(dataRoot: string): Promise<TrackerPreferenc
   const path = preferencesPath(dataRoot)
 
   try {
-    const raw = await readTextFile(path)
+    const raw = await readTextFile(dataRoot, path)
     const parsed = JSON.parse(raw) as unknown
     const normalized = normalizePreferences(parsed)
-    await writeTextFile(path, `${JSON.stringify(normalized, null, 2)}\n`)
+    await writeTextFile(dataRoot, path, `${JSON.stringify(normalized, null, 2)}\n`)
     return normalized
   } catch {
     const defaults = defaultPreferences()
-    await writeTextFile(path, `${JSON.stringify(defaults, null, 2)}\n`)
+    await writeTextFile(dataRoot, path, `${JSON.stringify(defaults, null, 2)}\n`)
     return defaults
   }
 }
@@ -124,6 +124,7 @@ export async function savePreferences(
 ): Promise<TrackerPreferences> {
   const normalized = normalizePreferences(preferences)
   await writeTextFile(
+    dataRoot,
     preferencesPath(dataRoot),
     `${JSON.stringify(normalized, null, 2)}\n`,
   )

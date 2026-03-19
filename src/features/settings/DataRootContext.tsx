@@ -160,10 +160,12 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         }
 
         await writeTextFile(
+          dataRoot,
           joinPath(dataRoot, 'templates', 'daily.md'),
           normalizeTemplateContent(dailyTemplate),
         )
         await writeTextFile(
+          dataRoot,
           joinPath(dataRoot, 'templates', 'weekly.md'),
           normalizeTemplateContent(weeklyTemplate),
         )
