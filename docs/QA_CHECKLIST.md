@@ -25,6 +25,7 @@
 ## UI Workflows
 - [ ] Structured mode toggle/check/edit works.
 - [ ] Raw mode edit/save works.
+- [ ] Daily/Weekly pages autosave without manual save button.
 - [ ] Save writes to local file and reloads state.
 - [ ] Dashboard summary matches detail pages.
 - [ ] UI language toggle (`EN` / `中文`) switches core page copy and persists after restart.

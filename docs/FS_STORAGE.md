@@ -42,7 +42,7 @@ On startup:
 5. If base root was initially empty, app enters first-launch template setup flow and rewrites active profile templates based on selected preset/language.
 
 ## Write Policy
-- Daily/Weekly use debounced autosave and still provide explicit Save button.
+- Daily/Weekly use debounced autosave only (no manual save button).
 - Body writes on submit/delete.
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.

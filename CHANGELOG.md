@@ -55,7 +55,7 @@ The format is based on Keep a Changelog.
 - Migrated runtime storage model to profile-based roots under `profiles/<profile>/`.
 - Dashboard, Daily, Weekly, and Body pages now respect profile preferences.
 - Eslint ignore updated to skip `src-tauri/target/**` artifacts produced by Rust builds.
-- Daily/Weekly pages now autosave with debounce and keep manual `Save now`.
+- Daily/Weekly pages now run in pure autosave mode (debounced) without manual save button.
 - Dashboard and note list pages now refresh from live events + periodic polling.
 - Body page now emits live change events and reloads external file updates via polling.
 - Renamed default base root to `dailytrack-data` and added automatic fallback to legacy `life-tracker-data` when present.

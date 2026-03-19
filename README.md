@@ -217,7 +217,7 @@ date,weight,waist,note
 ## Real-time behavior
 - Daily/Weekly pages:
   - debounced autosave while editing
-  - explicit `Save now` button remains available
+  - no manual save button; saving is fully automatic
   - external disk changes are pulled in automatically when local draft is not dirty
 - Body page:
   - saves immediately on submit/delete
