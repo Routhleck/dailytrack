@@ -44,6 +44,10 @@ export type BodyRecord = {
   date: string; // YYYY-MM-DD
   weight: number | null;
   waist: number | null;
+  bodyFat: number | null;
+  muscleMass: number | null;
+  chest: number | null;
+  hip: number | null;
   note: string;
 };
 
@@ -57,6 +61,10 @@ export type TrackerPreferences = {
   body: {
     weight: boolean;
     waist: boolean;
+    bodyFat: boolean;
+    muscleMass: boolean;
+    chest: boolean;
+    hip: boolean;
     note: boolean;
   };
 };
@@ -78,7 +86,7 @@ Per profile:
 - Structured mode: edits typed fields, then serializes to Markdown/CSV.
 - Raw mode: edits raw file text directly.
 - Save behavior:
-  - Daily/Weekly: debounced autosave + explicit save button.
+  - Daily/Weekly: debounced autosave.
   - Body: save on submit/delete.
 
 ## Profile Semantics

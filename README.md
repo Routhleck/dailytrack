@@ -106,7 +106,8 @@ dailytrack-data/
   - pure autosave mode
 - Body progress page:
   - local `body.csv` table + form
-  - weight/waist trend charts
+  - preference-based metric toggles (weight/waist/body fat/muscle/chest/hip/note)
+  - per-metric trend charts
 - Profiles:
   - create/switch/delete profile
   - editable template presets
@@ -248,8 +249,8 @@ Weekly note (`weekly/YYYY-Www.md`):
 Body CSV (`body.csv`):
 
 ```csv
-date,weight,waist,note
-2026-03-18,71.2,82.0,steady
+date,weight,waist,bodyFat,muscleMass,chest,hip,note
+2026-03-18,71.2,82.0,14.8,33.5,97.0,98.2,steady
 ```
 
 ## Limitations

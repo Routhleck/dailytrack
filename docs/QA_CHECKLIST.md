@@ -21,6 +21,9 @@
 - [ ] Add/edit/delete row persists to file.
 - [ ] Invalid numeric input handled as null-safe state.
 - [ ] Disabled body fields from preferences are hidden but existing file data is preserved.
+- [ ] Legacy 4-column `body.csv` (`date,weight,waist,note`) is parsed without data loss.
+- [ ] Expanded body columns (`bodyFat,muscleMass,chest,hip`) roundtrip correctly.
+- [ ] Body metric toggles in Preferences correctly control form/table/chart visibility.
 
 ## UI Workflows
 - [ ] Structured mode toggle/check/edit works.

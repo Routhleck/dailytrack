@@ -27,6 +27,15 @@ dailytrack-data/
       preferences.json
 ```
 
+## Body CSV Schema
+- Canonical header:
+  - `date,weight,waist,bodyFat,muscleMass,chest,hip,note`
+- Legacy compatibility:
+  - App still reads legacy 4-column files (`date,weight,waist,note`).
+  - Missing extended columns are treated as `null`.
+- Write normalization:
+  - Any app write re-serializes `body.csv` with canonical 8-column header.
+
 ## Profile Model
 - App runs against one active profile root at a time.
 - Profile name validation: 1-64 chars, `[a-zA-Z0-9_-]`.

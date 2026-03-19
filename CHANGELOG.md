@@ -31,7 +31,7 @@ The format is based on Keep a Changelog.
 - Preferences page for per-profile toggles:
   - daily optional section visibility
   - weekly section visibility
-  - body metric visibility (weight/waist/note)
+  - body metric visibility (weight/waist/body fat/muscle mass/chest/hip/note)
 - New Tauri profile commands:
   - `list_profiles`
   - `ensure_profile`
@@ -76,6 +76,8 @@ The format is based on Keep a Changelog.
   - signed/notarized build when secrets are configured
   - unsigned preview build when secrets are absent
 - README now documents unsigned macOS install workaround and lower-cost pre-signing distribution options.
+- Body tracking now supports extended numeric metrics (`bodyFat`, `muscleMass`, `chest`, `hip`) with dynamic form/table/chart rendering based on Preferences.
+- Body CSV parser now supports both legacy 4-column and extended 8-column headers for backward-compatible profile data upgrades.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
