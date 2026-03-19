@@ -166,6 +166,36 @@ For trusted macOS installer output (avoid Gatekeeper "app is damaged" warning), 
 - `KEYCHAIN_PASSWORD`
 - `APPLE_SIGNING_IDENTITY` (optional but recommended)
 
+## macOS Install Notice (Unsigned Builds)
+
+If your release build is not signed/notarized yet, macOS Gatekeeper may show:
+
+`"dailytrack" is damaged and can’t be opened.`
+
+Temporary user-side workaround:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/dailytrack.app
+```
+
+You can also remove quarantine on the downloaded DMG first:
+
+```bash
+xattr -dr com.apple.quarantine ~/Downloads/dailytrack_0.1.0_aarch64.dmg
+```
+
+For production/public distribution, use signed + notarized macOS artifacts.
+
+## Lower-Cost Distribution Options (Before Apple Developer Program)
+
+If you are not ready for Apple Developer Program yet ($99/year):
+
+- Prefer sharing source code and local run steps (`npm run tauri:dev`).
+- Provide unsigned `.app.tar.gz` for technical users with manual quarantine removal.
+- Mark releases clearly as `unsigned preview` to set user expectation.
+
+These options are acceptable for early testing, but not ideal for broad public distribution.
+
 ## Markdown Schema
 
 Daily note (`daily/YYYY-MM-DD.md`):

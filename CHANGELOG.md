@@ -73,6 +73,7 @@ The format is based on Keep a Changelog.
 - Settings page now uses migration-only root flow (removed direct root-switch form from UI).
 - Sidebar navigation is now sticky and remains fixed while main content scrolls.
 - GitHub release workflow now enforces macOS signing/notarization secrets and imports Apple certificate before Tauri bundling.
+- README now documents unsigned macOS install workaround and lower-cost pre-signing distribution options.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
