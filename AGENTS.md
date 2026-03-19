@@ -31,10 +31,10 @@ The app reads and writes local Markdown/CSV files and provides a structured edit
 - `docs/ADR/` for key architecture decisions
 
 ## Data Layout Contract
-Default local data root: `~/life-tracker-data`
+Default local data root: `~/dailytrack-data`
 
 ```text
-life-tracker-data/
+dailytrack-data/
   profiles/
     default/
       daily/
@@ -46,7 +46,7 @@ life-tracker-data/
       preferences.json
 ```
 
-On Windows, default base root falls back to `%USERPROFILE%\\life-tracker-data`.
+On Windows, default base root falls back to `%USERPROFILE%\\dailytrack-data`.
 
 ## Sync Behavior Contract
 - Markdown/CSV remains the source of truth on disk.

@@ -149,7 +149,7 @@ export function SettingsPage() {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
           value={draftPath}
           onChange={(event) => setDraftPath(event.target.value)}
-          placeholder="/Users/you/life-tracker-data"
+          placeholder="/Users/you/dailytrack-data"
           disabled={loading}
         />
         <button

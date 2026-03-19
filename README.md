@@ -41,14 +41,15 @@ npm run tauri:build
 
 ## Data storage
 Default base data root:
-- `~/life-tracker-data`
-- Windows fallback: `%USERPROFILE%\life-tracker-data`
+- `~/dailytrack-data`
+- Windows fallback: `%USERPROFILE%\dailytrack-data`
+- Legacy compatibility: if `~/life-tracker-data` already exists and the new default does not, app will keep using the legacy folder automatically.
 
 Configurable in Settings page.
 
 ### Active layout (profile-based)
 ```text
-life-tracker-data/
+dailytrack-data/
   profiles/
     default/
       daily/

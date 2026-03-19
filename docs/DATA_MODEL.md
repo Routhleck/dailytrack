@@ -64,7 +64,7 @@ export type TrackerPreferences = {
 
 ## Storage Contracts
 Base root:
-- `~/life-tracker-data` (default)
+- `~/dailytrack-data` (default)
 
 Per profile:
 - `profiles/<profile>/daily/YYYY-MM-DD.md`

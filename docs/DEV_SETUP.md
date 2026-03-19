@@ -19,7 +19,7 @@ npm run tauri:build
 
 ## Environment Notes
 - Project is local-first and does not require API keys.
-- Data files are created under `~/life-tracker-data` by default.
+- Data files are created under `~/dailytrack-data` by default.
 
 ## Recommended Iteration Loop
 1. Run dev app.

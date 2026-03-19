@@ -6,13 +6,14 @@
 - No database.
 
 ## Default Base Root
-- Default path: `~/life-tracker-data` on macOS/Linux.
+- Default path: `~/dailytrack-data` on macOS/Linux.
 - On Windows fallback uses `USERPROFILE`.
 - Configurable via Settings page (`baseDataRoot`).
+- Legacy compatibility: if legacy `life-tracker-data` exists and `dailytrack-data` does not, default resolution uses the legacy folder.
 
 ## Active Layout
 ```text
-life-tracker-data/
+dailytrack-data/
   profiles/
     default/
       daily/

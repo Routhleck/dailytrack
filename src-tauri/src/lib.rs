@@ -7,12 +7,26 @@ const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train /
 const DEFAULT_WEEKLY_TEMPLATE: &str = "# {{week}}\n\n## Body\n- [ ] 4-5 strength sessions\n- [ ] 2-3 cardio sessions\n- [ ] 3 core sessions\n- [ ] Record weight / waist / progress photo\n- [ ] Eat well >= 5 days\n\n## Research\n- [ ] 3 deep work sessions\n- [ ] Push one key project forward\n- [ ] Plan next week\n\n## Life\n- [ ] 1 outdoor activity\n- [ ] 1 small life-enhancing activity\n- [ ] 1 environment reset / cleanup\n\n## Output\n- [ ] Publish 1 piece of content\n- [ ] Save 3 ideas / materials\n\n## Social\n- [ ] Join 1 social activity / meetup\n- [ ] Reach out to 1 friend\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n";
 
 const DEFAULT_PROFILE_NAME: &str = "default";
+const DEFAULT_DATA_ROOT_DIR: &str = "dailytrack-data";
+const LEGACY_DATA_ROOT_DIR: &str = "life-tracker-data";
 
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
     .map_err(|_| "Failed to resolve user home directory".to_string())?;
-  Ok(PathBuf::from(home).join("life-tracker-data"))
+
+  let preferred = PathBuf::from(&home).join(DEFAULT_DATA_ROOT_DIR);
+  let legacy = PathBuf::from(home).join(LEGACY_DATA_ROOT_DIR);
+
+  if preferred.exists() {
+    return Ok(preferred);
+  }
+
+  if legacy.exists() {
+    return Ok(legacy);
+  }
+
+  Ok(preferred)
 }
 
 fn resolve_data_root(data_root: Option<String>) -> Result<PathBuf, String> {
