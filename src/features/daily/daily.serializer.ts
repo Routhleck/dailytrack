@@ -1,8 +1,5 @@
 import type { DailyNote } from '../../types/tracker'
-
-function serializeChecklist(items: DailyNote['dailyCore']): string[] {
-  return items.map((item) => `- [${item.checked ? 'x' : ' '}] ${item.text}`)
-}
+import { serializeChecklist } from '../../lib/parser/checkbox'
 
 export function serializeDailyMarkdown(note: DailyNote): string {
   const lines: string[] = []

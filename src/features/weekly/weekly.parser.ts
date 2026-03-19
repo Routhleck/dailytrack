@@ -4,6 +4,7 @@ import type {
   WeeklyReflection,
   WeeklySectionKey,
 } from '../../types/tracker'
+import { checkboxId, parseCheckbox } from '../../lib/parser/checkbox'
 
 const SECTION_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 
@@ -14,26 +15,6 @@ function emptySections(): Record<WeeklySectionKey, CheckboxItem[]> {
     Life: [],
     Output: [],
     Social: [],
-  }
-}
-
-function checkboxId(prefix: string, text: string, index: number): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return `${prefix}-${slug || 'item'}-${index}`
-}
-
-function parseCheckbox(line: string): { checked: boolean; text: string } | null {
-  const match = line.match(/^- \[( |x|X)\] (.*)$/)
-  if (!match) {
-    return null
-  }
-
-  return {
-    checked: match[1].toLowerCase() === 'x',
-    text: match[2].trim(),
   }
 }
 

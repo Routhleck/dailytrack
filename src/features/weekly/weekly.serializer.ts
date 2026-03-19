@@ -1,9 +1,6 @@
 import type { WeeklyNote } from '../../types/tracker'
+import { serializeChecklist } from '../../lib/parser/checkbox'
 import { WEEKLY_SECTION_ORDER } from './weekly.parser'
-
-function serializeChecklist(items: WeeklyNote['sections']['Body']): string[] {
-  return items.map((item) => `- [${item.checked ? 'x' : ' '}] ${item.text}`)
-}
 
 function serializeTop3(values: string[]): string[] {
   const normalized = values.slice(0, 3)

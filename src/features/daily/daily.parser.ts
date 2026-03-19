@@ -1,24 +1,5 @@
 import type { CheckboxItem, DailyNote } from '../../types/tracker'
-
-function checkboxId(prefix: string, text: string, index: number): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return `${prefix}-${slug || 'item'}-${index}`
-}
-
-function parseCheckbox(line: string): { checked: boolean; text: string } | null {
-  const match = line.match(/^- \[( |x|X)\] (.*)$/)
-  if (!match) {
-    return null
-  }
-
-  return {
-    checked: match[1].toLowerCase() === 'x',
-    text: match[2].trim(),
-  }
-}
+import { checkboxId, parseCheckbox } from '../../lib/parser/checkbox'
 
 export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
   const lines = markdown.split(/\r?\n/)
