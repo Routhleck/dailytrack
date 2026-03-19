@@ -123,7 +123,7 @@ export function WeeklyNotePage() {
 
     const timer = window.setTimeout(() => {
       void performSave()
-    }, mode === 'structured' ? 800 : 1200)
+    }, mode === 'structured' ? 1200 : 1500)
 
     return () => {
       window.clearTimeout(timer)
@@ -157,10 +157,10 @@ export function WeeklyNotePage() {
           setMessage(t('weeklyNote.updatedFromDisk'))
           emitDataChanged({ scope: 'weekly', path: remote.weekId })
         })
-        .catch(() => {
-          // ignore polling failures to avoid noisy UI updates
+        .catch((error) => {
+          console.warn('[weekly] failed to poll note changes from disk', error)
         })
-    }, 2500)
+    }, 4000)
 
     return () => {
       window.clearInterval(timer)

@@ -102,6 +102,31 @@ function toFormState(record?: BodyRecord): FormState {
   }
 }
 
+function areBodyRecordsEqual(left: BodyRecord[], right: BodyRecord[]): boolean {
+  if (left.length !== right.length) {
+    return false
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    const current = left[index]
+    const next = right[index]
+    if (
+      current.date !== next.date ||
+      current.weight !== next.weight ||
+      current.waist !== next.waist ||
+      current.bodyFat !== next.bodyFat ||
+      current.muscleMass !== next.muscleMass ||
+      current.chest !== next.chest ||
+      current.hip !== next.hip ||
+      current.note !== next.note
+    ) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export function BodyPage() {
   const { t } = useI18n()
   const { dataRoot } = useDataRoot()
@@ -164,20 +189,18 @@ export function BodyPage() {
       syncingRef.current = true
       void getBodyRecords(dataRoot)
         .then((latest) => {
-          const currentSignature = JSON.stringify(recordsRef.current)
-          const latestSignature = JSON.stringify(latest)
-          if (currentSignature !== latestSignature) {
+          if (!areBodyRecordsEqual(recordsRef.current, latest)) {
             setRecords(latest)
             setMessage(t('body.updatedFromDisk'))
           }
         })
-        .catch(() => {
-          // ignore polling failures
+        .catch((error) => {
+          console.warn('[body] failed to poll records from disk', error)
         })
         .finally(() => {
           syncingRef.current = false
         })
-    }, 3000)
+    }, 5000)
 
     return () => {
       window.clearInterval(timer)

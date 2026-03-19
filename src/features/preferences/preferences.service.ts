@@ -99,7 +99,7 @@ function normalizePreferences(raw: unknown): TrackerPreferences {
 }
 
 export function defaultPreferences(): TrackerPreferences {
-  return JSON.parse(JSON.stringify(DEFAULT_PREFERENCES)) as TrackerPreferences
+  return structuredClone(DEFAULT_PREFERENCES)
 }
 
 export async function getPreferences(dataRoot: string): Promise<TrackerPreferences> {

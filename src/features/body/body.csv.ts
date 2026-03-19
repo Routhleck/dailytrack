@@ -1,5 +1,6 @@
 import { escapeCsvCell, splitCsvLine } from '../../lib/csv/csv'
 import type { BodyRecord } from '../../types/tracker'
+import { compareIsoDateDesc } from '../../lib/date/date'
 
 const HEADER = ['date', 'weight', 'waist', 'bodyFat', 'muscleMass', 'chest', 'hip', 'note'] as const
 
@@ -78,7 +79,7 @@ export function parseBodyCsv(raw: string): BodyRecord[] {
       }
     })
     .filter((record) => record.date.length > 0)
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => compareIsoDateDesc(a.date, b.date))
 }
 
 export function serializeBodyCsv(records: BodyRecord[]): string {

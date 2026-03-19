@@ -118,7 +118,7 @@ export function DailyNotePage() {
 
     const timer = window.setTimeout(() => {
       void performSave()
-    }, mode === 'structured' ? 800 : 1200)
+    }, mode === 'structured' ? 1200 : 1500)
 
     return () => {
       window.clearTimeout(timer)
@@ -152,10 +152,10 @@ export function DailyNotePage() {
           setMessage(t('dailyNote.updatedFromDisk'))
           emitDataChanged({ scope: 'daily', path: remote.date })
         })
-        .catch(() => {
-          // ignore polling failures to avoid noisy UI updates
+        .catch((error) => {
+          console.warn('[daily] failed to poll note changes from disk', error)
         })
-    }, 2500)
+    }, 4000)
 
     return () => {
       window.clearInterval(timer)

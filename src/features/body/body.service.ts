@@ -1,4 +1,5 @@
 import { readTextFile, writeTextFile } from '../../lib/fs/fileApi'
+import { compareIsoDateDesc } from '../../lib/date/date'
 import { joinPath } from '../../lib/fs/pathApi'
 import type { BodyRecord } from '../../types/tracker'
 import { parseBodyCsv, serializeBodyCsv } from './body.csv'
@@ -13,7 +14,7 @@ export async function getBodyRecords(dataRoot: string): Promise<BodyRecord[]> {
 }
 
 export async function saveBodyRecords(dataRoot: string, records: BodyRecord[]): Promise<BodyRecord[]> {
-  const normalized = [...records].sort((a, b) => b.date.localeCompare(a.date))
+  const normalized = [...records].sort((a, b) => compareIsoDateDesc(a.date, b.date))
   await writeTextFile(dataRoot, bodyPath(dataRoot), serializeBodyCsv(normalized))
   return normalized
 }

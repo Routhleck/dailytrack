@@ -8,3 +8,14 @@ export function formatDate(date: Date): string {
 export function todayDateString(): string {
   return formatDate(new Date())
 }
+
+export function compareIsoDateDesc(left: string, right: string): number {
+  const leftTs = Date.parse(left)
+  const rightTs = Date.parse(right)
+
+  if (Number.isFinite(leftTs) && Number.isFinite(rightTs) && leftTs !== rightTs) {
+    return rightTs - leftTs
+  }
+
+  return right.localeCompare(left)
+}
