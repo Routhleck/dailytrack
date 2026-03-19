@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use serde::Serialize;
 
 const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
 
@@ -9,6 +10,13 @@ const DEFAULT_WEEKLY_TEMPLATE: &str = "# {{week}}\n\n## Body\n- [ ] 4-5 strength
 const DEFAULT_PROFILE_NAME: &str = "default";
 const DEFAULT_DATA_ROOT_DIR: &str = "dailytrack-data";
 const LEGACY_DATA_ROOT_DIR: &str = "life-tracker-data";
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EnsureDataRootResult {
+  root: String,
+  is_first_run: bool,
+}
 
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
@@ -239,15 +247,33 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
   Ok(())
 }
 
+fn is_data_root_empty(root: &Path) -> Result<bool, String> {
+  if !root.exists() {
+    return Ok(true);
+  }
+
+  if !root.is_dir() {
+    return Err(format!("Data root {} is not a directory", root.display()));
+  }
+
+  let mut entries =
+    fs::read_dir(root).map_err(|err| format!("Failed to read data root {}: {err}", root.display()))?;
+  Ok(entries.next().is_none())
+}
+
 #[tauri::command]
-fn ensure_data_root(data_root: Option<String>) -> Result<String, String> {
+fn ensure_data_root(data_root: Option<String>) -> Result<EnsureDataRootResult, String> {
   let root = resolve_data_root(data_root)?;
+  let is_first_run = is_data_root_empty(root.as_path())?;
   fs::create_dir_all(root.as_path())
     .map_err(|err| format!("Failed to create data root {}: {err}", root.display()))?;
 
   ensure_default_profile(root.as_path())?;
 
-  Ok(root.to_string_lossy().to_string())
+  Ok(EnsureDataRootResult {
+    root: root.to_string_lossy().to_string(),
+    is_first_run,
+  })
 }
 
 #[tauri::command]

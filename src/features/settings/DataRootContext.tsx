@@ -14,14 +14,19 @@ import {
   ensureProfile,
   listProfiles,
   migrateDataRoot as migrateDataRootApi,
+  writeTextFile,
 } from '../../lib/fs/fileApi'
 import {
+  clearPendingInitialTemplateRoot,
   loadActiveProfilePreference,
   loadDataRootPreference,
+  loadPendingInitialTemplateRoot,
+  savePendingInitialTemplateRoot,
   saveActiveProfilePreference,
   saveDataRootPreference,
 } from './settings.store'
 import { emitDataChanged } from '../../lib/liveSync'
+import { joinPath } from '../../lib/fs/pathApi'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
@@ -33,11 +38,13 @@ type DataRootContextValue = {
   dataRoot: string | null
   activeProfile: string | null
   profiles: string[]
+  needsInitialTemplateSetup: boolean
   loading: boolean
   error: string | null
   refresh: () => Promise<void>
   updateDataRoot: (nextPath: string) => Promise<void>
   migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<void>
+  completeInitialTemplateSetup: (dailyTemplate: string, weeklyTemplate: string) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
   deleteProfile: (profileName: string) => Promise<void>
@@ -50,16 +57,22 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
   const [dataRoot, setDataRoot] = useState<string | null>(null)
   const [activeProfile, setActiveProfile] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<string[]>([])
+  const [needsInitialTemplateSetup, setNeedsInitialTemplateSetup] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  function normalizeTemplateContent(content: string) {
+    return content.endsWith('\n') ? content : `${content}\n`
+  }
 
   async function bootstrap(rootOverride?: string, profileOverride?: string) {
     setLoading(true)
     setError(null)
 
     try {
-      const root = await ensureDataRoot(rootOverride)
+      const rootInfo = await ensureDataRoot(rootOverride)
+      const root = rootInfo.root
       const availableProfiles = await listProfiles(root)
 
       const preferredProfile =
@@ -80,10 +93,17 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
       setActiveProfile(nextProfile)
       setDataRoot(profileRoot)
 
+      if (rootInfo.isFirstRun) {
+        savePendingInitialTemplateRoot(root)
+      }
+      const pendingRoot = loadPendingInitialTemplateRoot()
+      setNeedsInitialTemplateSetup(rootInfo.isFirstRun || pendingRoot === root)
+
       saveDataRootPreference(root)
       saveActiveProfilePreference(nextProfile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize data root')
+      setNeedsInitialTemplateSetup(false)
     } finally {
       setLoading(false)
     }
@@ -101,6 +121,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
       dataRoot,
       activeProfile,
       profiles,
+      needsInitialTemplateSetup,
       loading,
       error,
       refresh: async () => {
@@ -118,6 +139,24 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         const nextRoot = await migrateDataRootApi(baseDataRoot, destinationPath, overwrite)
         await bootstrap(nextRoot, activeProfile ?? undefined)
         emitDataChanged({ scope: 'settings' })
+      },
+      completeInitialTemplateSetup: async (dailyTemplate: string, weeklyTemplate: string) => {
+        if (!dataRoot || !baseDataRoot) {
+          throw new Error('Data root is not initialized')
+        }
+
+        await writeTextFile(
+          joinPath(dataRoot, 'templates', 'daily.md'),
+          normalizeTemplateContent(dailyTemplate),
+        )
+        await writeTextFile(
+          joinPath(dataRoot, 'templates', 'weekly.md'),
+          normalizeTemplateContent(weeklyTemplate),
+        )
+
+        clearPendingInitialTemplateRoot()
+        setNeedsInitialTemplateSetup(false)
+        emitDataChanged({ scope: 'all' })
       },
       switchProfile: async (profileName: string) => {
         if (!baseDataRoot) {
@@ -150,7 +189,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         emitDataChanged({ scope: 'profile', profile: fallbackProfile })
       },
     }),
-    [activeProfile, baseDataRoot, dataRoot, error, loading, profiles],
+    [activeProfile, baseDataRoot, dataRoot, error, loading, needsInitialTemplateSetup, profiles],
   )
 
   return <DataRootContext.Provider value={value}>{children}</DataRootContext.Provider>

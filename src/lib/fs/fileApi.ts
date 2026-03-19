@@ -1,7 +1,12 @@
 import { invoke } from '@tauri-apps/api/core'
 
-export async function ensureDataRoot(dataRoot?: string): Promise<string> {
-  return invoke<string>('ensure_data_root', { dataRoot })
+export type EnsureDataRootInfo = {
+  root: string
+  isFirstRun: boolean
+}
+
+export async function ensureDataRoot(dataRoot?: string): Promise<EnsureDataRootInfo> {
+  return invoke<EnsureDataRootInfo>('ensure_data_root', { dataRoot })
 }
 
 export async function listProfiles(dataRoot: string): Promise<string[]> {

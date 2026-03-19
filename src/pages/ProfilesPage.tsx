@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
-import { TEMPLATE_PRESETS } from '../features/settings/templatePresets'
+import {
+  TEMPLATE_PRESETS,
+  getTemplatePresetById,
+  getTemplateVariant,
+  resolvePreferredTemplateLanguage,
+  type TemplateLanguage,
+} from '../features/settings/templatePresets'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { readTextFile, writeTextFile } from '../lib/fs/fileApi'
 import { joinPath } from '../lib/fs/pathApi'
@@ -23,14 +29,21 @@ export function ProfilesPage() {
   } = useDataRoot()
 
   const [createName, setCreateName] = useState('')
-  const [presetId, setPresetId] = useState(TEMPLATE_PRESETS[0]?.id ?? 'balanced')
+  const [presetId, setPresetId] = useState('balanced')
+  const [templateLanguage, setTemplateLanguage] = useState<TemplateLanguage>(
+    resolvePreferredTemplateLanguage(),
+  )
   const selectedPreset = useMemo(
-    () => TEMPLATE_PRESETS.find((preset) => preset.id === presetId) ?? TEMPLATE_PRESETS[0],
+    () => getTemplatePresetById(presetId),
     [presetId],
   )
 
-  const [newDailyTemplate, setNewDailyTemplate] = useState(selectedPreset?.dailyTemplate ?? '')
-  const [newWeeklyTemplate, setNewWeeklyTemplate] = useState(selectedPreset?.weeklyTemplate ?? '')
+  const [newDailyTemplate, setNewDailyTemplate] = useState(
+    getTemplateVariant(selectedPreset, templateLanguage).dailyTemplate,
+  )
+  const [newWeeklyTemplate, setNewWeeklyTemplate] = useState(
+    getTemplateVariant(selectedPreset, templateLanguage).weeklyTemplate,
+  )
   const [createMessage, setCreateMessage] = useState('')
   const [createBusy, setCreateBusy] = useState(false)
 
@@ -40,13 +53,10 @@ export function ProfilesPage() {
   const [templateBusy, setTemplateBusy] = useState(false)
 
   useEffect(() => {
-    if (!selectedPreset) {
-      return
-    }
-
-    setNewDailyTemplate(selectedPreset.dailyTemplate)
-    setNewWeeklyTemplate(selectedPreset.weeklyTemplate)
-  }, [selectedPreset])
+    const selectedVariant = getTemplateVariant(selectedPreset, templateLanguage)
+    setNewDailyTemplate(selectedVariant.dailyTemplate)
+    setNewWeeklyTemplate(selectedVariant.weeklyTemplate)
+  }, [selectedPreset, templateLanguage])
 
   useEffect(() => {
     if (!dataRoot) {
@@ -207,9 +217,26 @@ export function ProfilesPage() {
         >
           {TEMPLATE_PRESETS.map((preset) => (
             <option key={preset.id} value={preset.id}>
-              {preset.label}
+              {preset.labels[templateLanguage]}
             </option>
           ))}
+        </select>
+        {selectedPreset.descriptions?.[templateLanguage] ? (
+          <p className="text-xs text-slate-500">{selectedPreset.descriptions[templateLanguage]}</p>
+        ) : null}
+
+        <label className="block text-sm font-medium text-slate-700" htmlFor="template-language">
+          Template language
+        </label>
+        <select
+          id="template-language"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          value={templateLanguage}
+          onChange={(event) => setTemplateLanguage(event.target.value as TemplateLanguage)}
+          disabled={createBusy}
+        >
+          <option value="en">English</option>
+          <option value="zh">中文</option>
         </select>
 
         <label className="block text-sm font-medium text-slate-700">Daily template (editable)</label>

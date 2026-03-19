@@ -1,10 +1,11 @@
 import { Outlet } from 'react-router-dom'
 
+import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
 import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
 
 export function AppShell() {
-  const { baseDataRoot, dataRoot, activeProfile, loading, error } = useDataRoot()
+  const { baseDataRoot, dataRoot, activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -21,6 +22,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      {needsInitialTemplateSetup ? <InitialTemplateSetupModal /> : null}
     </div>
   )
 }
