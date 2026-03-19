@@ -156,7 +156,7 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-For trusted macOS installer output (avoid Gatekeeper "app is damaged" warning), configure these repository secrets:
+Optional (recommended): for trusted macOS installer output (avoid Gatekeeper "app is damaged" warning), configure these repository secrets:
 
 - `APPLE_ID`
 - `APPLE_PASSWORD` (app-specific password)

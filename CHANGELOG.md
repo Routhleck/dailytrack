@@ -72,7 +72,9 @@ The format is based on Keep a Changelog.
 - Replaced placeholder app branding with user-provided `dailytrack.png` across sidebar, favicon, and Tauri desktop icon assets.
 - Settings page now uses migration-only root flow (removed direct root-switch form from UI).
 - Sidebar navigation is now sticky and remains fixed while main content scrolls.
-- GitHub release workflow now enforces macOS signing/notarization secrets and imports Apple certificate before Tauri bundling.
+- GitHub release workflow now supports optional macOS signing/notarization:
+  - signed/notarized build when secrets are configured
+  - unsigned preview build when secrets are absent
 - README now documents unsigned macOS install workaround and lower-cost pre-signing distribution options.
 
 ### Fixed

@@ -59,7 +59,7 @@ jobs:
         if: ${{ matrix.target != '' }}
         run: rustup target add ${{ matrix.target }}
 
-      - name: Validate macOS signing secrets
+      - name: macOS signing mode notice
         if: ${{ matrix.platform == 'macos-latest' }}
         shell: bash
         env:
@@ -78,12 +78,14 @@ jobs:
           done
 
           if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::Missing required macOS signing/notarization secrets: ${missing[*]}"
-            exit 1
+            echo "::warning::macOS signing/notarization secrets are incomplete: ${missing[*]}"
+            echo "::warning::This run will continue with unsigned macOS artifacts."
+          else
+            echo "All macOS signing/notarization secrets are available."
           fi
 
       - name: Import Apple signing certificate
-        if: ${{ matrix.platform == 'macos-latest' }}
+        if: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.KEYCHAIN_PASSWORD != '' }}
         shell: bash
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}

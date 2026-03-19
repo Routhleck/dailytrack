@@ -19,7 +19,7 @@
 - [ ] Tauri dev build works locally.
 - [ ] Production build command succeeds.
 - [ ] Default data root bootstrap verified.
-- [ ] macOS signing/notarization secrets configured in GitHub repository:
+- [ ] If publishing trusted macOS installers, configure signing/notarization secrets in GitHub repository:
   - `APPLE_ID`
   - `APPLE_PASSWORD`
   - `APPLE_TEAM_ID`
