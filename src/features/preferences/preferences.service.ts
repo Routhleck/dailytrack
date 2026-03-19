@@ -1,6 +1,12 @@
 import { readTextFile, writeTextFile } from '../../lib/fs/fileApi'
+import {
+  cloneDefaultBodyMetricDisplay,
+  BODY_NUMERIC_METRIC_KEYS,
+  normalizeBodyMetricDisplay,
+} from '../body/body.format'
 import { joinPath } from '../../lib/fs/pathApi'
 import type { TrackerPreferences } from '../../types/preferences'
+import type { BodyNumericMetricKey } from '../../types/tracker'
 import type { WeeklySectionKey } from '../../types/tracker'
 
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
@@ -26,6 +32,7 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
     chest: false,
     hip: false,
     note: true,
+    display: cloneDefaultBodyMetricDisplay(),
   },
 }
 
@@ -48,6 +55,10 @@ function normalizePreferences(raw: unknown): TrackerPreferences {
       : {}
   const bodyRaw =
     typeof object.body === 'object' && object.body ? (object.body as Record<string, unknown>) : {}
+  const bodyDisplayRaw =
+    typeof bodyRaw.display === 'object' && bodyRaw.display
+      ? (bodyRaw.display as Record<string, unknown>)
+      : {}
 
   const weeklySectionsRaw =
     typeof weeklyRaw.sections === 'object' && weeklyRaw.sections
@@ -58,6 +69,14 @@ function normalizePreferences(raw: unknown): TrackerPreferences {
     acc[key] = toBoolean(weeklySectionsRaw[key], DEFAULT_PREFERENCES.weekly.sections[key])
     return acc
   }, {} as Record<WeeklySectionKey, boolean>)
+
+  const bodyDisplay = BODY_NUMERIC_METRIC_KEYS.reduce<Record<BodyNumericMetricKey, TrackerPreferences['body']['display'][BodyNumericMetricKey]>>((acc, key) => {
+    acc[key] = normalizeBodyMetricDisplay(
+      bodyDisplayRaw[key],
+      DEFAULT_PREFERENCES.body.display[key],
+    )
+    return acc
+  }, {} as Record<BodyNumericMetricKey, TrackerPreferences['body']['display'][BodyNumericMetricKey]>)
 
   return {
     daily: {
@@ -74,6 +93,7 @@ function normalizePreferences(raw: unknown): TrackerPreferences {
       chest: toBoolean(bodyRaw.chest, DEFAULT_PREFERENCES.body.chest),
       hip: toBoolean(bodyRaw.hip, DEFAULT_PREFERENCES.body.hip),
       note: toBoolean(bodyRaw.note, DEFAULT_PREFERENCES.body.note),
+      display: bodyDisplay,
     },
   }
 }

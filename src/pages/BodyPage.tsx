@@ -10,15 +10,19 @@ import {
 } from 'recharts'
 
 import { PageHeader } from '../components/PageHeader'
+import {
+  decimalInputStep,
+  formatBodyMetricNumber,
+  formatBodyMetricValue,
+  metricLabelWithUnit,
+} from '../features/body/body.format'
 import { getBodyRecords, saveBodyRecords } from '../features/body/body.service'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
 import { emitDataChanged } from '../lib/liveSync'
-import type { BodyRecord } from '../types/tracker'
-
-type BodyNumericMetricKey = 'weight' | 'waist' | 'bodyFat' | 'muscleMass' | 'chest' | 'hip'
+import type { BodyNumericMetricKey, BodyRecord } from '../types/tracker'
 
 const BODY_NUMERIC_METRICS: {
   key: BodyNumericMetricKey
@@ -272,8 +276,8 @@ export function BodyPage() {
             key={metric.key}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             type="number"
-            step="0.1"
-            placeholder={t(metric.labelKey)}
+            step={decimalInputStep(preferences.body.display[metric.key].decimals)}
+            placeholder={metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}
             value={form[metric.key]}
             onChange={(event) => {
               const nextValue = event.target.value
@@ -315,14 +319,36 @@ export function BodyPage() {
         <div className={`grid gap-4 ${enabledNumericMetrics.length > 1 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
           {enabledNumericMetrics.map((metric) => (
             <article key={metric.key} className="rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">{t(metric.trendLabelKey)}</h2>
+              <h2 className="mb-3 text-base font-semibold text-slate-900">
+                {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
+              </h2>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
                     <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => {
+                        const numeric = Number(value)
+                        if (!Number.isFinite(numeric)) {
+                          return '-'
+                        }
+                        return formatBodyMetricNumber(numeric, preferences.body.display[metric.key])
+                      }}
+                    />
+                    <Tooltip
+                      formatter={(value) => {
+                        const parsed =
+                          typeof value === 'number'
+                            ? value
+                            : Number.parseFloat(String(value))
+                        if (!Number.isFinite(parsed)) {
+                          return '-'
+                        }
+                        return formatBodyMetricValue(parsed, preferences.body.display[metric.key])
+                      }}
+                    />
                     <Line type="monotone" dataKey={metric.key} stroke={metric.stroke} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -344,7 +370,9 @@ export function BodyPage() {
               <tr className="border-b border-slate-200 text-slate-600">
                 <th className="py-2">{t('body.date')}</th>
                 {enabledNumericMetrics.map((metric) => (
-                  <th key={metric.key} className="py-2">{t(metric.labelKey)}</th>
+                  <th key={metric.key} className="py-2">
+                    {metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}
+                  </th>
                 ))}
                 {showNote ? <th className="py-2">{t('body.note')}</th> : null}
                 <th className="py-2">{t('common.actions')}</th>
@@ -356,7 +384,7 @@ export function BodyPage() {
                   <td className="py-2">{record.date}</td>
                   {enabledNumericMetrics.map((metric) => (
                     <td key={metric.key} className="py-2">
-                      {record[metric.key] ?? '-'}
+                      {formatBodyMetricValue(record[metric.key], preferences.body.display[metric.key])}
                     </td>
                   ))}
                   {showNote ? <td className="py-2">{record.note || '-'}</td> : null}

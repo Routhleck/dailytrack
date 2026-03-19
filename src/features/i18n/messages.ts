@@ -208,6 +208,10 @@ export const enMessages = {
   'preferences.trackChest': 'Track Chest',
   'preferences.trackHip': 'Track Hip',
   'preferences.trackBodyNote': 'Track Body Note',
+  'preferences.bodyDisplayHint': 'Each metric supports custom unit and decimal display format.',
+  'preferences.unit': 'Unit',
+  'preferences.unitPlaceholder': 'e.g. kg',
+  'preferences.decimals': 'Decimals',
 
   'settings.title': 'Settings',
   'settings.description':
@@ -510,6 +514,10 @@ export const zhMessages: Record<MessageKey, string> = {
   'preferences.trackChest': '追踪胸围',
   'preferences.trackHip': '追踪臀围',
   'preferences.trackBodyNote': '追踪身体备注',
+  'preferences.bodyDisplayHint': '每个指标都可自定义单位和小数显示格式。',
+  'preferences.unit': '单位',
+  'preferences.unitPlaceholder': '例如 kg',
+  'preferences.decimals': '小数位',
 
   'settings.title': '系统设置',
   'settings.description': '通过安全迁移和导出/导入在电脑间移动当前档案数据。',

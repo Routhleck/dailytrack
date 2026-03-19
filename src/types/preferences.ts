@@ -1,4 +1,10 @@
 import type { WeeklySectionKey } from './tracker'
+import type { BodyNumericMetricKey } from './tracker'
+
+export type BodyMetricDisplay = {
+  unit: string
+  decimals: number
+}
 
 export type TrackerPreferences = {
   daily: {
@@ -15,5 +21,6 @@ export type TrackerPreferences = {
     chest: boolean
     hip: boolean
     note: boolean
+    display: Record<BodyNumericMetricKey, BodyMetricDisplay>
   }
 }

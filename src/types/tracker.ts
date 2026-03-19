@@ -40,3 +40,5 @@ export type BodyRecord = {
   hip: number | null
   note: string
 }
+
+export type BodyNumericMetricKey = keyof Omit<BodyRecord, 'date' | 'note'>

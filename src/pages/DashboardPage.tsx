@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
+import { formatBodyMetricValue, metricLabelWithUnit } from '../features/body/body.format'
 import { useI18n } from '../features/i18n/I18nContext'
 import { getBodyRecords } from '../features/body/body.service'
 import { getTodayNote, listDailyDates } from '../features/daily/daily.service'
@@ -123,6 +124,8 @@ export function DashboardPage() {
     )
   }
 
+  const body = state.body
+
   return (
     <section className="space-y-4">
       <PageHeader
@@ -167,18 +170,23 @@ export function DashboardPage() {
               {t('common.open')}
             </Link>
           </div>
-          {state.body ? (
+          {body ? (
             <div className="space-y-1 text-sm text-slate-700">
-              <p>{t('dashboard.date')}: {state.body.date}</p>
+              <p>{t('dashboard.date')}: {body.date}</p>
               {BODY_DASHBOARD_FIELDS.map((field) => {
                 if (!preferences.body[field.preferenceKey]) {
                   return null
                 }
 
-                const value = state.body?.[field.key]
-                return <p key={field.key}>{t(field.labelKey)}: {value == null ? '-' : String(value)}</p>
+                const value = body[field.key]
+                return (
+                  <p key={field.key}>
+                    {metricLabelWithUnit(t(field.labelKey), preferences.body.display[field.key])}:{' '}
+                    {formatBodyMetricValue(value, preferences.body.display[field.key])}
+                  </p>
+                )
               })}
-              {preferences.body.note ? <p>{t('dashboard.note')}: {state.body.note || '-'}</p> : null}
+              {preferences.body.note ? <p>{t('dashboard.note')}: {body.note || '-'}</p> : null}
             </div>
           ) : (
             <p className="text-sm text-slate-600">{t('dashboard.noBodyRecords')}</p>
