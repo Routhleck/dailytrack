@@ -12,7 +12,7 @@ import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
-import { onDataChanged } from '../lib/liveSync'
+import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 import type { BodyRecord } from '../types/tracker'
 
 const BODY_DASHBOARD_FIELDS: {
@@ -98,9 +98,10 @@ export function DashboardPage() {
       void loadDashboard()
     })
 
+    const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
     const interval = window.setInterval(() => {
       void loadDashboard()
-    }, 4000)
+    }, intervalMs)
 
     const onFocus = () => {
       void loadDashboard()
@@ -113,7 +114,7 @@ export function DashboardPage() {
       window.clearInterval(interval)
       window.removeEventListener('focus', onFocus)
     }
-  }, [loadDashboard])
+  }, [loadDashboard, preferences.sync.mode])
 
   if (preferencesLoading || !state) {
     return (

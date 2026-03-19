@@ -149,6 +149,47 @@ export function PreferencesPage() {
       </article>
 
       <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('preferences.sync')}</h2>
+        <p className="text-xs text-slate-500">{t('preferences.syncHint')}</p>
+        <div className="flex items-center gap-4 text-sm text-slate-700">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="sync-mode"
+              value="watch"
+              checked={draft.sync.mode === 'watch'}
+              onChange={() => {
+                void update({
+                  ...draft,
+                  sync: {
+                    mode: 'watch',
+                  },
+                })
+              }}
+            />
+            {t('preferences.syncWatch')}
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="sync-mode"
+              value="poll"
+              checked={draft.sync.mode === 'poll'}
+              onChange={() => {
+                void update({
+                  ...draft,
+                  sync: {
+                    mode: 'poll',
+                  },
+                })
+              }}
+            />
+            {t('preferences.syncPoll')}
+          </label>
+        </div>
+      </article>
+
+      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.bodyMetrics')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.bodyDisplayHint')}</p>
         {BODY_METRIC_ORDER.map((metric) => (

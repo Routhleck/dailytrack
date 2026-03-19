@@ -5,6 +5,12 @@ export type EnsureDataRootInfo = {
   isFirstRun: boolean
 }
 
+export type FsChangedEventPayload = {
+  scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
+  path: string
+  at: number
+}
+
 export async function isUpdaterConfigured(): Promise<boolean> {
   return invoke<boolean>('updater_is_configured')
 }
@@ -53,6 +59,14 @@ export async function listFiles(
   extension?: string,
 ): Promise<string[]> {
   return invoke<string[]>('list_files', { dirPath, extension, dataRoot })
+}
+
+export async function startDataRootWatch(dataRoot: string): Promise<void> {
+  return invoke<void>('start_data_root_watch', { dataRoot })
+}
+
+export async function stopDataRootWatch(dataRoot: string): Promise<void> {
+  return invoke<void>('stop_data_root_watch', { dataRoot })
 }
 
 export async function exportDataBundle(

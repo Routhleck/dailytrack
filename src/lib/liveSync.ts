@@ -1,4 +1,5 @@
 const EVENT_NAME = 'dailytrack:data-changed'
+export const FS_CHANGED_EVENT_NAME = 'dailytrack://fs-changed'
 
 export type DataChangedScope =
   | 'daily'
@@ -37,4 +38,8 @@ export function onDataChanged(
 
   window.addEventListener(EVENT_NAME, listener)
   return () => window.removeEventListener(EVENT_NAME, listener)
+}
+
+export function fallbackPollIntervalMs(mode: 'watch' | 'poll'): number {
+  return mode === 'watch' ? 12000 : 5000
 }

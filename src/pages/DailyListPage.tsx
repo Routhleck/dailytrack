@@ -47,7 +47,7 @@ export function DailyListPage() {
 
     const interval = window.setInterval(() => {
       void loadDailyList()
-    }, 5000)
+    }, 10000)
 
     return () => {
       unlisten()

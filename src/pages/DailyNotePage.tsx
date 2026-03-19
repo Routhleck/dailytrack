@@ -11,7 +11,7 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
-import { emitDataChanged } from '../lib/liveSync'
+import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { DailyNote } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -130,6 +130,8 @@ export function DailyNotePage() {
       return
     }
 
+    const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
+
     const timer = window.setInterval(() => {
       if (saving) {
         return
@@ -155,12 +157,12 @@ export function DailyNotePage() {
         .catch((error) => {
           console.warn('[daily] failed to poll note changes from disk', error)
         })
-    }, 4000)
+    }, intervalMs)
 
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeDate, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty, t])
+  }, [activeDate, dataRoot, markSaved, mode, note, preferences.sync.mode, rawDirty, saving, structuredDirty, t])
 
   function updateChecklist(
     section: 'dailyCore' | 'optional',

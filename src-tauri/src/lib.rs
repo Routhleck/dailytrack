@@ -1,7 +1,14 @@
 use std::fs;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use notify::{
+  event::{DataChange, ModifyKind},
+  Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+};
 use serde::Serialize;
+use tauri::Emitter;
 
 const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
 
@@ -16,6 +23,19 @@ const LEGACY_DATA_ROOT_DIR: &str = "life-tracker-data";
 struct EnsureDataRootResult {
   root: String,
   is_first_run: bool,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct FsChangedEvent {
+  scope: String,
+  path: String,
+  at: u64,
+}
+
+#[derive(Default)]
+struct FsWatchState {
+  watchers: Mutex<HashMap<String, RecommendedWatcher>>,
 }
 
 fn default_data_root() -> Result<PathBuf, String> {
@@ -344,6 +364,52 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
   Ok(())
 }
 
+fn now_unix_millis() -> u64 {
+  match SystemTime::now().duration_since(UNIX_EPOCH) {
+    Ok(duration) => duration.as_millis() as u64,
+    Err(_) => 0,
+  }
+}
+
+fn normalize_path_for_scope(path: &Path) -> String {
+  path.to_string_lossy().replace('\\', "/")
+}
+
+fn scope_for_changed_path(path: &Path) -> Option<&'static str> {
+  let normalized = normalize_path_for_scope(path);
+
+  if normalized.ends_with("/body.csv") {
+    return Some("body");
+  }
+  if normalized.ends_with("/preferences.json") {
+    return Some("preferences");
+  }
+  if normalized.contains("/daily/") && normalized.ends_with(".md") {
+    return Some("daily");
+  }
+  if normalized.contains("/weekly/") && normalized.ends_with(".md") {
+    return Some("weekly");
+  }
+  if normalized.contains("/templates/") {
+    return Some("settings");
+  }
+
+  None
+}
+
+fn is_relevant_fs_event(event: &Event) -> bool {
+  match event.kind {
+    EventKind::Create(_) => true,
+    EventKind::Remove(_) => true,
+    EventKind::Modify(ModifyKind::Data(DataChange::Any))
+    | EventKind::Modify(ModifyKind::Data(DataChange::Content))
+    | EventKind::Modify(ModifyKind::Data(DataChange::Size))
+    | EventKind::Modify(ModifyKind::Name(_))
+    | EventKind::Modify(ModifyKind::Any) => true,
+    _ => false,
+  }
+}
+
 fn updater_configured_from_app(app: &tauri::AppHandle) -> bool {
   let plugins = &app.config().plugins.0;
   let updater = match plugins.get("updater") {
@@ -552,6 +618,77 @@ fn list_files(
 }
 
 #[tauri::command]
+fn start_data_root_watch(
+  app: tauri::AppHandle,
+  state: tauri::State<FsWatchState>,
+  data_root: String,
+) -> Result<(), String> {
+  let root = canonicalize_data_root_path(data_root.as_str())?;
+  let key = root.to_string_lossy().to_string();
+  let mut watchers = state
+    .watchers
+    .lock()
+    .map_err(|_| "Failed to acquire filesystem watch state lock".to_string())?;
+
+  if watchers.contains_key(key.as_str()) {
+    return Ok(());
+  }
+
+  let app_handle = app.clone();
+  let mut watcher = notify::recommended_watcher(move |result| {
+    let event = match result {
+      Ok(event) => event,
+      Err(err) => {
+        log::warn!("filesystem watch callback error: {err}");
+        return;
+      }
+    };
+
+    if !is_relevant_fs_event(&event) {
+      return;
+    }
+
+    let changed_at = now_unix_millis();
+    for path in event.paths {
+      let scope = match scope_for_changed_path(path.as_path()) {
+        Some(scope) => scope,
+        None => continue,
+      };
+
+      let payload = FsChangedEvent {
+        scope: scope.to_string(),
+        path: path.to_string_lossy().to_string(),
+        at: changed_at,
+      };
+
+      if let Err(err) = app_handle.emit("dailytrack://fs-changed", payload) {
+        log::warn!("failed to emit fs-changed event: {err}");
+      }
+    }
+  })
+  .map_err(|err| format!("Failed to create filesystem watcher: {err}"))?;
+
+  watcher
+    .watch(root.as_path(), RecursiveMode::Recursive)
+    .map_err(|err| format!("Failed to watch data root {}: {err}", root.display()))?;
+
+  watchers.insert(key, watcher);
+  Ok(())
+}
+
+#[tauri::command]
+fn stop_data_root_watch(state: tauri::State<FsWatchState>, data_root: String) -> Result<(), String> {
+  let root = canonicalize_data_root_path(data_root.as_str())?;
+  let key = root.to_string_lossy().to_string();
+  let mut watchers = state
+    .watchers
+    .lock()
+    .map_err(|_| "Failed to acquire filesystem watch state lock".to_string())?;
+  watchers.remove(key.as_str());
+  Ok(())
+}
+
+#[tauri::command]
 fn export_data_bundle(data_root: String, destination_dir: String) -> Result<String, String> {
   let source_root = PathBuf::from(data_root);
   if !source_root.exists() {
@@ -704,6 +841,7 @@ fn reset_tracker_data(data_root: String) -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .manage(FsWatchState::default())
     .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![
       updater_is_configured,
@@ -715,6 +853,8 @@ pub fn run() {
       read_text_file,
       write_text_file,
       list_files,
+      start_data_root_watch,
+      stop_data_root_watch,
       export_data_bundle,
       import_data_bundle,
       migrate_data_root,

@@ -16,7 +16,7 @@ import {
   saveWeeklyStructured,
 } from '../features/weekly/weekly.service'
 import { currentWeekId } from '../lib/date/week'
-import { emitDataChanged } from '../lib/liveSync'
+import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -135,6 +135,8 @@ export function WeeklyNotePage() {
       return
     }
 
+    const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
+
     const timer = window.setInterval(() => {
       if (saving) {
         return
@@ -160,12 +162,12 @@ export function WeeklyNotePage() {
         .catch((error) => {
           console.warn('[weekly] failed to poll note changes from disk', error)
         })
-    }, 4000)
+    }, intervalMs)
 
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeWeekId, dataRoot, markSaved, mode, note, rawDirty, saving, structuredDirty, t])
+  }, [activeWeekId, dataRoot, markSaved, mode, note, preferences.sync.mode, rawDirty, saving, structuredDirty, t])
 
   function updateChecklist(
     section: WeeklySectionKey,

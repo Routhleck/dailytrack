@@ -6,7 +6,13 @@ export type BodyMetricDisplay = {
   decimals: number
 }
 
+export type SyncMode = 'watch' | 'poll'
+
 export type TrackerPreferences = {
+  schemaVersion: number
+  sync: {
+    mode: SyncMode
+  }
   daily: {
     showOptional: boolean
   }

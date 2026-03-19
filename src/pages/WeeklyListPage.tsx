@@ -47,7 +47,7 @@ export function WeeklyListPage() {
 
     const interval = window.setInterval(() => {
       void loadWeeklyList()
-    }, 5000)
+    }, 10000)
 
     return () => {
       unlisten()

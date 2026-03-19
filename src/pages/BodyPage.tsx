@@ -21,7 +21,7 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
-import { emitDataChanged } from '../lib/liveSync'
+import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { BodyNumericMetricKey, BodyRecord } from '../types/tracker'
 
 const BODY_NUMERIC_METRICS: {
@@ -181,6 +181,8 @@ export function BodyPage() {
       return
     }
 
+    const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
+
     const timer = window.setInterval(() => {
       if (editingIndexRef.current != null || syncingRef.current) {
         return
@@ -200,12 +202,12 @@ export function BodyPage() {
         .finally(() => {
           syncingRef.current = false
         })
-    }, 5000)
+    }, intervalMs)
 
     return () => {
       window.clearInterval(timer)
     }
-  }, [dataRoot, t])
+  }, [dataRoot, preferences.sync.mode, t])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
