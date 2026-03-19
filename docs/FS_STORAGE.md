@@ -5,32 +5,39 @@
 - No cloud or remote persistence.
 - No database.
 
-## Default Data Root
-- Default path: `~/life-tracker-data`
-- Configurable via Settings page (`dataRoot`).
+## Default Base Root
+- Default path: `~/life-tracker-data` on macOS/Linux.
+- On Windows fallback uses `USERPROFILE`.
+- Configurable via Settings page (`baseDataRoot`).
 
-## Required Layout
+## Active Layout
 ```text
 life-tracker-data/
-  daily/
-    YYYY-MM-DD.md
-  weekly/
-    YYYY-Www.md
-  body.csv
-  templates/
-    daily.md
-    weekly.md
+  profiles/
+    default/
+      daily/
+        YYYY-MM-DD.md
+      weekly/
+        YYYY-Www.md
+      body.csv
+      templates/
+        daily.md
+        weekly.md
+      preferences.json
 ```
 
-## Bootstrap Behavior
-On startup or on data-root switch:
-1. Ensure directories `daily/`, `weekly/`, `templates/` exist.
-2. Ensure `body.csv` exists with header row: `date,weight,waist,note`.
-3. Ensure template files exist; recreate defaults if missing.
+## Profile Model
+- App runs against one active profile root at a time.
+- Profile name validation: 1-64 chars, `[a-zA-Z0-9_-]`.
+- At least one profile must always exist.
+- Deleting last profile is blocked.
 
-## File Naming Rules
-- Daily filename derived from local date: `YYYY-MM-DD.md`.
-- Weekly filename derived from ISO-like week id: `YYYY-Www.md`.
+## Bootstrap Behavior
+On startup:
+1. Ensure base root exists.
+2. Ensure `profiles/default` exists.
+3. If migrating from legacy layout (`daily/weekly/templates/body.csv` directly under base root), copy legacy files into `profiles/default` once.
+4. Ensure active profile has required files (`daily/`, `weekly/`, `templates/`, `body.csv`).
 
 ## Write Policy
 - Writes are explicit (Save button).
@@ -38,14 +45,14 @@ On startup or on data-root switch:
 - Raw mode writes user text directly.
 
 ## Export and Import
-- Export command copies the current data root to a timestamped bundle folder:
+- Export copies current active profile root to timestamped folder:
   - `dailytrack-export-<timestamp>`
-- Import command copies files from a bundle folder into current data root.
-- Import requires source layout to include:
+- Import copies files from bundle folder into current active profile root.
+- Import source validation requires:
   - `daily/`
   - `weekly/`
   - `body.csv`
-- Import supports overwrite toggle:
-  - `true`: replace existing files with imported files
-  - `false`: keep existing files and only copy missing files
-- Safety guard: export destination cannot be inside current data root.
+- Import overwrite modes:
+  - `true`: replace existing files
+  - `false`: keep existing files, copy missing files only
+- Safety guard: export destination cannot be inside current source root.

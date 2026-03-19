@@ -22,12 +22,30 @@ The format is based on Keep a Changelog.
 - New Tauri commands:
   - `export_data_bundle`
   - `import_data_bundle`
+- Profile management workflow:
+  - create profile
+  - switch profile
+  - delete profile (with safeguards)
+- Template preset support for profile creation (Balanced / Minimal / Fitness Focus).
+- Profile template editing for current active profile.
+- Preferences page for per-profile toggles:
+  - daily optional section visibility
+  - weekly section visibility
+  - body metric visibility (weight/waist/note)
+- New Tauri profile commands:
+  - `list_profiles`
+  - `ensure_profile`
+  - `create_profile`
+  - `delete_profile`
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
 - Updated README with run/build/test instructions and markdown schema contracts.
 - Switched route pages to lazy-loaded chunks to reduce initial bundle size.
 - Improved default data root resolution for Windows by falling back to `USERPROFILE`.
+- Migrated runtime storage model to profile-based roots under `profiles/<profile>/`.
+- Dashboard, Daily, Weekly, and Body pages now respect profile preferences.
+- Eslint ignore updated to skip `src-tauri/target/**` artifacts produced by Rust builds.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

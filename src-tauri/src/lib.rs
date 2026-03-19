@@ -6,6 +6,8 @@ const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train /
 
 const DEFAULT_WEEKLY_TEMPLATE: &str = "# {{week}}\n\n## Body\n- [ ] 4-5 strength sessions\n- [ ] 2-3 cardio sessions\n- [ ] 3 core sessions\n- [ ] Record weight / waist / progress photo\n- [ ] Eat well >= 5 days\n\n## Research\n- [ ] 3 deep work sessions\n- [ ] Push one key project forward\n- [ ] Plan next week\n\n## Life\n- [ ] 1 outdoor activity\n- [ ] 1 small life-enhancing activity\n- [ ] 1 environment reset / cleanup\n\n## Output\n- [ ] Publish 1 piece of content\n- [ ] Save 3 ideas / materials\n\n## Social\n- [ ] Join 1 social activity / meetup\n- [ ] Reach out to 1 friend\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n";
 
+const DEFAULT_PROFILE_NAME: &str = "default";
+
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
@@ -20,6 +22,40 @@ fn resolve_data_root(data_root: Option<String>) -> Result<PathBuf, String> {
   }
 }
 
+fn profiles_root(base_root: &Path) -> PathBuf {
+  base_root.join("profiles")
+}
+
+fn profile_root(base_root: &Path, profile_name: &str) -> PathBuf {
+  profiles_root(base_root).join(profile_name)
+}
+
+fn normalize_text(text: &str) -> String {
+  if text.ends_with('\n') {
+    text.to_string()
+  } else {
+    format!("{text}\n")
+  }
+}
+
+fn is_valid_profile_name(profile_name: &str) -> bool {
+  !profile_name.is_empty()
+    && profile_name.len() <= 64
+    && profile_name
+      .chars()
+      .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+fn validate_profile_name(profile_name: &str) -> Result<(), String> {
+  if is_valid_profile_name(profile_name) {
+    Ok(())
+  } else {
+    Err(
+      "Invalid profile name. Use 1-64 chars with letters, numbers, '-' or '_' only".to_string(),
+    )
+  }
+}
+
 fn ensure_file(path: &Path, default_content: &str) -> Result<(), String> {
   if !path.exists() {
     fs::write(path, default_content)
@@ -29,7 +65,7 @@ fn ensure_file(path: &Path, default_content: &str) -> Result<(), String> {
   Ok(())
 }
 
-fn ensure_data_root_layout(root: &Path) -> Result<(), String> {
+fn ensure_tracker_layout(root: &Path) -> Result<(), String> {
   fs::create_dir_all(root.join("daily"))
     .map_err(|err| format!("Failed to create daily directory: {err}"))?;
   fs::create_dir_all(root.join("weekly"))
@@ -84,6 +120,99 @@ fn copy_dir_recursive(source: &Path, destination: &Path, overwrite: bool) -> Res
   Ok(())
 }
 
+fn copy_if_exists_file(source: &Path, destination: &Path, overwrite: bool) -> Result<(), String> {
+  if !source.is_file() {
+    return Ok(());
+  }
+
+  if destination.exists() && !overwrite {
+    return Ok(());
+  }
+
+  if let Some(parent) = destination.parent() {
+    fs::create_dir_all(parent)
+      .map_err(|err| format!("Failed to create {}: {err}", parent.display()))?;
+  }
+
+  fs::copy(source, destination).map_err(|err| {
+    format!(
+      "Failed to copy {} to {}: {err}",
+      source.display(),
+      destination.display()
+    )
+  })?;
+
+  Ok(())
+}
+
+fn copy_legacy_data_into_profile(base_root: &Path, profile_root_path: &Path) -> Result<(), String> {
+  let daily_source = base_root.join("daily");
+  let weekly_source = base_root.join("weekly");
+  let templates_source = base_root.join("templates");
+  let body_source = base_root.join("body.csv");
+
+  if daily_source.is_dir() {
+    copy_dir_recursive(
+      daily_source.as_path(),
+      profile_root_path.join("daily").as_path(),
+      true,
+    )?;
+  }
+
+  if weekly_source.is_dir() {
+    copy_dir_recursive(
+      weekly_source.as_path(),
+      profile_root_path.join("weekly").as_path(),
+      true,
+    )?;
+  }
+
+  if templates_source.is_dir() {
+    copy_dir_recursive(
+      templates_source.as_path(),
+      profile_root_path.join("templates").as_path(),
+      true,
+    )?;
+  }
+
+  copy_if_exists_file(
+    body_source.as_path(),
+    profile_root_path.join("body.csv").as_path(),
+    true,
+  )?;
+
+  Ok(())
+}
+
+fn list_profile_names(base_root: &Path) -> Result<Vec<String>, String> {
+  let profiles_dir = profiles_root(base_root);
+  fs::create_dir_all(profiles_dir.as_path())
+    .map_err(|err| format!("Failed to create profiles directory: {err}"))?;
+
+  let mut profiles: Vec<String> = fs::read_dir(profiles_dir.as_path())
+    .map_err(|err| format!("Failed to read profiles directory: {err}"))?
+    .filter_map(Result::ok)
+    .filter(|entry| entry.path().is_dir())
+    .filter_map(|entry| entry.file_name().into_string().ok())
+    .collect();
+
+  profiles.sort();
+  Ok(profiles)
+}
+
+fn ensure_default_profile(base_root: &Path) -> Result<(), String> {
+  let default_profile_root = profile_root(base_root, DEFAULT_PROFILE_NAME);
+  if default_profile_root.exists() {
+    ensure_tracker_layout(default_profile_root.as_path())?;
+    return Ok(());
+  }
+
+  ensure_tracker_layout(default_profile_root.as_path())?;
+  copy_legacy_data_into_profile(base_root, default_profile_root.as_path())?;
+
+  Ok(())
+}
+
 fn validate_bundle_root(path: &Path) -> Result<(), String> {
   let required = [path.join("daily"), path.join("weekly"), path.join("body.csv")];
   if !required[0].is_dir() || !required[1].is_dir() || !required[2].is_file() {
@@ -99,9 +228,109 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
 #[tauri::command]
 fn ensure_data_root(data_root: Option<String>) -> Result<String, String> {
   let root = resolve_data_root(data_root)?;
-  ensure_data_root_layout(root.as_path())?;
+  fs::create_dir_all(root.as_path())
+    .map_err(|err| format!("Failed to create data root {}: {err}", root.display()))?;
+
+  ensure_default_profile(root.as_path())?;
 
   Ok(root.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn list_profiles(data_root: String) -> Result<Vec<String>, String> {
+  let root = resolve_data_root(Some(data_root))?;
+  fs::create_dir_all(root.as_path())
+    .map_err(|err| format!("Failed to create data root {}: {err}", root.display()))?;
+
+  ensure_default_profile(root.as_path())?;
+  list_profile_names(root.as_path())
+}
+
+#[tauri::command]
+fn ensure_profile(data_root: String, profile_name: String) -> Result<String, String> {
+  validate_profile_name(profile_name.as_str())?;
+
+  let base_root = resolve_data_root(Some(data_root))?;
+  let target_profile_root = profile_root(base_root.as_path(), profile_name.as_str());
+  ensure_tracker_layout(target_profile_root.as_path())?;
+
+  Ok(target_profile_root.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn create_profile(
+  data_root: String,
+  profile_name: String,
+  daily_template: Option<String>,
+  weekly_template: Option<String>,
+) -> Result<String, String> {
+  validate_profile_name(profile_name.as_str())?;
+
+  let base_root = resolve_data_root(Some(data_root))?;
+  let profiles_dir = profiles_root(base_root.as_path());
+  fs::create_dir_all(profiles_dir.as_path())
+    .map_err(|err| format!("Failed to create profiles directory: {err}"))?;
+
+  let target_profile_root = profile_root(base_root.as_path(), profile_name.as_str());
+  if target_profile_root.exists() {
+    return Err(format!("Profile {} already exists", profile_name));
+  }
+
+  ensure_tracker_layout(target_profile_root.as_path())?;
+
+  if let Some(content) = daily_template {
+    fs::write(
+      target_profile_root.join("templates").join("daily.md"),
+      normalize_text(content.as_str()),
+    )
+    .map_err(|err| format!("Failed to write daily template: {err}"))?;
+  }
+
+  if let Some(content) = weekly_template {
+    fs::write(
+      target_profile_root.join("templates").join("weekly.md"),
+      normalize_text(content.as_str()),
+    )
+    .map_err(|err| format!("Failed to write weekly template: {err}"))?;
+  }
+
+  Ok(target_profile_root.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn delete_profile(data_root: String, profile_name: String) -> Result<String, String> {
+  validate_profile_name(profile_name.as_str())?;
+
+  let base_root = resolve_data_root(Some(data_root))?;
+  let target_profile_root = profile_root(base_root.as_path(), profile_name.as_str());
+  if !target_profile_root.exists() {
+    return Err(format!("Profile {} does not exist", profile_name));
+  }
+
+  let profiles = list_profile_names(base_root.as_path())?;
+  if profiles.len() <= 1 {
+    return Err("Cannot delete the last remaining profile".to_string());
+  }
+
+  fs::remove_dir_all(target_profile_root.as_path()).map_err(|err| {
+    format!(
+      "Failed to delete profile {} at {}: {err}",
+      profile_name,
+      target_profile_root.display()
+    )
+  })?;
+
+  let remaining = list_profile_names(base_root.as_path())?;
+  let fallback = if remaining.iter().any(|name| name == DEFAULT_PROFILE_NAME) {
+    DEFAULT_PROFILE_NAME.to_string()
+  } else {
+    remaining
+      .first()
+      .cloned()
+      .ok_or_else(|| "No remaining profile after delete".to_string())?
+  };
+
+  Ok(fallback)
 }
 
 #[tauri::command]
@@ -189,8 +418,8 @@ fn import_data_bundle(
   let source_root = PathBuf::from(source_dir);
   validate_bundle_root(source_root.as_path())?;
 
-  let target_root = resolve_data_root(Some(data_root))?;
-  ensure_data_root_layout(target_root.as_path())?;
+  let target_root = PathBuf::from(data_root);
+  ensure_tracker_layout(target_root.as_path())?;
 
   let source_canonical = fs::canonicalize(source_root.as_path()).map_err(|err| {
     format!(
@@ -222,6 +451,10 @@ pub fn run() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       ensure_data_root,
+      list_profiles,
+      ensure_profile,
+      create_profile,
+      delete_profile,
       read_text_file,
       write_text_file,
       list_files,

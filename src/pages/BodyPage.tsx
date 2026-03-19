@@ -11,6 +11,7 @@ import {
 
 import { PageHeader } from '../components/PageHeader'
 import { getBodyRecords, saveBodyRecords } from '../features/body/body.service'
+import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
 import type { BodyRecord } from '../types/tracker'
@@ -47,6 +48,8 @@ function toFormState(record?: BodyRecord): FormState {
 
 export function BodyPage() {
   const { dataRoot } = useDataRoot()
+  const { preferences, loading: preferencesLoading } = usePreferences()
+
   const [records, setRecords] = useState<BodyRecord[]>([])
   const [form, setForm] = useState<FormState>(toFormState())
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
@@ -81,11 +84,17 @@ export function BodyPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
 
+    const editingRecord = editingIndex == null ? undefined : records[editingIndex]
+
     const nextRecord: BodyRecord = {
       date: form.date,
-      weight: parseNullableNumber(form.weight),
-      waist: parseNullableNumber(form.waist),
-      note: form.note.trim(),
+      weight: preferences.body.weight
+        ? parseNullableNumber(form.weight)
+        : (editingRecord?.weight ?? null),
+      waist: preferences.body.waist
+        ? parseNullableNumber(form.waist)
+        : (editingRecord?.waist ?? null),
+      note: preferences.body.note ? form.note.trim() : (editingRecord?.note ?? ''),
     }
 
     if (!nextRecord.date) {
@@ -117,11 +126,29 @@ export function BodyPage() {
 
   const chartData = useMemo(() => [...records].reverse(), [records])
 
+  if (preferencesLoading) {
+    return (
+      <section>
+        <PageHeader title="Body Progress" description="Loading profile preferences..." />
+      </section>
+    )
+  }
+
+  const showWeight = preferences.body.weight
+  const showWaist = preferences.body.waist
+  const showNote = preferences.body.note
+
   return (
     <section className="space-y-6">
-      <PageHeader title="Body Progress" description="Read and edit local body.csv records." />
+      <PageHeader
+        title="Body Progress"
+        description="Read and edit local body.csv records with profile preferences applied."
+      />
 
-      <form onSubmit={handleSubmit} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-4">
+      <form
+        onSubmit={handleSubmit}
+        className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-4"
+      >
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           type="date"
@@ -129,28 +156,37 @@ export function BodyPage() {
           onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
           required
         />
-        <input
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          type="number"
-          step="0.1"
-          placeholder="Weight"
-          value={form.weight}
-          onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
-        />
-        <input
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          type="number"
-          step="0.1"
-          placeholder="Waist"
-          value={form.waist}
-          onChange={(event) => setForm((prev) => ({ ...prev, waist: event.target.value }))}
-        />
-        <input
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          placeholder="Note"
-          value={form.note}
-          onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
-        />
+
+        {showWeight ? (
+          <input
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            type="number"
+            step="0.1"
+            placeholder="Weight"
+            value={form.weight}
+            onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
+          />
+        ) : null}
+
+        {showWaist ? (
+          <input
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            type="number"
+            step="0.1"
+            placeholder="Waist"
+            value={form.waist}
+            onChange={(event) => setForm((prev) => ({ ...prev, waist: event.target.value }))}
+          />
+        ) : null}
+
+        {showNote ? (
+          <input
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Note"
+            value={form.note}
+            onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
+          />
+        ) : null}
 
         <div className="md:col-span-4 flex items-center gap-2">
           <button className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white" type="submit">
@@ -172,37 +208,47 @@ export function BodyPage() {
         </div>
       </form>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-lg border border-slate-200 p-4">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">Weight Trend</h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="weight" stroke="#0f766e" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </article>
+      {showWeight || showWaist ? (
+        <div className={`grid gap-4 ${showWeight && showWaist ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+          {showWeight ? (
+            <article className="rounded-lg border border-slate-200 p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">Weight Trend</h2>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="weight" stroke="#0f766e" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+          ) : null}
 
-        <article className="rounded-lg border border-slate-200 p-4">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">Waist Trend</h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="waist" stroke="#334155" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {showWaist ? (
+            <article className="rounded-lg border border-slate-200 p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">Waist Trend</h2>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="waist" stroke="#334155" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+          ) : null}
+        </div>
+      ) : (
+        <article className="rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
+          All body metrics are disabled in Preferences.
         </article>
-      </div>
+      )}
 
       <article className="rounded-lg border border-slate-200 p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">History</h2>
@@ -211,9 +257,9 @@ export function BodyPage() {
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">
                 <th className="py-2">Date</th>
-                <th className="py-2">Weight</th>
-                <th className="py-2">Waist</th>
-                <th className="py-2">Note</th>
+                {showWeight ? <th className="py-2">Weight</th> : null}
+                {showWaist ? <th className="py-2">Waist</th> : null}
+                {showNote ? <th className="py-2">Note</th> : null}
                 <th className="py-2">Actions</th>
               </tr>
             </thead>
@@ -221,9 +267,9 @@ export function BodyPage() {
               {records.map((record, index) => (
                 <tr key={`${record.date}-${index}`} className="border-b border-slate-100">
                   <td className="py-2">{record.date}</td>
-                  <td className="py-2">{record.weight ?? '-'}</td>
-                  <td className="py-2">{record.waist ?? '-'}</td>
-                  <td className="py-2">{record.note || '-'}</td>
+                  {showWeight ? <td className="py-2">{record.weight ?? '-'}</td> : null}
+                  {showWaist ? <td className="py-2">{record.waist ?? '-'}</td> : null}
+                  {showNote ? <td className="py-2">{record.note || '-'}</td> : null}
                   <td className="py-2">
                     <div className="flex gap-2">
                       <button

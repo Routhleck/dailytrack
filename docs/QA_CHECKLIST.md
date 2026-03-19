@@ -12,11 +12,15 @@
 - [ ] Missing templates are auto-recreated.
 - [ ] Missing `body.csv` is created with header.
 - [ ] Today/This Week files auto-created from templates when absent.
+- [ ] Profile list/bootstrap works (`profiles/default` auto-created).
+- [ ] Profile switching changes active dataset.
+- [ ] Profile deletion is blocked when only one profile remains.
 
 ## Body CSV
 - [ ] Read table data correctly.
 - [ ] Add/edit/delete row persists to file.
 - [ ] Invalid numeric input handled as null-safe state.
+- [ ] Disabled body fields from preferences are hidden but existing file data is preserved.
 
 ## UI Workflows
 - [ ] Structured mode toggle/check/edit works.
@@ -27,3 +31,4 @@
 ## Regression Safety
 - [ ] Changing data root switches all views correctly.
 - [ ] Existing user files remain readable after app restart.
+- [ ] Legacy root layout migrates into `profiles/default` on first profile bootstrap.

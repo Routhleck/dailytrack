@@ -5,18 +5,27 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 
 ## High-Level Layers
 - UI Layer (`src/pages`, `src/components`): route views and interaction.
-- Feature Layer (`src/features/*`): note/body domain logic and orchestration.
+- Feature Layer (`src/features/*`): profile, preference, note, and body domain logic.
 - Domain Parsing Layer (`*.parser.ts`, `*.serializer.ts`): convert between files and typed state.
-- Local Storage Layer (`src/lib/fs` + Tauri file APIs): read/write local files only.
+- Local Storage Layer (`src/lib/fs` + Tauri commands): read/write local files only.
+
+## App-Level Contexts
+- `DataRootContext`:
+  - manages base root, profile list, active profile, active profile root
+  - supports create/switch/delete profile
+- `PreferencesContext`:
+  - loads/saves `preferences.json` per active profile
+  - controls section/field visibility in structured pages
 
 ## Data Flow
-1. Resolve active data root path.
-2. Read target local file.
-3. Parse content into typed state.
-4. Render structured UI.
-5. User edits structured fields or raw Markdown/CSV.
-6. Serialize (or raw write) back to file.
-7. Re-read and parse to refresh UI consistency.
+1. Resolve base root path.
+2. Ensure profile storage and active profile root.
+3. Read target local file from active profile root.
+4. Parse content into typed state.
+5. Render structured UI.
+6. User edits structured fields or raw Markdown/CSV.
+7. Serialize (or raw write) back to file.
+8. Re-read and parse to refresh UI consistency.
 
 ## Runtime Boundaries
 - Frontend: React + TypeScript + Tailwind.
@@ -28,8 +37,9 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - `features/daily`: daily note read/create/parse/edit/save.
 - `features/weekly`: weekly note read/create/parse/edit/save.
 - `features/body`: CSV read/edit/save and trend source data.
+- `features/preferences`: per-profile preferences read/save and context.
+- `features/settings`: base root + profile state management.
 - `features/dashboard`: summary and recent-file aggregation.
-- `features/settings`: local `dataRoot` management.
 
 ## Key Constraints
 - Markdown/CSV is the single source of truth.

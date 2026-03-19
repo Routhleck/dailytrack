@@ -6,7 +6,9 @@ import { ProgressBar } from '../components/ProgressBar'
 import { getBodyRecords } from '../features/body/body.service'
 import { getTodayNote, listDailyDates } from '../features/daily/daily.service'
 import { latestBodyRecord, summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
 
 type DashboardState = {
@@ -25,6 +27,7 @@ type DashboardState = {
 
 export function DashboardPage() {
   const { dataRoot } = useDataRoot()
+  const { preferences, loading: preferencesLoading } = usePreferences()
   const [state, setState] = useState<DashboardState | null>(null)
   const [error, setError] = useState('')
 
@@ -47,7 +50,9 @@ export function DashboardPage() {
           return
         }
 
-        const weeklyItems = Object.values(week.sections).flat()
+        const weeklyItems = WEEKLY_SECTION_ORDER.flatMap((section) =>
+          preferences.weekly.sections[section] ? week.sections[section] : [],
+        )
         const latestBody = latestBodyRecord(bodyRecords)
 
         setState({
@@ -77,9 +82,9 @@ export function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [dataRoot])
+  }, [dataRoot, preferences])
 
-  if (!state) {
+  if (preferencesLoading || !state) {
     return (
       <section>
         <PageHeader title="Dashboard" description="Loading local tracker summary..." />
@@ -133,9 +138,9 @@ export function DashboardPage() {
           {state.body ? (
             <div className="space-y-1 text-sm text-slate-700">
               <p>Date: {state.body.date}</p>
-              <p>Weight: {state.body.weight}</p>
-              <p>Waist: {state.body.waist}</p>
-              <p>Note: {state.body.note}</p>
+              {preferences.body.weight ? <p>Weight: {state.body.weight}</p> : null}
+              {preferences.body.waist ? <p>Waist: {state.body.waist}</p> : null}
+              {preferences.body.note ? <p>Note: {state.body.note}</p> : null}
             </div>
           ) : (
             <p className="text-sm text-slate-600">No body records yet.</p>

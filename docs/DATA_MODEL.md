@@ -1,6 +1,6 @@
 # Data Model
 
-## Type Contracts (MVP)
+## Type Contracts (MVP+)
 
 ```ts
 export type CheckboxItem = {
@@ -47,21 +47,42 @@ export type BodyRecord = {
   note: string;
 };
 
-export type Settings = {
-  dataRoot: string;
+export type TrackerPreferences = {
+  daily: {
+    showOptional: boolean;
+  };
+  weekly: {
+    sections: Record<WeeklySectionKey, boolean>;
+  };
+  body: {
+    weight: boolean;
+    waist: boolean;
+    note: boolean;
+  };
 };
 ```
 
-## Naming and File Contracts
-- Daily: `daily/YYYY-MM-DD.md`
-- Weekly: `weekly/YYYY-Www.md`
-- Body: `body.csv`
-- Templates: `templates/daily.md`, `templates/weekly.md`
+## Storage Contracts
+Base root:
+- `~/life-tracker-data` (default)
+
+Per profile:
+- `profiles/<profile>/daily/YYYY-MM-DD.md`
+- `profiles/<profile>/weekly/YYYY-Www.md`
+- `profiles/<profile>/body.csv`
+- `profiles/<profile>/templates/daily.md`
+- `profiles/<profile>/templates/weekly.md`
+- `profiles/<profile>/preferences.json`
 
 ## Editing Modes
 - Structured mode: edits typed fields, then serializes to Markdown/CSV.
 - Raw mode: edits raw file text directly.
 - Save behavior (MVP): explicit save button only.
+
+## Profile Semantics
+- App supports create/switch/delete profile.
+- Active profile is persisted in localStorage.
+- Deleting active profile is blocked in UI (switch first).
 
 ## Source of Truth Rule
 - Final persisted state always lives in local files.

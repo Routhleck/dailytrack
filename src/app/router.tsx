@@ -25,6 +25,12 @@ const BodyPage = lazy(async () => ({
 const SettingsPage = lazy(async () => ({
   default: (await import('../pages/SettingsPage')).SettingsPage,
 }))
+const ProfilesPage = lazy(async () => ({
+  default: (await import('../pages/ProfilesPage')).ProfilesPage,
+}))
+const PreferencesPage = lazy(async () => ({
+  default: (await import('../pages/PreferencesPage')).PreferencesPage,
+}))
 
 function withSuspense(node: ReactNode) {
   return (
@@ -47,6 +53,8 @@ export const router = createHashRouter([
       { path: 'weekly', element: withSuspense(<WeeklyListPage />) },
       { path: 'weekly/:weekId', element: withSuspense(<WeeklyNotePage />) },
       { path: 'body', element: withSuspense(<BodyPage />) },
+      { path: 'profiles', element: withSuspense(<ProfilesPage />) },
+      { path: 'preferences', element: withSuspense(<PreferencesPage />) },
       { path: 'settings', element: withSuspense(<SettingsPage />) },
     ],
   },

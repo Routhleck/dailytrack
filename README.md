@@ -27,42 +27,66 @@ npm install
 npm run tauri:dev
 ```
 
-### Build
+### Quality checks
 ```bash
+npm run lint
+npm run test
 npm run build
+```
+
+### Build release
+```bash
 npm run tauri:build
 ```
 
-### Test
-```bash
-npm run test
-```
-
 ## Data storage
-Default data root:
+Default base data root:
 - `~/life-tracker-data`
 
 Configurable in Settings page.
 
-### Expected file layout
+### Active layout (profile-based)
 ```text
 life-tracker-data/
-  daily/
-    YYYY-MM-DD.md
-  weekly/
-    YYYY-Www.md
-  body.csv
-  templates/
-    daily.md
-    weekly.md
+  profiles/
+    default/
+      daily/
+      weekly/
+      body.csv
+      templates/
+        daily.md
+        weekly.md
+      preferences.json
+    <another-profile>/
+      ...
 ```
 
-On startup, the app bootstraps missing directories/files/templates.
+At runtime, the app operates on one active profile root at a time.
+
+## Profiles and templates
+- Use `Profiles` page to:
+  - create profile
+  - switch profile
+  - delete non-active profile
+- New profile creation supports built-in template presets:
+  - Balanced
+  - Minimal
+  - Fitness Focus
+- Templates are editable when creating profile.
+- Current profile templates are also editable directly in `Profiles` page.
+
+## Preferences
+Use `Preferences` page to toggle tracking scope per profile:
+- daily optional section visibility
+- weekly section visibility (Body/Research/Life/Output/Social)
+- body fields visibility (weight/waist/note)
+
+These preferences affect structured UI rendering without changing your core file format contract.
 
 ## Data portability (Export / Import)
 - Use `Settings -> Export Data` to create a backup folder in your chosen destination directory.
 - Export creates a timestamped folder: `dailytrack-export-<timestamp>`.
-- Use `Settings -> Import Data` to import from an exported folder into the current data root.
+- Use `Settings -> Import Data` to import from an exported folder into current active profile root.
 - Import supports overwrite mode for existing files.
 - This enables moving data between macOS and Windows machines using local file transfer tools.
 
@@ -136,11 +160,14 @@ date,weight,waist,note
 - Daily notes list
 - Weekly notes list
 - Body progress
-- Settings (data root + export/import)
+- Profiles
+- Preferences
+- Settings (base root + export/import)
 
 ## Current limitations
 - Structured mode is schema-aware and only targets defined headings/fields.
 - Unknown extra markdown content is not preserved by structured save normalization.
+- Import is file-level merge/overwrite and does not do semantic conflict resolution.
 - No concurrent file write conflict handling yet.
 
 ## Project docs

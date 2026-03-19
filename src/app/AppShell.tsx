@@ -4,7 +4,7 @@ import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
 
 export function AppShell() {
-  const { dataRoot, loading, error } = useDataRoot()
+  const { baseDataRoot, dataRoot, activeProfile, loading, error } = useDataRoot()
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -13,7 +13,9 @@ export function AppShell() {
         <main className="flex-1 px-8 py-6">
           <div className="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
             {loading && 'Initializing local data folder...'}
-            {!loading && !error && `Data root: ${dataRoot}`}
+            {!loading &&
+              !error &&
+              `Base: ${baseDataRoot} | Profile: ${activeProfile} | Active root: ${dataRoot}`}
             {!loading && error && `Initialization error: ${error}`}
           </div>
           <Outlet />

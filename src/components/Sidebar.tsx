@@ -7,6 +7,8 @@ const navItems = [
   { to: '/daily', label: 'Daily Notes' },
   { to: '/weekly', label: 'Weekly Notes' },
   { to: '/body', label: 'Body Progress' },
+  { to: '/profiles', label: 'Profiles' },
+  { to: '/preferences', label: 'Preferences' },
   { to: '/settings', label: 'Settings' },
 ]
 

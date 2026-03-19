@@ -4,6 +4,32 @@ export async function ensureDataRoot(dataRoot?: string): Promise<string> {
   return invoke<string>('ensure_data_root', { dataRoot })
 }
 
+export async function listProfiles(dataRoot: string): Promise<string[]> {
+  return invoke<string[]>('list_profiles', { dataRoot })
+}
+
+export async function ensureProfile(dataRoot: string, profileName: string): Promise<string> {
+  return invoke<string>('ensure_profile', { dataRoot, profileName })
+}
+
+export async function createProfile(
+  dataRoot: string,
+  profileName: string,
+  dailyTemplate?: string,
+  weeklyTemplate?: string,
+): Promise<string> {
+  return invoke<string>('create_profile', {
+    dataRoot,
+    profileName,
+    dailyTemplate,
+    weeklyTemplate,
+  })
+}
+
+export async function deleteProfile(dataRoot: string, profileName: string): Promise<string> {
+  return invoke<string>('delete_profile', { dataRoot, profileName })
+}
+
 export async function readTextFile(path: string): Promise<string> {
   return invoke<string>('read_text_file', { path })
 }

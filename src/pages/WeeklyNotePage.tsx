@@ -5,6 +5,7 @@ import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import {
@@ -21,6 +22,7 @@ export function WeeklyNotePage() {
   const { weekId } = useParams()
   const activeWeekId = useMemo(() => weekId ?? currentWeekId(), [weekId])
   const { dataRoot, loading: rootLoading } = useDataRoot()
+  const { preferences, loading: preferencesLoading } = usePreferences()
 
   const [mode, setMode] = useState<Mode>('structured')
   const [note, setNote] = useState<WeeklyNote | null>(null)
@@ -130,7 +132,7 @@ export function WeeklyNotePage() {
     })
   }
 
-  if (rootLoading || loading) {
+  if (rootLoading || preferencesLoading || loading) {
     return (
       <section>
         <PageHeader title="Weekly" description="Loading local markdown note..." />
@@ -146,6 +148,8 @@ export function WeeklyNotePage() {
       </section>
     )
   }
+
+  const enabledSections = WEEKLY_SECTION_ORDER.filter((section) => preferences.weekly.sections[section])
 
   return (
     <section className="space-y-4">
@@ -186,7 +190,7 @@ export function WeeklyNotePage() {
 
       {mode === 'structured' ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          {WEEKLY_SECTION_ORDER.map((section) => {
+          {enabledSections.map((section) => {
             const items = note.sections[section]
             const summary = summarizeChecklist(items)
 

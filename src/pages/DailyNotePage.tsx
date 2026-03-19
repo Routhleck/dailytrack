@@ -6,6 +6,7 @@ import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
 import type { DailyNote } from '../types/tracker'
@@ -16,6 +17,7 @@ export function DailyNotePage() {
   const { date } = useParams()
   const activeDate = useMemo(() => date ?? todayDateString(), [date])
   const { dataRoot, loading: rootLoading } = useDataRoot()
+  const { preferences, loading: preferencesLoading } = usePreferences()
 
   const [mode, setMode] = useState<Mode>('structured')
   const [note, setNote] = useState<DailyNote | null>(null)
@@ -101,7 +103,7 @@ export function DailyNotePage() {
     })
   }
 
-  if (rootLoading || loading) {
+  if (rootLoading || preferencesLoading || loading) {
     return (
       <section>
         <PageHeader title="Daily" description="Loading local markdown note..." />
@@ -189,29 +191,31 @@ export function DailyNotePage() {
             </div>
           </article>
 
-          <article className="rounded-lg border border-slate-200 p-4">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Optional</h2>
-            <div className="space-y-2">
-              {note.optional.map((item, index) => (
-                <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={(event) => {
-                      updateChecklist('optional', index, { checked: event.target.checked })
-                    }}
-                  />
-                  <input
-                    className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
-                    value={item.text}
-                    onChange={(event) => {
-                      updateChecklist('optional', index, { text: event.target.value })
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          </article>
+          {preferences.daily.showOptional ? (
+            <article className="rounded-lg border border-slate-200 p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">Optional</h2>
+              <div className="space-y-2">
+                {note.optional.map((item, index) => (
+                  <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={(event) => {
+                        updateChecklist('optional', index, { checked: event.target.checked })
+                      }}
+                    />
+                    <input
+                      className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
+                      value={item.text}
+                      onChange={(event) => {
+                        updateChecklist('optional', index, { text: event.target.value })
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+            </article>
+          ) : null}
 
           <article className="rounded-lg border border-slate-200 p-4">
             <h2 className="mb-3 text-base font-semibold text-slate-900">One Line</h2>

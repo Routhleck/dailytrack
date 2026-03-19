@@ -15,9 +15,9 @@ function parentPath(path: string): string {
 }
 
 export function SettingsPage() {
-  const { dataRoot, updateDataRoot, refresh, loading } = useDataRoot()
+  const { baseDataRoot, dataRoot, activeProfile, updateDataRoot, refresh, loading } = useDataRoot()
 
-  const [draftPath, setDraftPath] = useState(dataRoot ?? '')
+  const [draftPath, setDraftPath] = useState(baseDataRoot ?? '')
   const [rootMessage, setRootMessage] = useState('')
 
   const defaultExportDir = useMemo(() => {
@@ -37,8 +37,8 @@ export function SettingsPage() {
   const [importBusy, setImportBusy] = useState(false)
 
   useEffect(() => {
-    setDraftPath(dataRoot ?? '')
-  }, [dataRoot])
+    setDraftPath(baseDataRoot ?? '')
+  }, [baseDataRoot])
 
   useEffect(() => {
     if (!exportDir) {
@@ -125,13 +125,22 @@ export function SettingsPage() {
     <section className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Configure local data folder and move data between computers via export/import."
+        description="Configure base data folder and move active profile data between computers via export/import."
       />
+
+      <div className="max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        <p>
+          Active profile: <span className="font-medium">{activeProfile || '-'}</span>
+        </p>
+        <p>
+          Active profile root: <span className="font-medium">{dataRoot || '-'}</span>
+        </p>
+      </div>
 
       <form onSubmit={handleRootSubmit} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">Data Root</h2>
         <label className="block text-sm font-medium text-slate-700" htmlFor="data-root">
-          Data root path
+          Base data root path
         </label>
         <input
           id="data-root"
