@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local CI/debug cache and release keys
+.gh-cache/
+dailytrack-updater.key
+dailytrack-updater.key.pub
