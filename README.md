@@ -7,8 +7,6 @@ Markdown and CSV stay as the only source of truth.
 
 ## Screenshots
 
-> Replace these PNG placeholders with real screenshots later, while keeping file names.
-
 ![Dashboard](docs/assets/screenshots/dashboard.png)
 ![Daily Note](docs/assets/screenshots/daily-note.png)
 ![Weekly Note](docs/assets/screenshots/weekly-note.png)
