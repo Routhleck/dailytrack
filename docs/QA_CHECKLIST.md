@@ -35,8 +35,7 @@
 - [ ] `Settings -> Start Tutorial` can replay the tutorial on demand.
 
 ## Regression Safety
-- [ ] Changing data root switches all views correctly.
-- [ ] `Save Data Root` only switches root and does not copy previous root data.
+- [ ] Migration-based root switch updates all views correctly.
 - [ ] `Migrate Data Root` copies data and switches to destination root.
 - [ ] Migration rejects same-path or nested source/destination roots.
 - [ ] `Reset Data` requires explicit `RESET` confirmation.

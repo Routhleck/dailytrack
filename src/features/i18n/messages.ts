@@ -192,9 +192,11 @@ export const enMessages = {
 
   'settings.title': 'Settings',
   'settings.description':
-    'Configure base data folder and move active profile data between computers via export/import.',
+    'Migrate data root safely and move active profile data between computers via export/import.',
   'settings.activeProfile': 'Active profile',
   'settings.activeProfileRoot': 'Active profile root',
+  'settings.migrateOnlyHint':
+    'Root switching is disabled in UI. Use migration to move data safely and switch in one step.',
   'settings.tutorial': 'Tutorial',
   'settings.tutorialDescription': 'Replay a short guided tour for the main navigation.',
   'settings.startTutorial': 'Start Tutorial',
@@ -452,9 +454,10 @@ export const zhMessages: Record<MessageKey, string> = {
   'preferences.trackBodyNote': '追踪身体备注',
 
   'settings.title': '系统设置',
-  'settings.description': '配置基础数据目录，并通过导出/导入在电脑间迁移当前档案数据。',
+  'settings.description': '通过安全迁移和导出/导入在电脑间移动当前档案数据。',
   'settings.activeProfile': '当前档案',
   'settings.activeProfileRoot': '当前档案路径',
+  'settings.migrateOnlyHint': '界面已禁用直接切换根目录。请使用迁移，在一步中安全复制并切换。',
   'settings.tutorial': '教程',
   'settings.tutorialDescription': '可随时重播一轮主导航快速引导。',
   'settings.startTutorial': '开始教程',

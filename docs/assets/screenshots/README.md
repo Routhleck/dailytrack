@@ -9,7 +9,7 @@ Replace them with real screenshots while keeping the same file names:
 - `dashboard.png`
 - `daily-note.png`
 - `weekly-note.png`
-- `settings-reset.png`
+- `settings.png`
 
 Recommended capture notes:
 

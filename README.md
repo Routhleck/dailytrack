@@ -12,7 +12,7 @@ Markdown and CSV stay as the only source of truth.
 ![Dashboard](docs/assets/screenshots/dashboard.png)
 ![Daily Note](docs/assets/screenshots/daily-note.png)
 ![Weekly Note](docs/assets/screenshots/weekly-note.png)
-![Settings Reset](docs/assets/screenshots/settings-reset.png)
+![Settings Reset](docs/assets/screenshots/settings.png)
 
 ## Why dailytrack
 
@@ -115,8 +115,8 @@ dailytrack-data/
 - Preferences:
   - per-profile module toggles
 - Settings:
-  - root switch
-  - one-click root migration
+  - migrate-and-switch data root
+  - migration safety checks
   - export/import data bundle
   - tutorial replay
   - reset to first-run state (danger zone)

@@ -70,6 +70,8 @@ The format is based on Keep a Changelog.
 - Settings now includes guarded `Reset Data` flow requiring `RESET` confirmation and re-triggering initial template setup.
 - README reorganized for open-source onboarding: screenshots, value proposition, quick start, data model summary, and CI/release guidance.
 - Replaced placeholder app branding with user-provided `dailytrack.png` across sidebar, favicon, and Tauri desktop icon assets.
+- Settings page now uses migration-only root flow (removed direct root-switch form from UI).
+- Sidebar navigation is now sticky and remains fixed while main content scrolls.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

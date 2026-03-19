@@ -37,15 +37,11 @@ export function SettingsPage() {
     baseDataRoot,
     dataRoot,
     activeProfile,
-    updateDataRoot,
     migrateDataRoot,
     resetTrackerData,
     refresh,
     loading,
   } = useDataRoot()
-
-  const [draftPath, setDraftPath] = useState(baseDataRoot ?? '')
-  const [rootMessage, setRootMessage] = useState('')
 
   const defaultExportDir = useMemo(() => {
     if (!dataRoot) {
@@ -90,10 +86,6 @@ export function SettingsPage() {
   }, [normalizedBaseRoot, normalizedMigrateTarget, t])
 
   useEffect(() => {
-    setDraftPath(baseDataRoot ?? '')
-  }, [baseDataRoot])
-
-  useEffect(() => {
     if (!exportDir) {
       setExportDir(defaultExportDir)
     }
@@ -105,26 +97,8 @@ export function SettingsPage() {
     }
 
     const suggested = baseDataRoot.replace(/life-tracker-data$/, 'dailytrack-data')
-    setMigrateTarget(suggested === baseDataRoot ? '' : suggested)
+    setMigrateTarget(suggested === baseDataRoot ? `${baseDataRoot}-migrated` : suggested)
   }, [baseDataRoot, migrateTarget])
-
-  async function handleRootSubmit(event: FormEvent) {
-    event.preventDefault()
-    setRootMessage('')
-
-    const nextPath = draftPath.trim()
-    if (!nextPath) {
-      setRootMessage(t('settings.pathEmpty'))
-      return
-    }
-
-    try {
-      await updateDataRoot(nextPath)
-      setRootMessage(t('settings.dataRootUpdated'))
-    } catch {
-      setRootMessage(t('settings.dataRootUpdateFailed'))
-    }
-  }
 
   async function handleExport(event: FormEvent) {
     event.preventDefault()
@@ -255,8 +229,12 @@ export function SettingsPage() {
           {t('settings.activeProfile')}: <span className="font-medium">{activeProfile || '-'}</span>
         </p>
         <p>
+          {t('settings.baseDataRootPath')}: <span className="font-medium">{baseDataRoot || '-'}</span>
+        </p>
+        <p>
           {t('settings.activeProfileRoot')}: <span className="font-medium">{dataRoot || '-'}</span>
         </p>
+        <p className="mt-1 text-xs text-slate-500">{t('settings.migrateOnlyHint')}</p>
         <div className="mt-4 border-t border-slate-200 pt-3">
           <p className="text-sm font-medium text-slate-900">{t('settings.tutorial')}</p>
           <p className="mt-1 text-sm text-slate-600">{t('settings.tutorialDescription')}</p>
@@ -269,43 +247,6 @@ export function SettingsPage() {
           </button>
         </div>
       </div>
-
-      <form onSubmit={handleRootSubmit} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-base font-semibold text-slate-900">{t('settings.dataRoot')}</h2>
-        <p className="text-sm text-slate-600">
-          {t('settings.dataRootDescription')}
-        </p>
-        <label className="block text-sm font-medium text-slate-700" htmlFor="data-root">
-          {t('settings.baseDataRootPath')}
-        </label>
-        <input
-          id="data-root"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
-          value={draftPath}
-          onChange={(event) => setDraftPath(event.target.value)}
-          placeholder="/Users/you/dailytrack-data"
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {t('settings.saveDataRoot')}
-        </button>
-        <button
-          type="button"
-          disabled={loading || !draftPath.trim()}
-          onClick={() => {
-            setMigrateTarget(draftPath.trim())
-            setMigrateMessage('')
-          }}
-          className="ml-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-60"
-        >
-          {t('settings.usePathForMigration')}
-        </button>
-        {rootMessage ? <p className="text-sm text-slate-600">{rootMessage}</p> : null}
-      </form>
 
       <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
