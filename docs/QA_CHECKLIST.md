@@ -38,6 +38,8 @@
 - [ ] `Save Data Root` only switches root and does not copy previous root data.
 - [ ] `Migrate Data Root` copies data and switches to destination root.
 - [ ] Migration rejects same-path or nested source/destination roots.
+- [ ] `Reset Data` requires explicit `RESET` confirmation.
+- [ ] `Reset Data` clears app-managed tracker files and re-enters first-run template setup.
 - [ ] Existing user files remain readable after app restart.
 - [ ] Legacy root layout migrates into `profiles/default` on first profile bootstrap.
 - [ ] Empty new root triggers first-launch template setup modal.

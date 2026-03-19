@@ -68,6 +68,14 @@ On startup:
   - source and destination cannot be the same path
   - source and destination cannot be nested
 
+## Reset Data Behavior
+- `Reset Data (Danger Zone)` removes app-managed tracker content from current base root:
+  - `profiles/`
+  - legacy `daily/`, `weekly/`, `templates/`, `body.csv`
+- Reset does not recursively delete unknown unrelated files in the same root.
+- After reset, app forces first-launch template setup for the current base root.
+- Tutorial completion/pending/session-dismiss flags are cleared so onboarding can run again.
+
 ## Local Browser Storage Keys
 - `dailytrack.dataRoot`: preferred base root path.
 - `dailytrack.activeProfile`: active profile name.

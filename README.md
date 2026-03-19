@@ -140,6 +140,14 @@ These preferences affect structured UI rendering without changing your core file
 - Migration blocks unsafe path pairs (same path or nested source/destination).
 - `Settings` also includes `Start Tutorial` to replay the sidebar onboarding guide manually.
 
+## Full reset (first-run rollback)
+- `Settings -> Reset Data (Danger Zone)` lets you wipe tracker data and return to first-run setup.
+- It removes app-managed data under the current base root:
+  - `profiles/`
+  - legacy `daily/`, `weekly/`, `templates/`, `body.csv`
+- You must type `RESET` to confirm.
+- After reset, app re-enters the initial template setup flow.
+
 ## Markdown schema
 
 ### Daily note (`daily/YYYY-MM-DD.md`)

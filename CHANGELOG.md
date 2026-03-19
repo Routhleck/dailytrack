@@ -45,6 +45,7 @@ The format is based on Keep a Changelog.
 - Expanded template preset pack with bilingual variants and Blank Skeleton option.
 - First-use guided tutorial overlay (5-step sidebar highlight flow) with auto-start after initial template setup.
 - Manual tutorial replay action in Settings (`Start Tutorial`).
+- Full reset action in Settings danger zone to wipe tracker data and return to first-run setup.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -64,6 +65,7 @@ The format is based on Keep a Changelog.
 - `ensure_data_root` now returns root metadata (`root`, `isFirstRun`) to drive first-launch onboarding behavior.
 - Profiles and onboarding flows now support selecting template language (English/中文).
 - Settings now includes tutorial replay entry; first-run tutorial auto-trigger uses persisted pending/completed/session-dismiss flags.
+- Settings now includes guarded `Reset Data` flow requiring `RESET` confirmation and re-triggering initial template setup.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
