@@ -43,6 +43,8 @@ The format is based on Keep a Changelog.
 - First-launch template setup workflow for brand-new empty data roots.
 - Bilingual UI framework with runtime language toggle (`EN` / `中文`) and persisted locale preference.
 - Expanded template preset pack with bilingual variants and Blank Skeleton option.
+- First-use guided tutorial overlay (5-step sidebar highlight flow) with auto-start after initial template setup.
+- Manual tutorial replay action in Settings (`Start Tutorial`).
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -61,6 +63,7 @@ The format is based on Keep a Changelog.
 - README and release checklist now document tag-based automated release flow.
 - `ensure_data_root` now returns root metadata (`root`, `isFirstRun`) to drive first-launch onboarding behavior.
 - Profiles and onboarding flows now support selecting template language (English/中文).
+- Settings now includes tutorial replay entry; first-run tutorial auto-trigger uses persisted pending/completed/session-dismiss flags.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

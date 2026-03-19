@@ -29,6 +29,9 @@
 - [ ] Dashboard summary matches detail pages.
 - [ ] UI language toggle (`EN` / `中文`) switches core page copy and persists after restart.
 - [ ] Profiles page supports template language switch for preset preview/fill.
+- [ ] After first-launch template setup completes, 5-step sidebar tutorial auto-opens once.
+- [ ] Skipping auto tutorial closes it and prevents repeated automatic prompts.
+- [ ] `Settings -> Start Tutorial` can replay the tutorial on demand.
 
 ## Regression Safety
 - [ ] Changing data root switches all views correctly.

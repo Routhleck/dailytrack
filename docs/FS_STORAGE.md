@@ -67,3 +67,12 @@ On startup:
 - Migration safety:
   - source and destination cannot be the same path
   - source and destination cannot be nested
+
+## Local Browser Storage Keys
+- `dailytrack.dataRoot`: preferred base root path.
+- `dailytrack.activeProfile`: active profile name.
+- `dailytrack.pendingInitialTemplateRoot`: root waiting for initial template setup completion.
+- `dailytrack.uiLanguage`: UI language (`en` or `zh`).
+- `dailytrack.tour.pending.v1`: first-run tutorial pending flag.
+- `dailytrack.tour.completed.v1`: first-run tutorial completion flag.
+- `dailytrack.tour.dismissed.session.v1`: session-only dismissal flag for auto tutorial.

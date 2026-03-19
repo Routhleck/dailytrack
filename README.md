@@ -108,6 +108,8 @@ At runtime, the app operates on one active profile root at a time.
 - If the selected base root is detected as a brand-new empty folder, app shows a blocking initial setup modal.
 - You must choose a template preset (or Blank) and template language before entering the main workflow.
 - Selected templates are written to active profile `templates/daily.md` and `templates/weekly.md`.
+- After template initialization completes, a 5-step guided navigation tutorial auto-starts once.
+- Skipping the auto tutorial stops further automatic prompts; you can replay anytime from `Settings`.
 
 ## UI language
 - Sidebar provides UI language toggle:
@@ -136,6 +138,7 @@ These preferences affect structured UI rendering without changing your core file
 - `Settings -> Migrate Data Root`: copy current base root to destination and switch to destination in one step.
 - Migration supports optional overwrite mode for filename conflicts.
 - Migration blocks unsafe path pairs (same path or nested source/destination).
+- `Settings` also includes `Start Tutorial` to replay the sidebar onboarding guide manually.
 
 ## Markdown schema
 

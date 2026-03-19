@@ -86,6 +86,10 @@ Per profile:
 - Active profile is persisted in localStorage.
 - Deleting active profile is blocked in UI (switch first).
 - UI language preference is persisted in localStorage (`dailytrack.uiLanguage`).
+- First-run tutorial state is persisted in local/session storage:
+  - pending: `dailytrack.tour.pending.v1`
+  - completed: `dailytrack.tour.completed.v1`
+  - session dismiss: `dailytrack.tour.dismissed.session.v1`
 
 ## Source of Truth Rule
 - Final persisted state always lives in local files.
