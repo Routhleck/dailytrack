@@ -7,13 +7,14 @@
 - Platform-specific Tauri prerequisites (macOS/Linux/Windows)
 
 ## Planned Commands
-These commands will be finalized once scaffold is generated in Phase 2.
+These are the current project commands.
 
 ```bash
 npm install
-npm run tauri dev
+npm run tauri:dev
+npm run test
 npm run build
-npm run tauri build
+npm run tauri:build
 ```
 
 ## Environment Notes

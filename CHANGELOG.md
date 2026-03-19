@@ -11,4 +11,17 @@ The format is based on Keep a Changelog.
 - `AGENTS.md` collaboration and engineering guardrails.
 - Architecture, data model, parser, storage, setup, QA, and release docs under `docs/`.
 - Initial ADRs for stack and markdown normalization strategy.
-- Initial development log entry for Phase 1 setup.
+- Tauri + React + TypeScript + Tailwind app shell with sidebar navigation and route structure.
+- Local data root bootstrap command to create `daily/`, `weekly/`, `templates/`, and `body.csv`.
+- Daily and weekly markdown parser/serializer/service modules.
+- Structured + raw editing workflows for daily and weekly notes.
+- Body CSV table/form editing with weight and waist trend charts.
+- Dashboard summaries and daily/weekly file list pages.
+- Parser and CSV roundtrip unit tests via Vitest.
+
+### Changed
+- Replaced template starter UI with tracker-focused desktop layout.
+- Updated README with run/build/test instructions and markdown schema contracts.
+
+### Fixed
+- Removed unused scaffold assets and legacy starter styles.
