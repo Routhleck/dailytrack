@@ -32,16 +32,15 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     env:
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      DAILYTRACK_UPDATER_PUBKEY: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      APPLE_ID_RAW: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD_RAW: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID_RAW: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_CERTIFICATE_RAW: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD_RAW: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY_RAW: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      DAILYTRACK_UPDATER_PUBKEY_RAW: ${{ secrets.DAILYTRACK_UPDATER_PUBKEY }}
+      TAURI_SIGNING_PRIVATE_KEY_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -70,45 +69,91 @@ jobs:
         if: ${{ matrix.target != '' }}
         run: rustup target add ${{ matrix.target }}
 
-      - name: macOS signing mode notice
+      - name: Prepare optional macOS signing env
         if: ${{ matrix.platform == 'macos-latest' }}
         shell: bash
         run: |
+          echo "ENABLE_MACOS_SIGNING=false" >> "$GITHUB_ENV"
           missing=()
-          for key in APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD KEYCHAIN_PASSWORD; do
+          for key in APPLE_ID_RAW APPLE_PASSWORD_RAW APPLE_TEAM_ID_RAW APPLE_CERTIFICATE_RAW APPLE_CERTIFICATE_PASSWORD_RAW; do
             if [ -z "${!key}" ]; then
               missing+=("$key")
             fi
           done
 
-          if [ ${#missing[@]} -gt 0 ]; then
+          if [ ${#missing[@]} -eq 0 ]; then
+            {
+              echo "APPLE_ID<<EOF"
+              printf '%s\n' "$APPLE_ID_RAW"
+              echo "EOF"
+              echo "APPLE_PASSWORD<<EOF"
+              printf '%s\n' "$APPLE_PASSWORD_RAW"
+              echo "EOF"
+              echo "APPLE_TEAM_ID<<EOF"
+              printf '%s\n' "$APPLE_TEAM_ID_RAW"
+              echo "EOF"
+              echo "APPLE_CERTIFICATE<<EOF"
+              printf '%s\n' "$APPLE_CERTIFICATE_RAW"
+              echo "EOF"
+              echo "APPLE_CERTIFICATE_PASSWORD<<EOF"
+              printf '%s\n' "$APPLE_CERTIFICATE_PASSWORD_RAW"
+              echo "EOF"
+              echo "APPLE_SIGNING_IDENTITY<<EOF"
+              printf '%s\n' "$APPLE_SIGNING_IDENTITY_RAW"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+            echo "ENABLE_MACOS_SIGNING=true" >> "$GITHUB_ENV"
+            echo "::notice::All macOS signing/notarization secrets are available."
+          else
             echo "::warning::macOS signing/notarization secrets are incomplete: ${missing[*]}"
             echo "::warning::This run will continue with unsigned macOS artifacts."
-          else
-            echo "All macOS signing/notarization secrets are available."
           fi
 
-      - name: Updater mode notice
+      - name: Prepare updater signing env
         shell: bash
         run: |
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && [ -n "$DAILYTRACK_UPDATER_PUBKEY" ]; then
+          decode_pubkey_if_needed() {
+            local input="$1"
+            if [ -z "$input" ]; then
+              printf ''
+              return
+            fi
+            if [[ "$input" == untrusted\ comment:* ]]; then
+              printf '%s' "$input"
+              return
+            fi
+            local decoded
+            decoded="$(printf '%s' "$input" | base64 --decode 2>/dev/null || true)"
+            if [[ "$decoded" == untrusted\ comment:* ]]; then
+              printf '%s' "$decoded"
+            else
+              printf '%s' "$input"
+            fi
+          }
+
+          pubkey="$(decode_pubkey_if_needed "$DAILYTRACK_UPDATER_PUBKEY_RAW")"
+          private_key="$TAURI_SIGNING_PRIVATE_KEY_RAW"
+          private_key_password="$TAURI_SIGNING_PRIVATE_KEY_PASSWORD_RAW"
+
+          if [ -n "$private_key" ] && [ -n "$pubkey" ]; then
+            {
+              echo "TAURI_SIGNING_PRIVATE_KEY<<EOF"
+              printf '%s\n' "$private_key"
+              echo "EOF"
+              echo "DAILYTRACK_UPDATER_PUBKEY<<EOF"
+              printf '%s\n' "$pubkey"
+              echo "EOF"
+              echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD<<EOF"
+              printf '%s\n' "$private_key_password"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+            echo "UPDATER_READY=true" >> "$GITHUB_ENV"
             echo "::notice::Updater signing key + public key found. Updater artifacts will be generated."
           else
+            echo "UPDATER_READY=false" >> "$GITHUB_ENV"
             echo "::warning::Updater key configuration missing (TAURI_SIGNING_PRIVATE_KEY or DAILYTRACK_UPDATER_PUBKEY)."
             echo "::warning::This run will still publish installers, but in-app auto-update metadata/signatures will be skipped."
           fi
-
-      - name: Import Apple signing certificate
-        if: ${{ matrix.platform == 'macos-latest' && env.APPLE_CERTIFICATE != '' && env.APPLE_CERTIFICATE_PASSWORD != '' && env.KEYCHAIN_PASSWORD != '' }}
-        shell: bash
-        run: |
-          echo "$APPLE_CERTIFICATE" | base64 --decode > signing-certificate.p12
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security import signing-certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          rm -f signing-certificate.p12
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -129,7 +174,7 @@ jobs:
         shell: bash
         run: |
           args="${{ matrix.args }}"
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && [ -n "$DAILYTRACK_UPDATER_PUBKEY" ]; then
+          if [ "${UPDATER_READY:-false}" = "true" ]; then
             args="$args --config src-tauri/tauri.updater.conf.json"
           fi
           echo "args=${args}" >> "$GITHUB_OUTPUT"
@@ -138,10 +183,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_ID: ${{ env.APPLE_ID }}
-          APPLE_PASSWORD: ${{ env.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
-          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           DAILYTRACK_UPDATER_PUBKEY: ${{ env.DAILYTRACK_UPDATER_PUBKEY }}
