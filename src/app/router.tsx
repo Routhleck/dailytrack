@@ -1,28 +1,52 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { createHashRouter } from 'react-router-dom'
 
 import { AppShell } from './AppShell'
-import { BodyPage } from '../pages/BodyPage'
-import { DailyListPage } from '../pages/DailyListPage'
-import { DailyNotePage } from '../pages/DailyNotePage'
-import { DashboardPage } from '../pages/DashboardPage'
-import { SettingsPage } from '../pages/SettingsPage'
-import { WeeklyListPage } from '../pages/WeeklyListPage'
-import { WeeklyNotePage } from '../pages/WeeklyNotePage'
+
+const DashboardPage = lazy(async () => ({
+  default: (await import('../pages/DashboardPage')).DashboardPage,
+}))
+const DailyNotePage = lazy(async () => ({
+  default: (await import('../pages/DailyNotePage')).DailyNotePage,
+}))
+const WeeklyNotePage = lazy(async () => ({
+  default: (await import('../pages/WeeklyNotePage')).WeeklyNotePage,
+}))
+const DailyListPage = lazy(async () => ({
+  default: (await import('../pages/DailyListPage')).DailyListPage,
+}))
+const WeeklyListPage = lazy(async () => ({
+  default: (await import('../pages/WeeklyListPage')).WeeklyListPage,
+}))
+const BodyPage = lazy(async () => ({
+  default: (await import('../pages/BodyPage')).BodyPage,
+}))
+const SettingsPage = lazy(async () => ({
+  default: (await import('../pages/SettingsPage')).SettingsPage,
+}))
+
+function withSuspense(node: ReactNode) {
+  return (
+    <Suspense fallback={<div className="text-sm text-slate-500">Loading page...</div>}>
+      {node}
+    </Suspense>
+  )
+}
 
 export const router = createHashRouter([
   {
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'today', element: <DailyNotePage /> },
-      { path: 'week', element: <WeeklyNotePage /> },
-      { path: 'daily', element: <DailyListPage /> },
-      { path: 'daily/:date', element: <DailyNotePage /> },
-      { path: 'weekly', element: <WeeklyListPage /> },
-      { path: 'weekly/:weekId', element: <WeeklyNotePage /> },
-      { path: 'body', element: <BodyPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      { index: true, element: withSuspense(<DashboardPage />) },
+      { path: 'today', element: withSuspense(<DailyNotePage />) },
+      { path: 'week', element: withSuspense(<WeeklyNotePage />) },
+      { path: 'daily', element: withSuspense(<DailyListPage />) },
+      { path: 'daily/:date', element: withSuspense(<DailyNotePage />) },
+      { path: 'weekly', element: withSuspense(<WeeklyListPage />) },
+      { path: 'weekly/:weekId', element: withSuspense(<WeeklyNotePage />) },
+      { path: 'body', element: withSuspense(<BodyPage />) },
+      { path: 'settings', element: withSuspense(<SettingsPage />) },
     ],
   },
 ])

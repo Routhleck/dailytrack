@@ -22,6 +22,7 @@ The format is based on Keep a Changelog.
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
 - Updated README with run/build/test instructions and markdown schema contracts.
+- Switched route pages to lazy-loaded chunks to reduce initial bundle size.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
