@@ -19,3 +19,6 @@
 - [ ] Tauri dev build works locally.
 - [ ] Production build command succeeds.
 - [ ] Default data root bootstrap verified.
+- [ ] GitHub Actions `publish` workflow green for target tag.
+- [ ] Draft release contains Windows + macOS artifacts.
+- [ ] Draft release notes reviewed before publishing.

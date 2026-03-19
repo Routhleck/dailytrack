@@ -39,6 +39,24 @@ npm run build
 npm run tauri:build
 ```
 
+### GitHub Release CI (Windows + macOS)
+- Workflow file: `.github/workflows/publish.yml`
+- Trigger options:
+  - push a tag like `v0.2.0`
+  - manual run via `workflow_dispatch` with `tag_name`
+- Output:
+  - Draft GitHub Release with Windows and macOS bundles uploaded as assets
+
+Tag-based release example:
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Notes:
+- This pipeline currently builds unsigned bundles by default.
+- For notarized/signed production installers, add platform signing secrets/certificates later.
+
 ## Data storage
 Default base data root:
 - `~/dailytrack-data`

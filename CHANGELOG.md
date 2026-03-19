@@ -39,6 +39,7 @@ The format is based on Keep a Changelog.
   - `delete_profile`
 - Realtime sync utilities and event bus (`src/lib/liveSync.ts`) for cross-page refresh.
 - Data-root migration command and Settings workflow for one-click copy + switch.
+- GitHub Actions publish pipeline for Windows + macOS release artifacts (`.github/workflows/publish.yml`).
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -54,6 +55,7 @@ The format is based on Keep a Changelog.
 - Renamed default base root to `dailytrack-data` and added automatic fallback to legacy `life-tracker-data` when present.
 - Settings now explicitly separates root switching (`Save Data Root`) from migration (`Migrate Data Root`).
 - Migration UI now validates unsafe paths early and provides quick "Use This Path for Migration" action.
+- README and release checklist now document tag-based automated release flow.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
