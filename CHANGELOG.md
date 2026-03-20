@@ -88,6 +88,8 @@ The format is based on Keep a Changelog.
 
 ### Changed
 - Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.
+- Create-profile template editor now also supports structured mode (default) with checklist add/remove, weekly reflection field editing, and raw markdown fallback.
+- README is reorganized around a user-first release download flow and now uses a compact HTML screenshot gallery to reduce vertical scrolling.
 - WebDAV settings now use debounced autosave; `Test/Push/Pull/Delete/Refresh` actions force-save draft config first, removing the need for manual save before testing.
 - Settings page now includes a `WebDAV Cloud Sync` section with connection test and snapshot operations.
 - Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
