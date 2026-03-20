@@ -7,6 +7,13 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Structured editor for current profile templates in Profiles:
+  - editable daily/weekly checklist items
+  - add/remove actions for template checklist items
+  - structured weekly reflection fields editing
+- One-click overwrite actions in Profiles to apply current templates to active files:
+  - `Apply Daily Template to Today`
+  - `Apply Weekly Template to This Week`
 - WebDAV cloud snapshot sync (whole-base-root scope):
   - local WebDAV config storage (`webdav.config.json` in app config dir)
   - manual `Push Now` / `Pull Latest` / `Pull Selected`
@@ -80,6 +87,7 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.
 - WebDAV settings now use debounced autosave; `Test/Push/Pull/Delete/Refresh` actions force-save draft config first, removing the need for manual save before testing.
 - Settings page now includes a `WebDAV Cloud Sync` section with connection test and snapshot operations.
 - Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
