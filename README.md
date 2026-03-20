@@ -5,30 +5,50 @@
 Local-first desktop life tracker for Markdown users.
 
 `dailytrack` is a Tauri desktop app that reads and writes your local tracker files.
-Markdown and CSV stay as the only source of truth.
+Markdown and CSV remain the only source of truth.
 
-## Download and Install (Recommended)
+## Start Here
 
-If you just want to use the app, start from GitHub Releases:
+### I just want to use it (Download)
 
 - Latest release: https://github.com/Routhleck/dailytrack/releases/latest
 - All releases: https://github.com/Routhleck/dailytrack/releases
 
-Choose assets by OS/CPU:
+Pick the installer by platform:
 
 - macOS (Apple Silicon): `dailytrack_*_aarch64.dmg`
 - macOS (Intel): `dailytrack_*_x64.dmg`
-- Windows: choose the `.msi` or `-setup.exe` asset in the same release
+- Windows: `dailytrack_*_x64_en-US.msi` or `dailytrack_*_x64-setup.exe`
 
-Install steps:
+Install in 3 steps:
 
-1. Open latest release page.
-2. Download the matching installer for your system.
+1. Open the latest release page.
+2. Download the matching installer.
 3. Install and launch `dailytrack`.
 
-Note for unsigned macOS builds:
+### I want to develop locally
 
-- If Gatekeeper blocks app launch, use the helper script included in the DMG (`fix-dailytrack-quarantine.command`) or follow the manual `xattr` workaround in the `macOS Install Notice (Unsigned Builds)` section below.
+```bash
+npm install
+npm run tauri:dev
+```
+
+Quality gates:
+
+```bash
+npm run lint
+npm run test -- --run
+npm run build
+cargo check --manifest-path src-tauri/Cargo.toml
+```
+
+## Why dailytrack
+
+- Local-first and private: no account system, no forced cloud backend.
+- Markdown-first: app is an editor/viewer layer, not a hidden database.
+- Structured + raw editing: fast checkbox toggles with raw markdown fallback.
+- Profile workflow: multiple profiles with separate templates and preferences.
+- Real-time feel: autosave + local file change refresh.
 
 ## Screenshots
 
@@ -37,66 +57,46 @@ Note for unsigned macOS builds:
 ![Weekly Note](docs/assets/screenshots/weekly-note.png)
 ![Settings Reset](docs/assets/screenshots/settings.png)
 
-## Why dailytrack
+## Core Features
 
-- Local-first and private: no cloud, no account, no remote API.
-- Markdown-first: app is an editor/viewer layer, not a hidden database.
-- Structured plus raw: toggle checklists in UI or edit raw Markdown directly.
-- Profile-based workflow: separate personal/work templates and preferences.
-- Real-time feel: debounced autosave with live refresh from disk.
-
-## What It Is
-
-- Desktop app for daily notes, weekly reviews, and body progress.
-- Local file parser/editor for known Markdown schema.
-- Practical personal tool with minimal complexity.
-
-## What It Is Not
-
-- SaaS or team collaboration product.
-- Cloud sync platform.
-- Database-backed note system.
-
-## Tech Stack
-
-- Tauri
-- React
-- TypeScript
-- Tailwind CSS
-- Recharts
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js LTS
-- Rust toolchain
-- Tauri platform prerequisites
-
-### Run in dev
-
-```bash
-npm install
-npm run tauri:dev
-```
-
-### Checks
-
-```bash
-npm run lint
-npm run test
-npm run build
-```
-
-### Build desktop bundle
-
-```bash
-npm run tauri:build
-```
+- Dashboard:
+  - Today and This Week progress summary
+  - latest body metrics snapshot
+  - recent files list
+- Daily note:
+  - structured checklist editing
+  - one-line editing
+  - raw markdown mode
+  - debounced autosave (no manual save button)
+- Weekly note:
+  - section checklist editing
+  - reflection field editing
+  - raw markdown mode
+  - debounced autosave
+- Body progress:
+  - local `body.csv` table + record form
+  - metric toggles by preferences
+  - per-metric unit/decimal display config
+  - trend charts
+- Profiles:
+  - create/switch/delete profiles
+  - built-in template presets
+  - current template editing (structured by default, raw mode available)
+  - one-click apply template to today/this week (overwrite)
+- Preferences:
+  - per-profile tracking toggles (daily/weekly/body)
+  - sync mode (`watch` / `poll`)
+- Settings:
+  - data root migration (copy + switch)
+  - export/import
+  - WebDAV cloud snapshot sync
+  - updater controls (auto-check, manual check, install+restart)
+  - tutorial replay
+  - full reset to first-run state
 
 ## Data Ownership and Storage
 
-Default base data root:
+Default base root:
 
 - macOS/Linux: `~/dailytrack-data`
 - Windows: `%USERPROFILE%\\dailytrack-data`
@@ -117,164 +117,13 @@ dailytrack-data/
       preferences.json
 ```
 
-## Core Features
+Important rules:
 
-- Dashboard summary for today, this week, body, and recent notes.
-- Daily note page:
-  - structured checklist editing
-  - raw Markdown mode
-  - pure autosave mode
-- Weekly note page:
-  - section checklists
-  - reflection fields
-  - raw Markdown mode
-  - pure autosave mode
-- Body progress page:
-  - local `body.csv` table + form
-  - preference-based metric toggles (weight/waist/body fat/muscle/chest/hip/note)
-  - per-metric unit + decimal display format
-  - per-metric trend charts
-- Profiles:
-  - create/switch/delete profile
-  - editable template presets
-- Preferences:
-  - per-profile module toggles
-- Settings:
-  - migrate-and-switch data root
-  - migration safety checks
-  - export/import data bundle
-  - WebDAV cloud snapshot sync (manual push/pull + optional interval auto-push)
-  - in-app updater controls (auto-check, manual check, install + restart)
-  - tutorial replay
-  - reset to first-run state (danger zone)
+- Markdown and CSV are the source of truth.
+- The app reads, parses, and writes local files.
+- Structured mode may normalize formatting to the supported schema.
 
-## Onboarding and Tutorial
-
-- First launch in an empty root opens template setup modal.
-- Template presets support English and Chinese variants.
-- After initial template setup, a 5-step guide starts once.
-- You can replay tutorial in `Settings -> Start Tutorial`.
-
-## Save and Sync Behavior
-
-- Daily/Weekly use debounced autosave only (no manual save button).
-- Body records save on submit/delete.
-- Live sync supports two per-profile modes:
-  - `Watch` (recommended): Rust filesystem watcher emits realtime change events.
-  - `Poll`: interval polling only.
-- Polling remains as fallback and refreshes pages only when local draft is clean.
-
-## Portability
-
-- Export creates `dailytrack-export-<timestamp>` folder.
-- Import merges/copies files into current active profile root.
-- Data root migration copies whole root and switches app root.
-- Settings displays copy summary after export/import/migration (copied/overwritten/skipped/new dirs).
-
-## Optional WebDAV Cloud Backup
-
-- WebDAV sync works as cloud snapshots for the whole base data root.
-- Supports:
-  - `Push Now` (upload new snapshot)
-  - `Pull Latest` or `Pull Selected` (restore from cloud snapshot)
-  - optional interval auto-push (minutes)
-- Snapshot metadata is tracked in remote `meta.json`; snapshot archives are stored under remote `snapshots/`.
-- Local pull can create a backup folder before overwrite (`dailytrack-webdav-backup-<timestamp>`).
-- WebDAV credentials are stored in the app config directory (`webdav.config.json`), not under data root.
-- `Markdown/CSV` files remain the source of truth; WebDAV is backup/sync transport only.
-
-## GitHub Release CI
-
-- Workflow: `.github/workflows/publish.yml`
-- Maintainer skill: `skills/dailytrack-release` (release runbook + notes generator)
-- Targets:
-  - windows-latest
-  - macOS aarch64
-  - macOS x86_64
-- Trigger:
-  - push tag like `v0.2.0`
-  - or manual `workflow_dispatch`
-
-Example:
-
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-Generate a readable release-note draft from commit range:
-
-```bash
-skills/dailytrack-release/scripts/make_release_notes.sh v0.2.0 v0.2.1 > /tmp/dailytrack-v0.2.1-notes.md
-gh release edit v0.2.1 --notes-file /tmp/dailytrack-v0.2.1-notes.md
-```
-
-Optional (recommended): for trusted macOS installer output (avoid Gatekeeper "app is damaged" warning), configure these repository secrets:
-
-- `APPLE_ID`
-- `APPLE_PASSWORD` (app-specific password)
-- `APPLE_TEAM_ID`
-- `APPLE_CERTIFICATE` (base64-encoded `.p12`)
-- `APPLE_CERTIFICATE_PASSWORD`
-- `KEYCHAIN_PASSWORD`
-- `APPLE_SIGNING_IDENTITY` (optional but recommended)
-
-Optional (recommended): for in-app auto-update artifacts (`latest.json` + signatures), configure:
-
-- `DAILYTRACK_UPDATER_PUBKEY` (public key embedded into app at build time)
-- `TAURI_SIGNING_PRIVATE_KEY` (private key used to sign updater artifacts)
-- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional, if private key is password protected)
-
-When updater secrets are missing, CI still publishes installers, but auto-update metadata/signatures are skipped.
-
-### Updater Key Generation (One-Time)
-
-```bash
-npm run tauri signer generate -- --ci --write-keys /tmp/dailytrack-updater.key
-cat /tmp/dailytrack-updater.key.pub
-```
-
-- Put the public key content into `DAILYTRACK_UPDATER_PUBKEY`.
-- Put the private key content into `TAURI_SIGNING_PRIVATE_KEY`.
-- If your key has a password, set `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-
-## macOS Install Notice (Unsigned Builds)
-
-If your release build is not signed/notarized yet, macOS Gatekeeper may show:
-
-`"dailytrack" is damaged and can’t be opened.`
-
-Temporary user-side workaround (manual command):
-
-```bash
-xattr -dr com.apple.quarantine /Applications/dailytrack.app
-```
-
-Or remove quarantine on the downloaded DMG first:
-
-```bash
-xattr -dr com.apple.quarantine ~/Downloads/dailytrack_*.dmg
-```
-
-Release helper option (for unsigned DMG builds):
-
-1. Drag `dailytrack.app` into `/Applications`.
-2. In the same mounted DMG window, run `fix-dailytrack-quarantine.command`.
-3. Re-open dailytrack.
-
-For production/public distribution, use signed + notarized macOS artifacts.
-
-## Lower-Cost Distribution Options (Before Apple Developer Program)
-
-If you are not ready for Apple Developer Program yet ($99/year):
-
-- Prefer sharing source code and local run steps (`npm run tauri:dev`).
-- Provide unsigned `.app.tar.gz` for technical users with manual quarantine removal.
-- Mark releases clearly as `unsigned preview` to set user expectation.
-
-These options are acceptable for early testing, but not ideal for broad public distribution.
-
-## Markdown Schema
+## File Formats
 
 Daily note (`daily/YYYY-MM-DD.md`):
 
@@ -330,48 +179,80 @@ date,weight,waist,bodyFat,muscleMass,chest,hip,note
 2026-03-18,71.2,82.0,14.8,33.5,97.0,98.2,steady
 ```
 
+## Sync, Backup, and Portability
+
+- Local sync:
+  - `Watch` mode (recommended): Rust watcher emits file-change events
+  - `Poll` mode: periodic fallback checks
+- Import/Export/Migration:
+  - export creates `dailytrack-export-<timestamp>` folder
+  - import merges files into active profile root
+  - migration copies whole base root and switches app root
+  - operation summary includes copied/overwritten/skipped/new-dir counts
+- WebDAV snapshots (optional):
+  - `Push Now`, `Pull Latest`, `Pull Selected`, snapshot list/delete
+  - optional interval auto-push
+  - remote `meta.json` + `snapshots/*.zip`
+  - optional local backup before pull overwrite
+
+## Onboarding
+
+- First launch with empty root opens template setup.
+- Template presets support English and Chinese variants.
+- A guided tutorial runs after first setup and can be replayed in Settings.
+
+## macOS Install Notice (Unsigned Builds)
+
+If a release build is unsigned/notarized, macOS Gatekeeper may show:
+
+`"dailytrack" is damaged and can’t be opened.`
+
+You can use one of these workarounds:
+
+- Run helper script from DMG: `fix-dailytrack-quarantine.command`
+- Or run manually:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/dailytrack.app
+```
+
+For production/public distribution, signed + notarized artifacts are recommended.
+
 ## Limitations
 
-- Structured save is schema-aware and normalizes formatting.
-- Unknown custom Markdown blocks may not be preserved in structured mode.
-- Import is file-level merge/overwrite without semantic conflict resolution.
-- No file locking.
+- Structured save is schema-aware and can normalize markdown formatting.
+- Unknown custom markdown blocks may not be preserved in structured mode.
+- Import is file-level merge/overwrite; no semantic conflict resolution yet.
+- No cross-process file locking.
 
-## Future TODOs
+## Maintainer Release Workflow
 
-### P0 (v0.2.0 target)
-- Replace polling-first behavior completely with watcher-first flow across all major pages.
-- Add atomic write tests (including failure-path cleanup and Windows replace behavior).
-- Expand service-layer test coverage for import/migrate/profile/preferences edge cases.
-- Add migration/import post-check verification report (expected file set + mismatch hints).
+Release CI workflow: `.github/workflows/publish.yml`
 
-### P1 (next)
-- Add native folder picker dialogs for root path/import/export/migration flows.
-- Add lightweight conflict preview before import overwrite.
-- Add richer onboarding with template explanation and first-week quick-start checklist.
+Targets:
 
-### P2 (backlog)
-- Add optional file history snapshots for rollback safety.
-- Add plugin-like custom metric sections while keeping markdown/csv as source of truth.
-- Add additional template packs maintained by community contributors.
+- windows-latest
+- macOS aarch64
+- macOS x86_64
 
-## Milestone Roadmap
+Trigger release build by tag:
 
-### v0.2.0 - Local-First Stability
-- Goal:
-  - Make sync/write behavior robust enough for daily long-term usage.
-  - Improve observability and recoverability for filesystem operations.
-- Planned deliverables:
-  - watcher-first live sync with polling fallback
-  - atomic text writes on core save paths
-  - import/export/migration operation summary
-  - preference schema versioning and normalization hardening
-  - improved docs for schema/sync/release process
-  - broader automated tests for service + config paths
-- Definition of done:
-  - `npm run lint`, `npm run test`, `npm run build`, `cargo check` all pass
-  - QA checklist items for sync/storage/import/migration pass
-  - release checklist fully checked before tag publish
+```bash
+git tag v0.3.2
+git push origin master --tags
+```
+
+Generate readable release notes draft:
+
+```bash
+skills/dailytrack-release/scripts/make_release_notes.sh v0.3.1 v0.3.2 > /tmp/dailytrack-v0.3.2-notes.md
+gh release edit v0.3.2 --notes-file /tmp/dailytrack-v0.3.2-notes.md
+```
+
+Useful docs:
+
+- `skills/dailytrack-release/SKILL.md`
+- `docs/RELEASE_CHECKLIST.md`
 
 ## Project Docs
 
@@ -383,3 +264,10 @@ date,weight,waist,bodyFat,muscleMass,chest,hip,note
 - [docs/PREFERENCES_SCHEMA.md](./docs/PREFERENCES_SCHEMA.md)
 - [docs/QA_CHECKLIST.md](./docs/QA_CHECKLIST.md)
 - [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
+
+## Future Roadmap
+
+- Better import overwrite preview before confirm.
+- Native folder picker for all root/import/export/migration paths.
+- Optional history snapshots for safer rollback.
+- More built-in template packs and community-contributed templates.
