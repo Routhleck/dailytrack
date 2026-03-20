@@ -80,6 +80,7 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- WebDAV settings now use debounced autosave; `Test/Push/Pull/Delete/Refresh` actions force-save draft config first, removing the need for manual save before testing.
 - Settings page now includes a `WebDAV Cloud Sync` section with connection test and snapshot operations.
 - Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
 - Replaced template starter UI with tracker-focused desktop layout.
