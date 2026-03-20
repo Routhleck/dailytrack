@@ -5,7 +5,7 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
 import { useUpdater } from '../features/updater/UpdaterContext'
-import { exportDataBundle, importDataBundle } from '../lib/fs/fileApi'
+import { exportDataBundle, importDataBundle, type CopySummary } from '../lib/fs/fileApi'
 import { emitDataChanged } from '../lib/liveSync'
 
 function parentPath(path: string): string {
@@ -30,6 +30,18 @@ function isNestedPath(parent: string, child: string): boolean {
     return false
   }
   return child.startsWith(`${parent}/`)
+}
+
+function formatCopySummary(
+  summary: CopySummary,
+  t: (key: 'settings.copySummary', params: Record<string, string | number>) => string,
+): string {
+  return t('settings.copySummary', {
+    copied: summary.copiedFiles,
+    overwritten: summary.overwrittenFiles,
+    skipped: summary.skippedFiles,
+    dirs: summary.createdDirs,
+  })
 }
 
 export function SettingsPage() {
@@ -134,8 +146,10 @@ export function SettingsPage() {
     setExportMessage('')
 
     try {
-      const bundlePath = await exportDataBundle(dataRoot, destination)
-      setExportMessage(t('settings.exportCompleted', { path: bundlePath }))
+      const result = await exportDataBundle(dataRoot, destination)
+      setExportMessage(
+        `${t('settings.exportCompleted', { path: result.bundlePath })} ${formatCopySummary(result.summary, t)}`,
+      )
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.exportFailed')
       setExportMessage(text)
@@ -166,8 +180,8 @@ export function SettingsPage() {
     setMigrateMessage('')
 
     try {
-      await migrateDataRoot(destination, overwriteMigrate)
-      setMigrateMessage(t('settings.migrateCompleted'))
+      const summary = await migrateDataRoot(destination, overwriteMigrate)
+      setMigrateMessage(`${t('settings.migrateCompleted')} ${formatCopySummary(summary, t)}`)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.migrateFailed')
       setMigrateMessage(text)
@@ -194,10 +208,10 @@ export function SettingsPage() {
     setImportMessage('')
 
     try {
-      await importDataBundle(source, dataRoot, overwriteImport)
+      const result = await importDataBundle(source, dataRoot, overwriteImport)
       await refresh()
       emitDataChanged({ scope: 'all' })
-      setImportMessage(t('settings.importCompleted'))
+      setImportMessage(`${t('settings.importCompleted')} ${formatCopySummary(result.summary, t)}`)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.importFailed')
       setImportMessage(text)

@@ -5,6 +5,28 @@ export type EnsureDataRootInfo = {
   isFirstRun: boolean
 }
 
+export type CopySummary = {
+  copiedFiles: number
+  skippedFiles: number
+  overwrittenFiles: number
+  createdDirs: number
+}
+
+export type ExportDataBundleResult = {
+  bundlePath: string
+  summary: CopySummary
+}
+
+export type ImportDataBundleResult = {
+  dataRoot: string
+  summary: CopySummary
+}
+
+export type MigrateDataRootResult = {
+  dataRoot: string
+  summary: CopySummary
+}
+
 export type FsChangedEventPayload = {
   scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
   path: string
@@ -72,24 +94,24 @@ export async function stopDataRootWatch(dataRoot: string): Promise<void> {
 export async function exportDataBundle(
   dataRoot: string,
   destinationDir: string,
-): Promise<string> {
-  return invoke<string>('export_data_bundle', { dataRoot, destinationDir })
+): Promise<ExportDataBundleResult> {
+  return invoke<ExportDataBundleResult>('export_data_bundle', { dataRoot, destinationDir })
 }
 
 export async function importDataBundle(
   sourceDir: string,
   dataRoot: string,
   overwrite = true,
-): Promise<string> {
-  return invoke<string>('import_data_bundle', { sourceDir, dataRoot, overwrite })
+): Promise<ImportDataBundleResult> {
+  return invoke<ImportDataBundleResult>('import_data_bundle', { sourceDir, dataRoot, overwrite })
 }
 
 export async function migrateDataRoot(
   sourceRoot: string,
   destinationRoot: string,
   overwrite = false,
-): Promise<string> {
-  return invoke<string>('migrate_data_root', {
+): Promise<MigrateDataRootResult> {
+  return invoke<MigrateDataRootResult>('migrate_data_root', {
     sourceRoot,
     destinationRoot,
     overwrite,

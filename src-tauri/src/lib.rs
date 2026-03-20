@@ -38,6 +38,36 @@ struct FsWatchState {
   watchers: Mutex<HashMap<String, RecommendedWatcher>>,
 }
 
+#[derive(Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+struct CopySummary {
+  copied_files: u64,
+  skipped_files: u64,
+  overwritten_files: u64,
+  created_dirs: u64,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ExportDataBundleResult {
+  bundle_path: String,
+  summary: CopySummary,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ImportDataBundleResult {
+  data_root: String,
+  summary: CopySummary,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct MigrateDataRootResult {
+  data_root: String,
+  summary: CopySummary,
+}
+
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
@@ -177,10 +207,55 @@ fn validate_profile_name(profile_name: &str) -> Result<(), String> {
   }
 }
 
+fn write_text_atomic(path: &Path, content: &str) -> Result<(), String> {
+  let parent = path
+    .parent()
+    .ok_or_else(|| format!("Path {} has no parent directory", path.display()))?;
+  fs::create_dir_all(parent)
+    .map_err(|err| format!("Failed to create directory {}: {err}", parent.display()))?;
+
+  let nanos = SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .map_err(|err| format!("Failed to get timestamp for atomic write: {err}"))?
+    .as_nanos();
+  let file_name = path
+    .file_name()
+    .and_then(|name| name.to_str())
+    .unwrap_or("dailytrack-temp");
+  let temp_path = parent.join(format!(".{}.tmp-{}-{}", file_name, std::process::id(), nanos));
+
+  fs::write(temp_path.as_path(), content).map_err(|err| {
+    format!(
+      "Failed to write temporary file {}: {err}",
+      temp_path.display()
+    )
+  })?;
+
+  if let Err(rename_err) = fs::rename(temp_path.as_path(), path) {
+    if path.exists() {
+      fs::remove_file(path)
+        .map_err(|err| format!("Failed to replace existing file {}: {err}", path.display()))?;
+      fs::rename(temp_path.as_path(), path).map_err(|err| {
+        format!(
+          "Failed to atomically replace file {} after remove: {err}",
+          path.display()
+        )
+      })?;
+    } else {
+      let _ = fs::remove_file(temp_path.as_path());
+      return Err(format!(
+        "Failed to atomically write file {}: {rename_err}",
+        path.display()
+      ));
+    }
+  }
+
+  Ok(())
+}
+
 fn ensure_file(path: &Path, default_content: &str) -> Result<(), String> {
   if !path.exists() {
-    fs::write(path, default_content)
-      .map_err(|err| format!("Failed to write {}: {err}", path.display()))?;
+    write_text_atomic(path, default_content)?;
   }
 
   Ok(())
@@ -210,7 +285,15 @@ fn ensure_tracker_layout(root: &Path) -> Result<(), String> {
   Ok(())
 }
 
-fn copy_dir_recursive(source: &Path, destination: &Path, overwrite: bool) -> Result<(), String> {
+fn copy_dir_recursive_with_summary(
+  source: &Path,
+  destination: &Path,
+  overwrite: bool,
+  summary: &mut CopySummary,
+) -> Result<(), String> {
+  if !destination.exists() {
+    summary.created_dirs += 1;
+  }
   fs::create_dir_all(destination)
     .map_err(|err| format!("Failed to create {}: {err}", destination.display()))?;
 
@@ -222,12 +305,19 @@ fn copy_dir_recursive(source: &Path, destination: &Path, overwrite: bool) -> Res
     let destination_path = destination.join(entry.file_name());
 
     if source_path.is_dir() {
-      copy_dir_recursive(source_path.as_path(), destination_path.as_path(), overwrite)?;
+      copy_dir_recursive_with_summary(
+        source_path.as_path(),
+        destination_path.as_path(),
+        overwrite,
+        summary,
+      )?;
       continue;
     }
 
     if source_path.is_file() {
-      if destination_path.exists() && !overwrite {
+      let destination_exists = destination_path.exists();
+      if destination_exists && !overwrite {
+        summary.skipped_files += 1;
         continue;
       }
 
@@ -238,10 +328,20 @@ fn copy_dir_recursive(source: &Path, destination: &Path, overwrite: bool) -> Res
           destination_path.display()
         )
       })?;
+      summary.copied_files += 1;
+      if destination_exists {
+        summary.overwritten_files += 1;
+      }
     }
   }
 
   Ok(())
+}
+
+fn copy_dir_recursive(source: &Path, destination: &Path, overwrite: bool) -> Result<CopySummary, String> {
+  let mut summary = CopySummary::default();
+  copy_dir_recursive_with_summary(source, destination, overwrite, &mut summary)?;
+  Ok(summary)
 }
 
 fn copy_if_exists_file(source: &Path, destination: &Path, overwrite: bool) -> Result<(), String> {
@@ -517,17 +617,17 @@ fn create_profile(
   ensure_tracker_layout(target_profile_root.as_path())?;
 
   if let Some(content) = daily_template {
-    fs::write(
-      target_profile_root.join("templates").join("daily.md"),
-      normalize_text(content.as_str()),
+    write_text_atomic(
+      target_profile_root.join("templates").join("daily.md").as_path(),
+      normalize_text(content.as_str()).as_str(),
     )
     .map_err(|err| format!("Failed to write daily template: {err}"))?;
   }
 
   if let Some(content) = weekly_template {
-    fs::write(
-      target_profile_root.join("templates").join("weekly.md"),
-      normalize_text(content.as_str()),
+    write_text_atomic(
+      target_profile_root.join("templates").join("weekly.md").as_path(),
+      normalize_text(content.as_str()).as_str(),
     )
     .map_err(|err| format!("Failed to write weekly template: {err}"))?;
   }
@@ -583,7 +683,7 @@ fn read_text_file(path: String, data_root: String) -> Result<String, String> {
 fn write_text_file(path: String, content: String, data_root: String) -> Result<(), String> {
   let root = canonicalize_data_root_path(data_root.as_str())?;
   let target = validate_writable_file_under_root(root.as_path(), path.as_str())?;
-  fs::write(target.as_path(), content)
+  write_text_atomic(target.as_path(), content.as_str())
     .map_err(|err| format!("Failed to write file {}: {err}", target.display()))
 }
 
@@ -689,7 +789,10 @@ fn stop_data_root_watch(state: tauri::State<FsWatchState>, data_root: String) ->
 }
 
 #[tauri::command]
-fn export_data_bundle(data_root: String, destination_dir: String) -> Result<String, String> {
+fn export_data_bundle(
+  data_root: String,
+  destination_dir: String,
+) -> Result<ExportDataBundleResult, String> {
   let source_root = PathBuf::from(data_root);
   if !source_root.exists() {
     return Err(format!(
@@ -726,8 +829,11 @@ fn export_data_bundle(data_root: String, destination_dir: String) -> Result<Stri
     ));
   }
 
-  copy_dir_recursive(source_root.as_path(), bundle_path.as_path(), false)?;
-  Ok(bundle_path.to_string_lossy().to_string())
+  let summary = copy_dir_recursive(source_root.as_path(), bundle_path.as_path(), false)?;
+  Ok(ExportDataBundleResult {
+    bundle_path: bundle_path.to_string_lossy().to_string(),
+    summary,
+  })
 }
 
 #[tauri::command]
@@ -735,7 +841,7 @@ fn import_data_bundle(
   source_dir: String,
   data_root: String,
   overwrite: Option<bool>,
-) -> Result<String, String> {
+) -> Result<ImportDataBundleResult, String> {
   let source_root = PathBuf::from(source_dir);
   validate_bundle_root(source_root.as_path())?;
 
@@ -759,12 +865,15 @@ fn import_data_bundle(
     return Err("Import source cannot be the same as current data root".to_string());
   }
 
-  copy_dir_recursive(
+  let summary = copy_dir_recursive(
     source_canonical.as_path(),
     target_canonical.as_path(),
     overwrite.unwrap_or(true),
   )?;
-  Ok(target_canonical.to_string_lossy().to_string())
+  Ok(ImportDataBundleResult {
+    data_root: target_canonical.to_string_lossy().to_string(),
+    summary,
+  })
 }
 
 #[tauri::command]
@@ -772,7 +881,7 @@ fn migrate_data_root(
   source_root: String,
   destination_root: String,
   overwrite: Option<bool>,
-) -> Result<String, String> {
+) -> Result<MigrateDataRootResult, String> {
   let source_path = PathBuf::from(source_root);
   if !source_path.exists() || !source_path.is_dir() {
     return Err(format!(
@@ -812,7 +921,7 @@ fn migrate_data_root(
     return Err("Source and destination data roots cannot be nested".to_string());
   }
 
-  copy_dir_recursive(
+  let summary = copy_dir_recursive(
     source_canonical.as_path(),
     destination_canonical.as_path(),
     overwrite.unwrap_or(false),
@@ -820,7 +929,10 @@ fn migrate_data_root(
 
   ensure_default_profile(destination_canonical.as_path())?;
 
-  Ok(destination_canonical.to_string_lossy().to_string())
+  Ok(MigrateDataRootResult {
+    data_root: destination_canonical.to_string_lossy().to_string(),
+    summary,
+  })
 }
 
 #[tauri::command]

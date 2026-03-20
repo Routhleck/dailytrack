@@ -268,6 +268,7 @@ export const enMessages = {
   'settings.exportDestinationRequired': 'Export destination path is required.',
   'settings.exportCompleted': 'Export completed: {path}',
   'settings.exportFailed': 'Export failed.',
+  'settings.copySummary': 'Copied {copied}, overwritten {overwritten}, skipped {skipped}, created dirs {dirs}.',
   'settings.importData': 'Import Data',
   'settings.importDescription':
     'Import from an exported bundle folder into the current data root.',
@@ -572,6 +573,7 @@ export const zhMessages: Record<MessageKey, string> = {
   'settings.exportDestinationRequired': '请填写导出目标路径。',
   'settings.exportCompleted': '导出完成：{path}',
   'settings.exportFailed': '导出失败。',
+  'settings.copySummary': '复制 {copied}，覆盖 {overwritten}，跳过 {skipped}，新建目录 {dirs}。',
   'settings.importData': '导入数据',
   'settings.importDescription': '从导出的 bundle 文件夹导入到当前数据根目录。',
   'settings.importSource': '导入源目录路径',

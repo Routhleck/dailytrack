@@ -35,6 +35,13 @@ type ProfileCreateOptions = {
   weeklyTemplate?: string
 }
 
+type MigrateDataRootSummary = {
+  copiedFiles: number
+  skippedFiles: number
+  overwrittenFiles: number
+  createdDirs: number
+}
+
 type DataRootContextValue = {
   baseDataRoot: string | null
   dataRoot: string | null
@@ -45,7 +52,7 @@ type DataRootContextValue = {
   error: string | null
   refresh: () => Promise<void>
   updateDataRoot: (nextPath: string) => Promise<void>
-  migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<void>
+  migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<MigrateDataRootSummary>
   resetTrackerData: () => Promise<void>
   completeInitialTemplateSetup: (dailyTemplate: string, weeklyTemplate: string) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
@@ -139,9 +146,10 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
           throw new Error('Data root is not initialized')
         }
 
-        const nextRoot = await migrateDataRootApi(baseDataRoot, destinationPath, overwrite)
-        await bootstrap(nextRoot, activeProfile ?? undefined)
+        const result = await migrateDataRootApi(baseDataRoot, destinationPath, overwrite)
+        await bootstrap(result.dataRoot, activeProfile ?? undefined)
         emitDataChanged({ scope: 'settings' })
+        return result.summary
       },
       resetTrackerData: async () => {
         if (!baseDataRoot) {
