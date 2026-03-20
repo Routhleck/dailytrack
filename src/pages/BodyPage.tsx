@@ -278,7 +278,7 @@ export function BodyPage() {
   const showNote = preferences.body.note
 
   return (
-    <section className="space-y-6">
+    <section className="min-w-0 space-y-6">
       <PageHeader
         title={t('body.title')}
         description={t('body.description')}
@@ -341,13 +341,13 @@ export function BodyPage() {
       </form>
 
       {enabledNumericMetrics.length > 0 ? (
-        <div className={`grid gap-4 ${enabledNumericMetrics.length > 1 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+        <div className={`grid min-w-0 gap-4 ${enabledNumericMetrics.length > 1 ? 'xl:grid-cols-2' : 'xl:grid-cols-1'}`}>
           {enabledNumericMetrics.map((metric) => (
-            <article key={metric.key} className="rounded-lg border border-slate-200 p-4">
+            <article key={metric.key} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-4">
               <h2 className="mb-3 text-base font-semibold text-slate-900">
                 {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
               </h2>
-              <div className="h-56">
+              <div className="h-56 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
