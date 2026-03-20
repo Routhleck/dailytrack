@@ -7,3 +7,11 @@ export function currentWeekId(reference = new Date()): string {
   const weekNumber = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
   return `${date.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`
 }
+
+export function weekIdFromIsoDate(isoDate: string): string | null {
+  const parsed = new Date(`${isoDate}T00:00:00`)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+  return currentWeekId(parsed)
+}

@@ -27,6 +27,10 @@ export type MigrateDataRootResult = {
   summary: CopySummary
 }
 
+export type GenerateLlmReportResult = {
+  content: string
+}
+
 export type FsChangedEventPayload = {
   scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
   path: string
@@ -89,6 +93,24 @@ export async function startDataRootWatch(dataRoot: string): Promise<void> {
 
 export async function stopDataRootWatch(dataRoot: string): Promise<void> {
   return invoke<void>('stop_data_root_watch', { dataRoot })
+}
+
+export async function generateLlmReport(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature?: number,
+): Promise<GenerateLlmReportResult> {
+  return invoke<GenerateLlmReportResult>('generate_llm_report', {
+    baseUrl,
+    apiKey,
+    model,
+    systemPrompt,
+    userPrompt,
+    temperature,
+  })
 }
 
 export async function exportDataBundle(

@@ -68,6 +68,12 @@ struct MigrateDataRootResult {
   summary: CopySummary,
 }
 
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct GenerateLlmReportResult {
+  content: String,
+}
+
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
@@ -266,6 +272,10 @@ fn ensure_tracker_layout(root: &Path) -> Result<(), String> {
     .map_err(|err| format!("Failed to create daily directory: {err}"))?;
   fs::create_dir_all(root.join("weekly"))
     .map_err(|err| format!("Failed to create weekly directory: {err}"))?;
+  fs::create_dir_all(root.join("reports").join("weekly"))
+    .map_err(|err| format!("Failed to create reports/weekly directory: {err}"))?;
+  fs::create_dir_all(root.join("reports").join("monthly"))
+    .map_err(|err| format!("Failed to create reports/monthly directory: {err}"))?;
   fs::create_dir_all(root.join("templates"))
     .map_err(|err| format!("Failed to create templates directory: {err}"))?;
 
@@ -788,6 +798,87 @@ fn stop_data_root_watch(state: tauri::State<FsWatchState>, data_root: String) ->
   Ok(())
 }
 
+fn resolve_chat_completions_endpoint(base_url: &str) -> String {
+  let trimmed = base_url.trim().trim_end_matches('/');
+  if trimmed.ends_with("/chat/completions") {
+    return trimmed.to_string();
+  }
+  format!("{trimmed}/chat/completions")
+}
+
+#[tauri::command]
+fn generate_llm_report(
+  base_url: String,
+  api_key: String,
+  model: String,
+  system_prompt: String,
+  user_prompt: String,
+  temperature: Option<f32>,
+) -> Result<GenerateLlmReportResult, String> {
+  if base_url.trim().is_empty() {
+    return Err("Base URL is required".to_string());
+  }
+  if api_key.trim().is_empty() {
+    return Err("API key is required".to_string());
+  }
+  if model.trim().is_empty() {
+    return Err("Model is required".to_string());
+  }
+
+  let endpoint = resolve_chat_completions_endpoint(base_url.as_str());
+  let mut payload = serde_json::json!({
+    "model": model.trim(),
+    "messages": [
+      { "role": "system", "content": system_prompt },
+      { "role": "user", "content": user_prompt }
+    ]
+  });
+
+  if let Some(value) = temperature {
+    if value.is_finite() {
+      payload["temperature"] = serde_json::json!(value.clamp(0.0, 2.0));
+    }
+  }
+
+  let client = reqwest::blocking::Client::builder()
+    .timeout(std::time::Duration::from_secs(90))
+    .build()
+    .map_err(|err| format!("Failed to build HTTP client: {err}"))?;
+
+  let response = client
+    .post(endpoint.as_str())
+    .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", api_key.trim()))
+    .header(reqwest::header::CONTENT_TYPE, "application/json")
+    .json(&payload)
+    .send()
+    .map_err(|err| format!("Failed to call LLM provider: {err}"))?;
+
+  if !response.status().is_success() {
+    let status = response.status();
+    let body = response
+      .text()
+      .unwrap_or_else(|_| "Failed to read error response body".to_string());
+    return Err(format!("LLM provider returned {status}: {body}"));
+  }
+
+  let body: serde_json::Value = response
+    .json()
+    .map_err(|err| format!("Failed to parse provider response: {err}"))?;
+  let content = body
+    .get("choices")
+    .and_then(|choices| choices.as_array())
+    .and_then(|choices| choices.first())
+    .and_then(|choice| choice.get("message"))
+    .and_then(|message| message.get("content"))
+    .and_then(|content| content.as_str())
+    .map(str::trim)
+    .filter(|text| !text.is_empty())
+    .ok_or_else(|| "Provider response has no message content".to_string())?
+    .to_string();
+
+  Ok(GenerateLlmReportResult { content })
+}
+
 #[tauri::command]
 fn export_data_bundle(
   data_root: String,
@@ -967,6 +1058,7 @@ pub fn run() {
       list_files,
       start_data_root_watch,
       stop_data_root_watch,
+      generate_llm_report,
       export_data_bundle,
       import_data_bundle,
       migrate_data_root,

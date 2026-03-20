@@ -23,6 +23,9 @@ const WeeklyListPage = lazy(async () => ({
 const BodyPage = lazy(async () => ({
   default: (await import('../pages/BodyPage')).BodyPage,
 }))
+const ReportsPage = lazy(async () => ({
+  default: (await import('../pages/ReportsPage')).ReportsPage,
+}))
 const SettingsPage = lazy(async () => ({
   default: (await import('../pages/SettingsPage')).SettingsPage,
 }))
@@ -59,6 +62,7 @@ export const router = createHashRouter([
       { path: 'weekly', element: withSuspense(<WeeklyListPage />) },
       { path: 'weekly/:weekId', element: withSuspense(<WeeklyNotePage />) },
       { path: 'body', element: withSuspense(<BodyPage />) },
+      { path: 'reports', element: withSuspense(<ReportsPage />) },
       { path: 'profiles', element: withSuspense(<ProfilesPage />) },
       { path: 'preferences', element: withSuspense(<PreferencesPage />) },
       { path: 'settings', element: withSuspense(<SettingsPage />) },
