@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 
 import { useI18n } from '../features/i18n/I18nContext'
-import { loadUILanguagePreference } from '../features/i18n/i18n.store'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import {
   TEMPLATE_PRESETS,
@@ -14,9 +13,7 @@ import {
 export function InitialTemplateSetupModal() {
   const { t, language, setLanguage } = useI18n()
   const { dataRoot, completeInitialTemplateSetup } = useDataRoot()
-  const [step, setStep] = useState<'language' | 'template'>(
-    loadUILanguagePreference() ? 'template' : 'language',
-  )
+  const [step, setStep] = useState<'language' | 'template'>('language')
   const [presetId, setPresetId] = useState('balanced')
   const [templateLanguage, setTemplateLanguage] = useState<TemplateLanguage>(() => {
     if (language === 'en' || language === 'zh') {
