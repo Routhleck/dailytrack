@@ -83,6 +83,14 @@ export function ProfilesPage() {
   const [newWeeklyTemplate, setNewWeeklyTemplate] = useState(
     getTemplateVariant(selectedPreset, templateLanguage).weeklyTemplate,
   )
+  const [createTemplateEditMode, setCreateTemplateEditMode] = useState<'raw' | 'structured'>('structured')
+  const [newDailyStructured, setNewDailyStructured] = useState<DailyNote | null>(
+    parseDailyTemplateMarkdown(getTemplateVariant(selectedPreset, templateLanguage).dailyTemplate),
+  )
+  const [newWeeklyStructured, setNewWeeklyStructured] = useState<WeeklyNote | null>(
+    parseWeeklyTemplateMarkdown(getTemplateVariant(selectedPreset, templateLanguage).weeklyTemplate),
+  )
+  const [createTemplateMessage, setCreateTemplateMessage] = useState('')
   const [createMessage, setCreateMessage] = useState('')
   const [createBusy, setCreateBusy] = useState(false)
 
@@ -98,6 +106,9 @@ export function ProfilesPage() {
     const selectedVariant = getTemplateVariant(selectedPreset, templateLanguage)
     setNewDailyTemplate(selectedVariant.dailyTemplate)
     setNewWeeklyTemplate(selectedVariant.weeklyTemplate)
+    setNewDailyStructured(parseDailyTemplateMarkdown(selectedVariant.dailyTemplate))
+    setNewWeeklyStructured(parseWeeklyTemplateMarkdown(selectedVariant.weeklyTemplate))
+    setCreateTemplateMessage('')
   }, [selectedPreset, templateLanguage])
 
   useEffect(() => {
@@ -156,6 +167,167 @@ export function ProfilesPage() {
     } finally {
       setCreateBusy(false)
     }
+  }
+
+  function handleCreateTemplateModeChange(mode: 'raw' | 'structured') {
+    if (mode === 'structured') {
+      try {
+        setNewDailyStructured(parseDailyTemplateMarkdown(newDailyTemplate))
+        setNewWeeklyStructured(parseWeeklyTemplateMarkdown(newWeeklyTemplate))
+        setCreateTemplateMessage('')
+      } catch (error) {
+        setCreateTemplateMessage(
+          error instanceof Error ? error.message : t('profiles.createStructuredTemplateParseFailed'),
+        )
+        return
+      }
+    }
+    setCreateTemplateEditMode(mode)
+  }
+
+  function updateNewDailyItem(
+    section: 'dailyCore' | 'optional',
+    index: number,
+    text: string,
+  ) {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const target = prev[section][index]
+      if (!target) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].map((item, itemIndex) =>
+          itemIndex === index ? { ...item, text } : item,
+        ),
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function removeNewDailyItem(section: 'dailyCore' | 'optional', index: number) {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].filter((_, itemIndex) => itemIndex !== index),
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function addNewDailyItem(section: 'dailyCore' | 'optional') {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: [
+          ...prev[section],
+          {
+            id: `${section}-${Date.now()}`,
+            text: '',
+            checked: false,
+          },
+        ],
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateNewWeeklyItem(section: WeeklySectionKey, index: number, text: string) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const target = prev.sections[section][index]
+      if (!target) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].map((item, itemIndex) =>
+            itemIndex === index ? { ...item, text } : item,
+          ),
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function removeNewWeeklyItem(section: WeeklySectionKey, index: number) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].filter((_, itemIndex) => itemIndex !== index),
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function addNewWeeklyItem(section: WeeklySectionKey) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: [
+            ...prev.sections[section],
+            {
+              id: `${section}-${Date.now()}`,
+              text: '',
+              checked: false,
+            },
+          ],
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateNewReflectionItem(field: 'goodThings' | 'nextWeekTop3', index: number, text: string) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const nextValues = [...prev.reflection[field]]
+      while (nextValues.length < 3) {
+        nextValues.push('')
+      }
+      nextValues[index] = text
+      const next = {
+        ...prev,
+        reflection: {
+          ...prev.reflection,
+          [field]: nextValues,
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
   }
 
   async function handleSaveCurrentTemplates(event: FormEvent) {
@@ -493,23 +665,182 @@ export function ProfilesPage() {
           <option value="zh">{t('template.languageChinese')}</option>
         </select>
 
-        <label className="block text-sm font-medium text-slate-700">{t('profiles.dailyTemplateEditable')}</label>
-        <textarea
-          className="h-48 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
-          value={newDailyTemplate}
-          onChange={(event) => setNewDailyTemplate(event.target.value)}
-          disabled={createBusy}
-          spellCheck={false}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              createTemplateEditMode === 'structured' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            }`}
+            onClick={() => handleCreateTemplateModeChange('structured')}
+            disabled={createBusy}
+          >
+            {t('common.structured')}
+          </button>
+          <button
+            type="button"
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              createTemplateEditMode === 'raw' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            }`}
+            onClick={() => handleCreateTemplateModeChange('raw')}
+            disabled={createBusy}
+          >
+            {t('common.rawMarkdown')}
+          </button>
+        </div>
 
-        <label className="block text-sm font-medium text-slate-700">{t('profiles.weeklyTemplateEditable')}</label>
-        <textarea
-          className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
-          value={newWeeklyTemplate}
-          onChange={(event) => setNewWeeklyTemplate(event.target.value)}
-          disabled={createBusy}
-          spellCheck={false}
-        />
+        {createTemplateEditMode === 'raw' ? (
+          <>
+            <label className="block text-sm font-medium text-slate-700">{t('profiles.dailyTemplateEditable')}</label>
+            <textarea
+              className="h-48 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+              value={newDailyTemplate}
+              onChange={(event) => setNewDailyTemplate(event.target.value)}
+              disabled={createBusy}
+              spellCheck={false}
+            />
+
+            <label className="block text-sm font-medium text-slate-700">{t('profiles.weeklyTemplateEditable')}</label>
+            <textarea
+              className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+              value={newWeeklyTemplate}
+              onChange={(event) => setNewWeeklyTemplate(event.target.value)}
+              disabled={createBusy}
+              spellCheck={false}
+            />
+          </>
+        ) : (
+          <div className="space-y-4">
+            <article className="rounded-md border border-slate-200 p-3">
+              <h3 className="text-sm font-semibold text-slate-900">{t('profiles.dailyTemplateEditable')}</h3>
+              <p className="mt-1 text-xs text-slate-500">{t('profiles.dailyTemplateStructuredHint')}</p>
+
+              <div className="mt-3 space-y-2">
+                <p className="text-sm font-medium text-slate-700">{t('dailyNote.dailyCore')}</p>
+                {newDailyStructured?.dailyCore.map((item, index) => (
+                  <div key={item.id} className="flex gap-2">
+                    <input
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      value={item.text}
+                      onChange={(event) => updateNewDailyItem('dailyCore', index, event.target.value)}
+                      disabled={createBusy}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                      onClick={() => removeNewDailyItem('dailyCore', index)}
+                      disabled={createBusy}
+                    >
+                      {t('profiles.removeItem')}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                  onClick={() => addNewDailyItem('dailyCore')}
+                  disabled={createBusy}
+                >
+                  {t('profiles.addItem')}
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-slate-700">{t('dailyNote.optional')}</p>
+                {newDailyStructured?.optional.map((item, index) => (
+                  <div key={item.id} className="flex gap-2">
+                    <input
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      value={item.text}
+                      onChange={(event) => updateNewDailyItem('optional', index, event.target.value)}
+                      disabled={createBusy}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                      onClick={() => removeNewDailyItem('optional', index)}
+                      disabled={createBusy}
+                    >
+                      {t('profiles.removeItem')}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                  onClick={() => addNewDailyItem('optional')}
+                  disabled={createBusy}
+                >
+                  {t('profiles.addItem')}
+                </button>
+              </div>
+            </article>
+
+            <article className="rounded-md border border-slate-200 p-3">
+              <h3 className="text-sm font-semibold text-slate-900">{t('profiles.weeklyTemplateEditable')}</h3>
+              <p className="mt-1 text-xs text-slate-500">{t('profiles.weeklyTemplateStructuredHint')}</p>
+
+              {WEEKLY_SECTION_ORDER.map((section) => (
+                <div key={section} className="mt-3 space-y-2">
+                  <p className="text-sm font-medium text-slate-700">{t(`section.${section}`)}</p>
+                  {newWeeklyStructured?.sections[section].map((item, index) => (
+                    <div key={item.id} className="flex gap-2">
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        value={item.text}
+                        onChange={(event) => updateNewWeeklyItem(section, index, event.target.value)}
+                        disabled={createBusy}
+                      />
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                        onClick={() => removeNewWeeklyItem(section, index)}
+                        disabled={createBusy}
+                      >
+                        {t('profiles.removeItem')}
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                    onClick={() => addNewWeeklyItem(section)}
+                    disabled={createBusy}
+                  >
+                    {t('profiles.addItem')}
+                  </button>
+                </div>
+              ))}
+
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-slate-700">{t('weeklyNote.goodThings')}</p>
+                {[0, 1, 2].map((index) => (
+                  <input
+                    key={`new-good-${index}`}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    value={newWeeklyStructured?.reflection.goodThings[index] ?? ''}
+                    onChange={(event) => updateNewReflectionItem('goodThings', index, event.target.value)}
+                    disabled={createBusy}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-slate-700">{t('weeklyNote.nextTop3')}</p>
+                {[0, 1, 2].map((index) => (
+                  <input
+                    key={`new-next-${index}`}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    value={newWeeklyStructured?.reflection.nextWeekTop3[index] ?? ''}
+                    onChange={(event) => updateNewReflectionItem('nextWeekTop3', index, event.target.value)}
+                    disabled={createBusy}
+                  />
+                ))}
+              </div>
+            </article>
+          </div>
+        )}
+
+        {createTemplateMessage ? <p className="text-sm text-slate-600">{createTemplateMessage}</p> : null}
 
         <button
           type="submit"

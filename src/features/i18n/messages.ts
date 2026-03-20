@@ -188,6 +188,8 @@ export const enMessages = {
   'profiles.profileNameRequired': 'Profile name is required.',
   'profiles.profileCreated': 'Profile {name} created and activated.',
   'profiles.createFailed': 'Failed to create profile.',
+  'profiles.createStructuredTemplateParseFailed':
+    'Failed to parse create-profile template in structured mode. Switch to raw mode to fix markdown format.',
   'profiles.currentTemplates': 'Current Profile Templates',
   'profiles.dailyTemplate': 'Daily template',
   'profiles.weeklyTemplate': 'Weekly template',
@@ -601,6 +603,7 @@ export const zhMessages: Record<MessageKey, string> = {
   'profiles.profileNameRequired': '请输入档案名。',
   'profiles.profileCreated': '档案 {name} 已创建并切换。',
   'profiles.createFailed': '创建档案失败。',
+  'profiles.createStructuredTemplateParseFailed': '创建档案模板结构化解析失败，请切换到原始 Markdown 修正格式。',
   'profiles.currentTemplates': '当前档案模板',
   'profiles.dailyTemplate': '每日模板',
   'profiles.weeklyTemplate': '每周模板',
