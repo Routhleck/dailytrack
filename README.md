@@ -52,10 +52,12 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 ## Screenshots
 
-![Dashboard](docs/assets/screenshots/dashboard.png)
-![Daily Note](docs/assets/screenshots/daily-note.png)
-![Weekly Note](docs/assets/screenshots/weekly-note.png)
-![Settings Reset](docs/assets/screenshots/settings.png)
+<p align="center">
+  <img src="docs/assets/screenshots/dashboard.png" alt="Dashboard" width="49%" />
+  <img src="docs/assets/screenshots/daily-note.png" alt="Daily Note" width="49%" />
+  <img src="docs/assets/screenshots/weekly-note.png" alt="Weekly Note" width="49%" />
+  <img src="docs/assets/screenshots/settings.png" alt="Settings Reset" width="49%" />
+</p>
 
 ## Core Features
 
