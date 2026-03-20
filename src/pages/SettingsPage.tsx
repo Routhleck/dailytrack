@@ -5,8 +5,27 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
 import { useUpdater } from '../features/updater/UpdaterContext'
-import { exportDataBundle, importDataBundle, type CopySummary } from '../lib/fs/fileApi'
+import {
+  deleteWebdavSnapshot,
+  exportDataBundle,
+  getWebdavConfig,
+  importDataBundle,
+  listWebdavSnapshots,
+  pullWebdavSnapshot,
+  pushWebdavSnapshot,
+  saveWebdavConfig,
+  testWebdavConnection,
+  type CopySummary,
+  type WebdavConfig,
+  type WebdavSnapshot,
+} from '../lib/fs/fileApi'
 import { emitDataChanged } from '../lib/liveSync'
+import {
+  defaultWebdavConfig,
+  formatSnapshotSize,
+  formatSnapshotTime,
+  normalizeWebdavConfig,
+} from '../features/webdav/webdav.service'
 
 function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -43,6 +62,9 @@ function formatCopySummary(
     dirs: summary.createdDirs,
   })
 }
+
+type WebdavNumericField = 'autoPushIntervalMin' | 'requestTimeoutSec' | 'maxSnapshots'
+type WebdavTextField = 'remoteBaseUrl' | 'username' | 'password'
 
 export function SettingsPage() {
   const { t } = useI18n()
@@ -95,6 +117,20 @@ export function SettingsPage() {
   const [resetMessage, setResetMessage] = useState('')
   const [resetBusy, setResetBusy] = useState(false)
 
+  const [webdavConfig, setWebdavConfig] = useState<WebdavConfig>(defaultWebdavConfig())
+  const [webdavSnapshots, setWebdavSnapshots] = useState<WebdavSnapshot[]>([])
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState('')
+  const [webdavMessage, setWebdavMessage] = useState('')
+  const [webdavLoading, setWebdavLoading] = useState(true)
+  const [webdavSaving, setWebdavSaving] = useState(false)
+  const [webdavTesting, setWebdavTesting] = useState(false)
+  const [webdavPushing, setWebdavPushing] = useState(false)
+  const [webdavPulling, setWebdavPulling] = useState(false)
+  const [webdavRefreshing, setWebdavRefreshing] = useState(false)
+  const [webdavDeleting, setWebdavDeleting] = useState(false)
+  const [webdavSnapshotNote, setWebdavSnapshotNote] = useState('')
+  const [webdavBackupBeforePull, setWebdavBackupBeforePull] = useState(true)
+
   const normalizedBaseRoot = useMemo(() => normalizePath(baseDataRoot ?? ''), [baseDataRoot])
   const normalizedMigrateTarget = useMemo(() => normalizePath(migrateTarget.trim()), [migrateTarget])
   const migrateValidationMessage = useMemo(() => {
@@ -127,6 +163,183 @@ export function SettingsPage() {
     const suggested = baseDataRoot.replace(/life-tracker-data$/, 'dailytrack-data')
     setMigrateTarget(suggested === baseDataRoot ? `${baseDataRoot}-migrated` : suggested)
   }, [baseDataRoot, migrateTarget])
+
+  async function refreshWebdavSnapshots() {
+    setWebdavRefreshing(true)
+    try {
+      const snapshots = await listWebdavSnapshots()
+      setWebdavSnapshots(snapshots)
+      if (snapshots.length === 0) {
+        setSelectedSnapshotId('')
+      } else if (!snapshots.some((item) => item.id === selectedSnapshotId)) {
+        setSelectedSnapshotId(snapshots[0].id)
+      }
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavListFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    let disposed = false
+
+    void (async () => {
+      try {
+        const loaded = await getWebdavConfig()
+        if (!disposed) {
+          setWebdavConfig(normalizeWebdavConfig(loaded))
+          await refreshWebdavSnapshots()
+        }
+      } catch (error) {
+        if (!disposed) {
+          const text = error instanceof Error ? error.message : t('settings.webdavLoadFailed')
+          setWebdavMessage(text)
+        }
+      } finally {
+        if (!disposed) {
+          setWebdavLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      disposed = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function setWebdavTextField(field: WebdavTextField, value: string) {
+    setWebdavConfig((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  function setWebdavNumericField(field: WebdavNumericField, value: string) {
+    const parsed = Number.parseInt(value, 10)
+    setWebdavConfig((current) => ({
+      ...current,
+      [field]: Number.isFinite(parsed) ? parsed : 0,
+    }))
+  }
+
+  async function handleSaveWebdav(event: FormEvent) {
+    event.preventDefault()
+    setWebdavSaving(true)
+    setWebdavMessage('')
+
+    try {
+      const saved = await saveWebdavConfig(normalizeWebdavConfig(webdavConfig))
+      setWebdavConfig(saved)
+      setWebdavMessage(t('settings.webdavSaved'))
+      emitDataChanged({ scope: 'settings' })
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavSaveFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavSaving(false)
+    }
+  }
+
+  async function handleTestWebdav() {
+    setWebdavTesting(true)
+    setWebdavMessage('')
+    try {
+      const result = await testWebdavConnection()
+      setWebdavMessage(result.message || t('settings.webdavTestPassed'))
+      await refreshWebdavSnapshots()
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavTestFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavTesting(false)
+    }
+  }
+
+  async function handlePushWebdav() {
+    if (!baseDataRoot) {
+      setWebdavMessage(t('settings.dataRootNotReady'))
+      return
+    }
+
+    setWebdavPushing(true)
+    setWebdavMessage('')
+    try {
+      const result = await pushWebdavSnapshot(baseDataRoot, webdavSnapshotNote.trim() || undefined)
+      setWebdavSnapshotNote('')
+      setWebdavMessage(
+        `${t('settings.webdavPushSucceeded', { id: result.snapshot.id })}` +
+          (result.prunedSnapshotIds.length > 0
+            ? ` ${t('settings.webdavPruned', { count: result.prunedSnapshotIds.length })}`
+            : ''),
+      )
+      await refreshWebdavSnapshots()
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavPushFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavPushing(false)
+    }
+  }
+
+  async function pullSnapshot(snapshotId?: string) {
+    if (!baseDataRoot) {
+      setWebdavMessage(t('settings.dataRootNotReady'))
+      return
+    }
+
+    if (!window.confirm(t('settings.webdavPullConfirm'))) {
+      return
+    }
+
+    setWebdavPulling(true)
+    setWebdavMessage('')
+
+    try {
+      const result = await pullWebdavSnapshot(baseDataRoot, snapshotId, true, webdavBackupBeforePull)
+      await refresh()
+      emitDataChanged({ scope: 'all' })
+      setWebdavMessage(
+        `${t('settings.webdavPullSucceeded', { id: result.snapshot.id })} ${formatCopySummary(result.summary, t)}` +
+          (result.backupPath ? ` ${t('settings.webdavBackupPath', { path: result.backupPath })}` : ''),
+      )
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavPullFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavPulling(false)
+    }
+  }
+
+  async function handleDeleteSnapshot() {
+    if (!selectedSnapshotId) {
+      return
+    }
+
+    if (!window.confirm(t('settings.webdavDeleteConfirm'))) {
+      return
+    }
+
+    setWebdavDeleting(true)
+    setWebdavMessage('')
+
+    try {
+      const result = await deleteWebdavSnapshot(selectedSnapshotId)
+      if (result.deleted) {
+        setWebdavMessage(t('settings.webdavDeleteSucceeded'))
+      } else {
+        setWebdavMessage(t('settings.webdavDeleteNoop'))
+      }
+      await refreshWebdavSnapshots()
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.webdavDeleteFailed')
+      setWebdavMessage(text)
+    } finally {
+      setWebdavDeleting(false)
+    }
+  }
 
   async function handleExport(event: FormEvent) {
     event.preventDefault()
@@ -333,6 +546,228 @@ export function SettingsPage() {
         {updaterStatus ? <p className="text-sm text-slate-700">{updaterStatus}</p> : null}
         {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
       </section>
+
+      <form onSubmit={handleSaveWebdav} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.webdavTitle')}</h2>
+        <p className="text-sm text-slate-600">{t('settings.webdavDescription')}</p>
+
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={webdavConfig.enabled}
+            onChange={(event) => setWebdavConfig((current) => ({ ...current, enabled: event.target.checked }))}
+            disabled={webdavLoading || webdavSaving}
+          />
+          {t('settings.webdavEnabled')}
+        </label>
+
+        <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-url">
+          {t('settings.webdavBaseUrl')}
+        </label>
+        <input
+          id="webdav-url"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          value={webdavConfig.remoteBaseUrl}
+          onChange={(event) => setWebdavTextField('remoteBaseUrl', event.target.value)}
+          placeholder="https://cloud.example.com/remote.php/dav/files/<user>/dailytrack"
+          disabled={webdavLoading || webdavSaving}
+        />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-username">
+              {t('settings.webdavUsername')}
+            </label>
+            <input
+              id="webdav-username"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              value={webdavConfig.username}
+              onChange={(event) => setWebdavTextField('username', event.target.value)}
+              disabled={webdavLoading || webdavSaving}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-password">
+              {t('settings.webdavPassword')}
+            </label>
+            <input
+              id="webdav-password"
+              type="password"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              value={webdavConfig.password}
+              onChange={(event) => setWebdavTextField('password', event.target.value)}
+              disabled={webdavLoading || webdavSaving}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-interval">
+              {t('settings.webdavInterval')}
+            </label>
+            <input
+              id="webdav-interval"
+              type="number"
+              min={0}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              value={webdavConfig.autoPushIntervalMin}
+              onChange={(event) => setWebdavNumericField('autoPushIntervalMin', event.target.value)}
+              disabled={webdavLoading || webdavSaving}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-timeout">
+              {t('settings.webdavTimeout')}
+            </label>
+            <input
+              id="webdav-timeout"
+              type="number"
+              min={10}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              value={webdavConfig.requestTimeoutSec}
+              onChange={(event) => setWebdavNumericField('requestTimeoutSec', event.target.value)}
+              disabled={webdavLoading || webdavSaving}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-max-snapshots">
+              {t('settings.webdavMaxSnapshots')}
+            </label>
+            <input
+              id="webdav-max-snapshots"
+              type="number"
+              min={1}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              value={webdavConfig.maxSnapshots}
+              onChange={(event) => setWebdavNumericField('maxSnapshots', event.target.value)}
+              disabled={webdavLoading || webdavSaving}
+            />
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={webdavConfig.verifyTls}
+            onChange={(event) => setWebdavConfig((current) => ({ ...current, verifyTls: event.target.checked }))}
+            disabled={webdavLoading || webdavSaving}
+          />
+          {t('settings.webdavVerifyTls')}
+        </label>
+
+        <p className="text-xs text-slate-500">{t('settings.webdavCredentialsHint')}</p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={webdavLoading || webdavSaving}
+            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {webdavSaving ? t('settings.webdavSaving') : t('settings.webdavSave')}
+          </button>
+          <button
+            type="button"
+            disabled={webdavLoading || webdavTesting}
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+            onClick={() => void handleTestWebdav()}
+          >
+            {webdavTesting ? t('settings.webdavTesting') : t('settings.webdavTest')}
+          </button>
+          <button
+            type="button"
+            disabled={webdavLoading || webdavRefreshing}
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+            onClick={() => void refreshWebdavSnapshots()}
+          >
+            {webdavRefreshing ? t('settings.webdavRefreshing') : t('settings.webdavRefresh')}
+          </button>
+        </div>
+
+        <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-note">
+            {t('settings.webdavPushNote')}
+          </label>
+          <input
+            id="webdav-note"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+            value={webdavSnapshotNote}
+            onChange={(event) => setWebdavSnapshotNote(event.target.value)}
+            placeholder={t('settings.webdavPushNotePlaceholder')}
+            disabled={webdavPushing || webdavPulling}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={webdavPushing || webdavPulling || !baseDataRoot}
+              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              onClick={() => void handlePushWebdav()}
+            >
+              {webdavPushing ? t('settings.webdavPushing') : t('settings.webdavPushNow')}
+            </button>
+            <button
+              type="button"
+              disabled={webdavPushing || webdavPulling || webdavSnapshots.length === 0 || !baseDataRoot}
+              className="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              onClick={() => void pullSnapshot()}
+            >
+              {webdavPulling ? t('settings.webdavPulling') : t('settings.webdavPullLatest')}
+            </button>
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={webdavBackupBeforePull}
+            onChange={(event) => setWebdavBackupBeforePull(event.target.checked)}
+            disabled={webdavPulling}
+          />
+          {t('settings.webdavBackupBeforePull')}
+        </label>
+
+        <div className="space-y-2 rounded-md border border-slate-200 p-3">
+          <p className="text-sm font-medium text-slate-900">{t('settings.webdavSnapshots')}</p>
+          {webdavSnapshots.length === 0 ? (
+            <p className="text-sm text-slate-600">{t('settings.webdavNoSnapshots')}</p>
+          ) : (
+            <>
+              <select
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+                value={selectedSnapshotId}
+                onChange={(event) => setSelectedSnapshotId(event.target.value)}
+                disabled={webdavPulling || webdavDeleting}
+              >
+                {webdavSnapshots.map((snapshot) => (
+                  <option key={snapshot.id} value={snapshot.id}>
+                    {snapshot.id} | {formatSnapshotTime(snapshot.createdAt)} | {formatSnapshotSize(snapshot.sizeBytes)}
+                  </option>
+                ))}
+              </select>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!selectedSnapshotId || webdavPulling || !baseDataRoot}
+                  className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-60"
+                  onClick={() => void pullSnapshot(selectedSnapshotId)}
+                >
+                  {webdavPulling ? t('settings.webdavPulling') : t('settings.webdavPullSelected')}
+                </button>
+                <button
+                  type="button"
+                  disabled={!selectedSnapshotId || webdavDeleting}
+                  className="rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 disabled:opacity-60"
+                  onClick={() => void handleDeleteSnapshot()}
+                >
+                  {webdavDeleting ? t('settings.webdavDeleting') : t('settings.webdavDeleteSelected')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {webdavMessage ? <p className="break-all text-sm text-slate-600">{webdavMessage}</p> : null}
+      </form>
 
       <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>

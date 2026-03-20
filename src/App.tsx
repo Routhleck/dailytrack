@@ -6,6 +6,7 @@ import { PreferencesProvider } from './features/preferences/PreferencesContext'
 import { FilesystemWatchBridge } from './features/settings/FilesystemWatchBridge'
 import { DataRootProvider } from './features/settings/DataRootContext'
 import { UpdaterProvider } from './features/updater/UpdaterContext'
+import { WebdavSyncBridge } from './features/webdav/WebdavSyncBridge'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <DataRootProvider>
           <PreferencesProvider>
             <FilesystemWatchBridge />
+            <WebdavSyncBridge />
             <RouterProvider router={router} />
           </PreferencesProvider>
         </DataRootProvider>

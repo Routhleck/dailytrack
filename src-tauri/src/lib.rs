@@ -9,6 +9,7 @@ use notify::{
 };
 use serde::Serialize;
 use tauri::Emitter;
+mod webdav;
 
 const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
 
@@ -1062,7 +1063,14 @@ pub fn run() {
       export_data_bundle,
       import_data_bundle,
       migrate_data_root,
-      reset_tracker_data
+      reset_tracker_data,
+      webdav::get_webdav_config,
+      webdav::save_webdav_config,
+      webdav::test_webdav_connection,
+      webdav::webdav_list_snapshots,
+      webdav::webdav_push_snapshot,
+      webdav::webdav_pull_snapshot,
+      webdav::webdav_delete_snapshot
     ])
     .setup(|app| {
       #[cfg(desktop)]

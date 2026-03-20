@@ -31,6 +31,49 @@ export type GenerateLlmReportResult = {
   content: string
 }
 
+export type WebdavConfig = {
+  enabled: boolean
+  remoteBaseUrl: string
+  username: string
+  password: string
+  autoPushIntervalMin: number
+  requestTimeoutSec: number
+  maxSnapshots: number
+  verifyTls: boolean
+  deviceId: string
+}
+
+export type WebdavSnapshot = {
+  id: string
+  createdAt: number
+  deviceId: string
+  appVersion: string
+  fileName: string
+  sizeBytes: number
+  sha256: string
+  note?: string | null
+}
+
+export type WebdavTestResult = {
+  ok: boolean
+  message: string
+}
+
+export type WebdavPushResult = {
+  snapshot: WebdavSnapshot
+  prunedSnapshotIds: string[]
+}
+
+export type WebdavPullResult = {
+  snapshot: WebdavSnapshot
+  summary: CopySummary
+  backupPath?: string | null
+}
+
+export type WebdavDeleteSnapshotResult = {
+  deleted: boolean
+}
+
 export type FsChangedEventPayload = {
   scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
   path: string
@@ -142,4 +185,47 @@ export async function migrateDataRoot(
 
 export async function resetTrackerData(dataRoot: string): Promise<string> {
   return invoke<string>('reset_tracker_data', { dataRoot })
+}
+
+export async function getWebdavConfig(): Promise<WebdavConfig> {
+  return invoke<WebdavConfig>('get_webdav_config')
+}
+
+export async function saveWebdavConfig(config: WebdavConfig): Promise<WebdavConfig> {
+  return invoke<WebdavConfig>('save_webdav_config', { config })
+}
+
+export async function testWebdavConnection(): Promise<WebdavTestResult> {
+  return invoke<WebdavTestResult>('test_webdav_connection')
+}
+
+export async function listWebdavSnapshots(): Promise<WebdavSnapshot[]> {
+  return invoke<WebdavSnapshot[]>('webdav_list_snapshots')
+}
+
+export async function pushWebdavSnapshot(
+  dataRoot: string,
+  note?: string,
+): Promise<WebdavPushResult> {
+  return invoke<WebdavPushResult>('webdav_push_snapshot', { dataRoot, note })
+}
+
+export async function pullWebdavSnapshot(
+  dataRoot: string,
+  snapshotId?: string,
+  overwrite = true,
+  backupBeforePull = true,
+): Promise<WebdavPullResult> {
+  return invoke<WebdavPullResult>('webdav_pull_snapshot', {
+    dataRoot,
+    snapshotId,
+    overwrite,
+    backupBeforePull,
+  })
+}
+
+export async function deleteWebdavSnapshot(
+  snapshotId: string,
+): Promise<WebdavDeleteSnapshotResult> {
+  return invoke<WebdavDeleteSnapshotResult>('webdav_delete_snapshot', { snapshotId })
 }
