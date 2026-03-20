@@ -1,5 +1,7 @@
 # dailytrack
 
+[<img src="https://badges.ws/badge/Buy_Me_a_Coffee-ff813f?icon=buymeacoffee" />](https://buymeacoffee.com/forrestcai6)
+
 Local-first desktop life tracker for Markdown users.
 
 `dailytrack` is a Tauri desktop app that reads and writes your local tracker files.
