@@ -7,6 +7,7 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Repo-versioned release skill: `skills/dailytrack-release` with release runbook, verification checklist, and release-note template/scripts.
 - Documentation baseline for MVP development workflow.
 - `AGENTS.md` collaboration and engineering guardrails.
 - Architecture, data model, parser, storage, setup, QA, and release docs under `docs/`.
@@ -73,6 +74,7 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
 - Replaced template starter UI with tracker-focused desktop layout.
 - Updated README with run/build/test instructions and markdown schema contracts.
 - Switched route pages to lazy-loaded chunks to reduce initial bundle size.

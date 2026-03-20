@@ -29,6 +29,7 @@ The app reads and writes local Markdown/CSV files and provides a structured edit
 - `docs/` for architecture, specs, QA, release docs
 - `docs/DEVLOG/` for day-by-day engineering logs
 - `docs/ADR/` for key architecture decisions
+- `skills/` for repo-versioned Codex skills and automation runbooks
 
 ## Data Layout Contract
 Default local data root: `~/dailytrack-data`
@@ -50,9 +51,15 @@ On Windows, default base root falls back to `%USERPROFILE%\\dailytrack-data`.
 
 ## Sync Behavior Contract
 - Markdown/CSV remains the source of truth on disk.
-- Daily/Weekly editors use debounced autosave and also keep explicit `Save now`.
+- Daily/Weekly editors use debounced autosave only (no explicit save button).
 - Dashboard/list pages react to in-app data-change events and periodic polling.
 - External file edits are polled and pulled into UI only when there are no unsaved local edits.
+
+## Repo Skills
+- `skills/dailytrack-release`:
+  - release runbook for this repository
+  - readable release-note generation helper
+  - GitHub Actions artifact verification commands
 
 ## Development Workflow
 1. Confirm requirement and scope boundaries.

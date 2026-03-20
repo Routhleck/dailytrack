@@ -148,6 +148,7 @@ dailytrack-data/
 ## GitHub Release CI
 
 - Workflow: `.github/workflows/publish.yml`
+- Maintainer skill: `skills/dailytrack-release` (release runbook + notes generator)
 - Targets:
   - windows-latest
   - macOS aarch64
@@ -161,6 +162,13 @@ Example:
 ```bash
 git tag v0.2.0
 git push origin v0.2.0
+```
+
+Generate a readable release-note draft from commit range:
+
+```bash
+skills/dailytrack-release/scripts/make_release_notes.sh v0.2.0 v0.2.1 > /tmp/dailytrack-v0.2.1-notes.md
+gh release edit v0.2.1 --notes-file /tmp/dailytrack-v0.2.1-notes.md
 ```
 
 Optional (recommended): for trusted macOS installer output (avoid Gatekeeper "app is damaged" warning), configure these repository secrets:

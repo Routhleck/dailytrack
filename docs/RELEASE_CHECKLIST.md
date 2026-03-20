@@ -17,6 +17,7 @@
 - [ ] `docs/PREFERENCES_SCHEMA.md` updated when schema changes.
 - [ ] DEVLOG entry appended for release session.
 - [ ] CHANGELOG updated with user-visible changes.
+- [ ] Release notes drafted with `skills/dailytrack-release` template/script and edited for readability.
 
 ## Packaging Readiness
 - [ ] Tauri dev build works locally.

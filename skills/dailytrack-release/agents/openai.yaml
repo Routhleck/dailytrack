@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dailytrack Release"
+  short_description: "Release workflow for the dailytrack repository."
+  default_prompt: "Use this skill to prepare, validate, and publish a dailytrack release with readable notes and artifact checks."
