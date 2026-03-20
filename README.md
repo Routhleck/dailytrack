@@ -7,6 +7,29 @@ Local-first desktop life tracker for Markdown users.
 `dailytrack` is a Tauri desktop app that reads and writes your local tracker files.
 Markdown and CSV stay as the only source of truth.
 
+## Download and Install (Recommended)
+
+If you just want to use the app, start from GitHub Releases:
+
+- Latest release: https://github.com/Routhleck/dailytrack/releases/latest
+- All releases: https://github.com/Routhleck/dailytrack/releases
+
+Choose assets by OS/CPU:
+
+- macOS (Apple Silicon): `dailytrack_*_aarch64.dmg`
+- macOS (Intel): `dailytrack_*_x64.dmg`
+- Windows: choose the `.msi` or `-setup.exe` asset in the same release
+
+Install steps:
+
+1. Open latest release page.
+2. Download the matching installer for your system.
+3. Install and launch `dailytrack`.
+
+Note for unsigned macOS builds:
+
+- If Gatekeeper blocks app launch, use the helper script included in the DMG (`fix-dailytrack-quarantine.command`) or follow the manual `xattr` workaround in the `macOS Install Notice (Unsigned Builds)` section below.
+
 ## Screenshots
 
 ![Dashboard](docs/assets/screenshots/dashboard.png)
