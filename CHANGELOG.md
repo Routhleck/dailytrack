@@ -7,6 +7,12 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- WebDAV cloud snapshot sync (whole-base-root scope):
+  - local WebDAV config storage (`webdav.config.json` in app config dir)
+  - manual `Push Now` / `Pull Latest` / `Pull Selected`
+  - snapshot list and delete actions
+  - optional interval auto-push bridge
+  - snapshot metadata (`meta.json`) + zip archives (`snapshots/*.zip`)
 - Repo-versioned release skill: `skills/dailytrack-release` with release runbook, verification checklist, and release-note template/scripts.
 - Documentation baseline for MVP development workflow.
 - `AGENTS.md` collaboration and engineering guardrails.
@@ -74,6 +80,7 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Settings page now includes a `WebDAV Cloud Sync` section with connection test and snapshot operations.
 - Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
 - Replaced template starter UI with tracker-focused desktop layout.
 - Updated README with run/build/test instructions and markdown schema contracts.

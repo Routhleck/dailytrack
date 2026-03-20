@@ -2,7 +2,8 @@
 
 ## Local-Only Storage Policy
 - All data is stored on local disk.
-- No cloud or remote persistence.
+- Optional cloud transport is available via WebDAV snapshot sync.
+- WebDAV does not replace local files as source of truth.
 - No database.
 
 ## Default Base Root
@@ -61,6 +62,27 @@ On startup:
 - Raw mode writes user text directly.
 - Text file saves use atomic write (`temp file -> rename/replace`) for safer crash/interruption behavior.
 - External disk edits use watcher-first sync with polling fallback, and synchronize into UI only when local drafts are not dirty.
+
+## WebDAV Snapshot Sync
+- Scope: entire base data root (not per single file merge).
+- Trigger:
+  - manual `Push` / `Pull`
+  - optional interval auto-push
+- Remote layout under configured base URL:
+  - `meta.json`
+  - `snapshots/<snapshot-id>.zip`
+- Pull behavior:
+  - can create local backup first (`dailytrack-webdav-backup-<timestamp>`)
+  - then overwrites local base root with selected snapshot content.
+- Snapshot retention:
+  - controlled by `maxSnapshots`
+  - old snapshots are pruned after successful push.
+
+## WebDAV Config Storage
+- Stored outside data root in Tauri app config directory:
+  - `webdav.config.json`
+- Contains endpoint and credentials (`username/password`) plus sync options.
+- Not included in data-root export/import/migration operations.
 
 ## Export and Import
 - Export copies current active profile root to timestamped folder:

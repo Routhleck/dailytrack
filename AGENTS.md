@@ -5,7 +5,7 @@ Build a local desktop life tracker for personal use.
 The app reads and writes local Markdown/CSV files and provides a structured editing UI.
 
 ## Non-Goals
-- Cloud sync
+- Full SaaS-style cloud backend (database/auth/multi-tenant APIs)
 - Auth/accounts
 - Remote API backend
 - Team collaboration
@@ -16,6 +16,7 @@ The app reads and writes local Markdown/CSV files and provides a structured edit
 - Markdown and CSV files are the only source of truth.
 - The app must not introduce hidden app-only data formats.
 - Structured editing and raw editing must both map back to local files.
+- Optional WebDAV snapshot sync is transport/backup only and must not replace local source-of-truth files.
 
 ## Preferred Stack
 - Tauri

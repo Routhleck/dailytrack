@@ -39,8 +39,9 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 ## Runtime Boundaries
 - Frontend: React + TypeScript + Tailwind.
 - Desktop runtime: Tauri.
-- Persistence: local filesystem only.
-- No remote services.
+- Persistence: local filesystem.
+- Optional remote transport: WebDAV snapshot backup/sync (config + snapshots + metadata).
+- Remote transport must not replace local markdown/csv source-of-truth files.
 
 ## Feature Modules
 - `features/daily`: daily note read/create/parse/edit/save.
@@ -48,6 +49,7 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - `features/body`: CSV read/edit/save and trend source data.
 - `features/preferences`: per-profile preferences read/save and context.
 - `features/settings`: base root + profile state management.
+- `features/webdav`: WebDAV config, snapshot sync controls, and auto-push bridge.
 - `features/dashboard`: summary and recent-file aggregation.
 
 ## Key Constraints

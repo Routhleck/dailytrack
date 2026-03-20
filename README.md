@@ -118,6 +118,7 @@ dailytrack-data/
   - migrate-and-switch data root
   - migration safety checks
   - export/import data bundle
+  - WebDAV cloud snapshot sync (manual push/pull + optional interval auto-push)
   - in-app updater controls (auto-check, manual check, install + restart)
   - tutorial replay
   - reset to first-run state (danger zone)
@@ -144,6 +145,18 @@ dailytrack-data/
 - Import merges/copies files into current active profile root.
 - Data root migration copies whole root and switches app root.
 - Settings displays copy summary after export/import/migration (copied/overwritten/skipped/new dirs).
+
+## Optional WebDAV Cloud Backup
+
+- WebDAV sync works as cloud snapshots for the whole base data root.
+- Supports:
+  - `Push Now` (upload new snapshot)
+  - `Pull Latest` or `Pull Selected` (restore from cloud snapshot)
+  - optional interval auto-push (minutes)
+- Snapshot metadata is tracked in remote `meta.json`; snapshot archives are stored under remote `snapshots/`.
+- Local pull can create a backup folder before overwrite (`dailytrack-webdav-backup-<timestamp>`).
+- WebDAV credentials are stored in the app config directory (`webdav.config.json`), not under data root.
+- `Markdown/CSV` files remain the source of truth; WebDAV is backup/sync transport only.
 
 ## GitHub Release CI
 

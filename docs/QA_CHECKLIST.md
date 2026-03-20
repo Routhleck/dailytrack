@@ -60,3 +60,13 @@
 ## Sync Mode
 - [ ] `Preferences -> Live Sync -> Watch` pushes external file edits into UI without waiting for poll interval.
 - [ ] `Preferences -> Live Sync -> Poll` disables watcher path and still refreshes via polling.
+
+## WebDAV Sync
+- [ ] Save WebDAV config succeeds and persists after app restart.
+- [ ] `Test Connection` succeeds with valid URL/credentials and fails with clear error on invalid credentials.
+- [ ] `Push Now` uploads a new snapshot and appears in snapshot list.
+- [ ] `Pull Latest` restores data correctly and refreshes UI state.
+- [ ] `Pull Selected` restores the selected snapshot.
+- [ ] Pull with backup enabled creates `dailytrack-webdav-backup-<timestamp>` in parent directory.
+- [ ] Auto-push interval triggers background push when enabled.
+- [ ] Snapshot deletion removes selected snapshot from remote meta/list.
