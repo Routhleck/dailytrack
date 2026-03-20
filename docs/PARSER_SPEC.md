@@ -55,6 +55,14 @@ Reflection numbered rule:
 4. `### 3 good things this week` + numbered list 1..3
 5. `### 3 most important things next week` + numbered list 1..3
 
+## Template Variable Substitution
+- Daily template supports:
+  - `{{date}}` -> current note date (`YYYY-MM-DD`)
+- Weekly template supports:
+  - `{{week}}` -> current week id (`YYYY-Www`)
+- Substitution runs only when auto-creating missing files from templates.
+- Raw/structured saves do not perform additional template interpolation.
+
 ## Raw/Structured Interaction
 - Raw save: write raw text, then parse again.
 - Structured save: serialize normalized Markdown, write file, then parse again.

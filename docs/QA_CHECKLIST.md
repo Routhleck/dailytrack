@@ -42,6 +42,7 @@
 - [ ] Migration-based root switch updates all views correctly.
 - [ ] `Migrate Data Root` copies data and switches to destination root.
 - [ ] Migration rejects same-path or nested source/destination roots.
+- [ ] Export/import/migration success messages include copy summary counters.
 - [ ] `Reset Data` requires explicit `RESET` confirmation.
 - [ ] `Reset Data` clears app-managed tracker files and re-enters first-run template setup.
 - [ ] Existing user files remain readable after app restart.
@@ -55,3 +56,7 @@
 - [ ] Available update can be installed via install-and-restart action.
 - [ ] Auto-check preference persists across app restarts.
 - [ ] If updater secrets are missing in CI, release still succeeds without updater artifacts.
+
+## Sync Mode
+- [ ] `Preferences -> Live Sync -> Watch` pushes external file edits into UI without waiting for poll interval.
+- [ ] `Preferences -> Live Sync -> Poll` disables watcher path and still refreshes via polling.

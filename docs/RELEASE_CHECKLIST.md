@@ -8,10 +8,13 @@
 - [ ] QA checklist fully passed.
 - [ ] Critical parser and storage flows manually verified.
 - [ ] Known limitations documented in README.
+- [ ] Watch mode and poll mode both verified for data refresh.
+- [ ] Atomic write flows validated (daily/weekly/preferences/template updates).
 
 ## Documentation
 - [ ] README updated for run steps and data layout.
 - [ ] Relevant docs in `docs/` updated.
+- [ ] `docs/PREFERENCES_SCHEMA.md` updated when schema changes.
 - [ ] DEVLOG entry appended for release session.
 - [ ] CHANGELOG updated with user-visible changes.
 

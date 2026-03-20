@@ -133,13 +133,17 @@ dailytrack-data/
 
 - Daily/Weekly use debounced autosave only (no manual save button).
 - Body records save on submit/delete.
-- App polls disk and refreshes pages when local draft is clean.
+- Live sync supports two per-profile modes:
+  - `Watch` (recommended): Rust filesystem watcher emits realtime change events.
+  - `Poll`: interval polling only.
+- Polling remains as fallback and refreshes pages only when local draft is clean.
 
 ## Portability
 
 - Export creates `dailytrack-export-<timestamp>` folder.
 - Import merges/copies files into current active profile root.
 - Data root migration copies whole root and switches app root.
+- Settings displays copy summary after export/import/migration (copied/overwritten/skipped/new dirs).
 
 ## GitHub Release CI
 
@@ -281,6 +285,42 @@ date,weight,waist,bodyFat,muscleMass,chest,hip,note
 - Import is file-level merge/overwrite without semantic conflict resolution.
 - No file locking.
 
+## Future TODOs
+
+### P0 (v0.2.0 target)
+- Replace polling-first behavior completely with watcher-first flow across all major pages.
+- Add atomic write tests (including failure-path cleanup and Windows replace behavior).
+- Expand service-layer test coverage for import/migrate/profile/preferences edge cases.
+- Add migration/import post-check verification report (expected file set + mismatch hints).
+
+### P1 (next)
+- Add native folder picker dialogs for root path/import/export/migration flows.
+- Add lightweight conflict preview before import overwrite.
+- Add richer onboarding with template explanation and first-week quick-start checklist.
+
+### P2 (backlog)
+- Add optional file history snapshots for rollback safety.
+- Add plugin-like custom metric sections while keeping markdown/csv as source of truth.
+- Add additional template packs maintained by community contributors.
+
+## Milestone Roadmap
+
+### v0.2.0 - Local-First Stability
+- Goal:
+  - Make sync/write behavior robust enough for daily long-term usage.
+  - Improve observability and recoverability for filesystem operations.
+- Planned deliverables:
+  - watcher-first live sync with polling fallback
+  - atomic text writes on core save paths
+  - import/export/migration operation summary
+  - preference schema versioning and normalization hardening
+  - improved docs for schema/sync/release process
+  - broader automated tests for service + config paths
+- Definition of done:
+  - `npm run lint`, `npm run test`, `npm run build`, `cargo check` all pass
+  - QA checklist items for sync/storage/import/migration pass
+  - release checklist fully checked before tag publish
+
 ## Project Docs
 
 - [AGENTS.md](./AGENTS.md)
@@ -288,5 +328,6 @@ date,weight,waist,bodyFat,muscleMass,chest,hip,note
 - [docs/DATA_MODEL.md](./docs/DATA_MODEL.md)
 - [docs/PARSER_SPEC.md](./docs/PARSER_SPEC.md)
 - [docs/FS_STORAGE.md](./docs/FS_STORAGE.md)
+- [docs/PREFERENCES_SCHEMA.md](./docs/PREFERENCES_SCHEMA.md)
 - [docs/QA_CHECKLIST.md](./docs/QA_CHECKLIST.md)
 - [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)

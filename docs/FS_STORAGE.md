@@ -44,6 +44,7 @@ dailytrack-data/
 - `preferences.json` stores:
   - section/module visibility toggles
   - body metric display settings (unit + decimals per metric)
+  - live sync mode (`watch` or `poll`)
 
 ## Bootstrap Behavior
 On startup:
@@ -58,7 +59,8 @@ On startup:
 - Body writes on submit/delete.
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.
-- External disk edits are polled and synchronized back into UI only when local drafts are not dirty.
+- Text file saves use atomic write (`temp file -> rename/replace`) for safer crash/interruption behavior.
+- External disk edits use watcher-first sync with polling fallback, and synchronize into UI only when local drafts are not dirty.
 
 ## Export and Import
 - Export copies current active profile root to timestamped folder:
@@ -72,6 +74,11 @@ On startup:
   - `true`: replace existing files
   - `false`: keep existing files, copy missing files only
 - Safety guard: export destination cannot be inside current source root.
+- Export/import/migration responses include copy summary counters:
+  - copied files
+  - overwritten files
+  - skipped files
+  - created directories
 
 ## Root Switching vs Migration
 - Settings UI uses migration-only flow for root moves.

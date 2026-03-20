@@ -16,6 +16,15 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - `PreferencesContext`:
   - loads/saves `preferences.json` per active profile
   - controls section/field visibility in structured pages
+  - controls live sync mode (`watch` / `poll`)
+
+## Live Sync
+- Watch-first path:
+  - Rust emits `dailytrack://fs-changed` for data-root filesystem changes.
+  - Frontend bridge converts these to app-level `data-changed` events.
+- Polling fallback:
+  - Pages still poll as safety fallback.
+  - Poll interval is longer when watch mode is enabled.
 
 ## Data Flow
 1. Resolve base root path.

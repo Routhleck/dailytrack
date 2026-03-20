@@ -60,6 +60,15 @@ The format is based on Keep a Changelog.
   - unit text
   - decimal precision (0-3)
   - shared formatter helpers + tests
+- Preferences schema versioning (`schemaVersion`) and sync mode setting (`sync.mode`: `watch`/`poll`).
+- Rust filesystem watcher bridge for realtime local change propagation (`dailytrack://fs-changed`).
+- Copy summary payloads for export/import/migration:
+  - copied files
+  - overwritten files
+  - skipped files
+  - created directories
+- Preferences normalization unit tests (`preferences.service.test.ts`).
+- `docs/PREFERENCES_SCHEMA.md` for runtime preference schema contract and compatibility rules.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -94,6 +103,11 @@ The format is based on Keep a Changelog.
 - Settings page now includes app update controls and updater configuration visibility.
 - Body/Dashboard views now render values and labels using profile-configured metric units and decimal precision.
 - Preferences now includes editable body metric display options (unit + decimals per metric).
+- Live sync now supports profile-level mode switching (`Watch` recommended, `Poll` fallback only).
+- Dashboard/Daily/Weekly/Body polling intervals now adapt to selected sync mode.
+- Export/import/migration UI messages now include file operation summary stats.
+- README includes explicit future TODOs and v0.2.0 milestone roadmap.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.
+- Core text writes now use atomic file replacement in Tauri backend (`write_text_file`, template writes, bootstrap ensures).
