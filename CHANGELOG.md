@@ -69,6 +69,8 @@ The format is based on Keep a Changelog.
   - created directories
 - Preferences normalization unit tests (`preferences.service.test.ts`).
 - `docs/PREFERENCES_SCHEMA.md` for runtime preference schema contract and compatibility rules.
+- macOS unsigned install helper scripts under `scripts/macos/`.
+- Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
 - Replaced template starter UI with tracker-focused desktop layout.
@@ -107,6 +109,7 @@ The format is based on Keep a Changelog.
 - Dashboard/Daily/Weekly/Body polling intervals now adapt to selected sync mode.
 - Export/import/migration UI messages now include file operation summary stats.
 - README includes explicit future TODOs and v0.2.0 milestone roadmap.
+- README now documents helper-script flow for unsigned macOS quarantine removal.
 
 ### Fixed
 - Removed unused scaffold assets and legacy starter styles.

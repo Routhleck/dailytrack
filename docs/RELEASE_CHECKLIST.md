@@ -36,5 +36,6 @@
   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional)
 - [ ] GitHub Actions `publish` workflow green for target tag.
 - [ ] Draft release contains Windows + macOS artifacts.
+- [ ] Unsigned macOS DMG includes `fix-dailytrack-quarantine.command` and `INSTALL_UNSIGNED_MAC.md`.
 - [ ] If updater secrets are set, draft release contains updater metadata (`latest.json` and signatures).
 - [ ] Draft release notes reviewed before publishing.

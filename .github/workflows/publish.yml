@@ -200,3 +200,55 @@ jobs:
           releaseDraft: false
           prerelease: ${{ contains(steps.release_tag.outputs.tag, '-') }}
           args: ${{ steps.tauri_args.outputs.args }}
+
+      - name: Inject unsigned macOS helper into DMG
+        if: ${{ matrix.platform == 'macos-latest' && env.ENABLE_MACOS_SIGNING != 'true' }}
+        shell: bash
+        run: |
+          target_dir="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          dmg_path="$(find "$target_dir" -maxdepth 1 -type f -name '*.dmg' | head -n 1)"
+          if [ -z "$dmg_path" ]; then
+            echo "::error::No DMG artifact found under $target_dir"
+            exit 1
+          fi
+
+          rw_base="${dmg_path%.dmg}-rw"
+          patched_base="${dmg_path%.dmg}-patched"
+
+          hdiutil convert "$dmg_path" -format UDRW -o "$rw_base"
+          rw_dmg="${rw_base}.dmg"
+
+          mount_point="$(hdiutil attach "$rw_dmg" -readwrite -noverify -noautoopen | awk '/\/Volumes\// {print substr($0, index($0, "/Volumes/")); exit}')"
+          if [ -z "$mount_point" ]; then
+            echo "::error::Failed to mount rw dmg $rw_dmg"
+            exit 1
+          fi
+
+          cp scripts/macos/fix-dailytrack-quarantine.command "$mount_point/"
+          cp scripts/macos/README.md "$mount_point/INSTALL_UNSIGNED_MAC.md"
+          chmod +x "$mount_point/fix-dailytrack-quarantine.command"
+
+          sync
+          hdiutil detach "$mount_point"
+          hdiutil convert "$rw_dmg" -format UDZO -imagekey zlib-level=9 -o "$patched_base"
+
+          mv "${patched_base}.dmg" "$dmg_path"
+          rm -f "$rw_dmg"
+
+      - name: Re-upload patched unsigned macOS DMG
+        if: ${{ matrix.platform == 'macos-latest' && env.ENABLE_MACOS_SIGNING != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          target_dir="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          dmg_path="$(find "$target_dir" -maxdepth 1 -type f -name '*.dmg' | head -n 1)"
+          if [ -z "$dmg_path" ]; then
+            echo "::error::No DMG artifact found under $target_dir for re-upload"
+            exit 1
+          fi
+
+          gh release upload \
+            "${{ steps.release_tag.outputs.tag }}" \
+            "$dmg_path" \
+            --clobber

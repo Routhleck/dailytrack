@@ -198,17 +198,23 @@ If your release build is not signed/notarized yet, macOS Gatekeeper may show:
 
 `"dailytrack" is damaged and can’t be opened.`
 
-Temporary user-side workaround:
+Temporary user-side workaround (manual command):
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/dailytrack.app
 ```
 
-You can also remove quarantine on the downloaded DMG first:
+Or remove quarantine on the downloaded DMG first:
 
 ```bash
-xattr -dr com.apple.quarantine ~/Downloads/dailytrack_0.1.0_aarch64.dmg
+xattr -dr com.apple.quarantine ~/Downloads/dailytrack_*.dmg
 ```
+
+Release helper option (for unsigned DMG builds):
+
+1. Drag `dailytrack.app` into `/Applications`.
+2. In the same mounted DMG window, run `fix-dailytrack-quarantine.command`.
+3. Re-open dailytrack.
 
 For production/public distribution, use signed + notarized macOS artifacts.
 
