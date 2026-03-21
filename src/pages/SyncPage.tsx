@@ -54,6 +54,7 @@ export function SyncPage() {
   const [message, setMessage] = useState('')
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
   const [previewMap, setPreviewMap] = useState<Record<string, ConflictPreview>>({})
+  const [showOnlyChanges, setShowOnlyChanges] = useState(true)
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!baseDataRoot) {
@@ -299,6 +300,7 @@ export function SyncPage() {
             const preview = previewMap[item.id]
             const expanded = Boolean(expandedMap[item.id])
             const resolving = resolvingId === item.id
+            const diffRows = (preview?.rows ?? []).filter((row) => !showOnlyChanges || row.kind !== 'same')
             return (
               <div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
                 <p className="font-medium text-slate-900">{item.path}</p>
@@ -348,13 +350,21 @@ export function SyncPage() {
                     <div className="rounded-md border border-slate-200 bg-white p-2">
                       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
                         <span className="font-semibold text-slate-700">{t('sync.diffView')}</span>
+                        <label className="ml-auto inline-flex items-center gap-1 text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={showOnlyChanges}
+                            onChange={(event) => setShowOnlyChanges(event.target.checked)}
+                          />
+                          {t('sync.showOnlyChanges')}
+                        </label>
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{t('sync.diffSame')}</span>
                         <span className="rounded bg-rose-100 px-1.5 py-0.5 text-rose-700">{t('sync.diffRemoved')}</span>
                         <span className="rounded bg-teal-100 px-1.5 py-0.5 text-teal-700">{t('sync.diffAdded')}</span>
                       </div>
                       {preview?.loading ? (
                         <p className="text-xs text-slate-600">{t('common.loading')}</p>
-                      ) : preview?.rows && preview.rows.length > 0 ? (
+                      ) : diffRows.length > 0 ? (
                         <div className="overflow-x-auto">
                           <table className="min-w-[680px] w-full border-collapse text-[11px]">
                             <thead>
@@ -366,7 +376,7 @@ export function SyncPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {preview.rows.map((row, idx) => {
+                              {diffRows.map((row, idx) => {
                                 const rowClass =
                                   row.kind === 'same'
                                     ? 'bg-white'
@@ -386,7 +396,9 @@ export function SyncPage() {
                           </table>
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-600">{t('sync.noDiff')}</p>
+                        <p className="text-xs text-slate-600">
+                          {showOnlyChanges ? t('sync.noChangedRows') : t('sync.noDiff')}
+                        </p>
                       )}
                     </div>
 

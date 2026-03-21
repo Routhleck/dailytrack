@@ -111,6 +111,7 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Sync diff view now supports `Only show changes` mode (enabled by default).
 - Mobile layout density improved on key screens:
   - Dashboard cards use tighter spacing/typography on narrow widths
   - Body page form/buttons/charts are compacted for small windows
