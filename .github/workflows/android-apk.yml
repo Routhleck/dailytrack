@@ -88,21 +88,41 @@ jobs:
           echo "NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> "$GITHUB_ENV"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> "$GITHUB_ENV"
 
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
       - name: Install dependencies
-        run: npm ci --no-audit
+        run: npm ci --no-audit --prefer-offline
 
       - name: Initialize Android target
         run: npm run tauri -- android init --ci --skip-targets-install
 
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('src-tauri/gen/android/**/*.gradle*', 'src-tauri/gen/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Build APK
         shell: bash
         run: |
+          mode="debug"
+          targets="aarch64"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
-            npm run tauri -- android build --ci --apk --target aarch64 x86_64
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            npm run tauri -- android build --ci --apk --debug --target aarch64 x86_64
+            mode="release"
+            targets="aarch64 x86_64"
+          fi
+
+          if [ "$mode" = "release" ]; then
+            npm run tauri -- android build --ci --apk --target $targets
           else
-            npm run tauri -- android build --ci --apk --debug --target aarch64 x86_64
+            npm run tauri -- android build --ci --apk --debug --target $targets
           fi
 
       - name: Collect APK paths

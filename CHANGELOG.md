@@ -115,6 +115,10 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Android APK workflow performance tuning:
+  - default debug build compiles `aarch64` only (faster feedback loop)
+  - release mode keeps `aarch64 + x86_64`
+  - enabled Rust cache and Gradle cache in Android workflow
 - Release pipeline performance improved:
   - frontend lint/test/build now runs once in `verify-frontend`
   - platform matrix jobs reuse prebuilt `dist/` artifact

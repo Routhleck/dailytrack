@@ -277,6 +277,10 @@ Build Android APKs:
 
 - Run workflow `android-apk` from Actions page (artifact build, optional release upload).
 - On tag push (`v*`), workflow also runs automatically and uploads APK artifacts.
+- Speed profile:
+  - default debug build uses `aarch64` target only (faster, good for most physical-device testing)
+  - workflow-dispatch `release` build uses `aarch64 + x86_64`
+  - Rust + Gradle caches are enabled in the APK workflow
 
 Local build speed helpers:
 

@@ -26,7 +26,8 @@ npm run build:desktop:fast
 ## Android APK Build
 - Local:
   - `npm run tauri -- android init --ci`
-  - `npm run tauri -- android build --ci --apk --debug`
+  - `npm run tauri -- android build --ci --apk --debug --target aarch64`
+  - (release multi-target) `npm run tauri -- android build --ci --apk --target aarch64 x86_64`
 - CI:
   - Use `.github/workflows/android-apk.yml` (workflow_dispatch or tag-triggered).
 
