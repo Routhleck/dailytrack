@@ -12,12 +12,14 @@ import {
   deleteProfile as deleteProfileApi,
   ensureDataRoot,
   ensureProfile,
+  type EnsureDataRootInfo,
   listProfiles,
   migrateDataRoot as migrateDataRootApi,
   resetTrackerData as resetTrackerDataApi,
   writeTextFile,
 } from '../../lib/fs/fileApi'
 import {
+  clearDataRootPreference,
   clearPendingInitialTemplateRoot,
   loadActiveProfilePreference,
   loadDataRootPreference,
@@ -81,7 +83,20 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const rootInfo = await ensureDataRoot(rootOverride)
+      let rootInfo: EnsureDataRootInfo
+      let retriedWithDefaultRoot = false
+      if (rootOverride) {
+        try {
+          rootInfo = await ensureDataRoot(rootOverride)
+        } catch (err) {
+          console.warn('Failed to initialize configured data root, fallback to default root', err)
+          clearDataRootPreference()
+          rootInfo = await ensureDataRoot()
+          retriedWithDefaultRoot = true
+        }
+      } else {
+        rootInfo = await ensureDataRoot()
+      }
       const root = rootInfo.root
       const availableProfiles = await listProfiles(root)
 
@@ -111,6 +126,11 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
 
       saveDataRootPreference(root)
       saveActiveProfilePreference(nextProfile)
+      if (retriedWithDefaultRoot) {
+        console.warn('Configured data root is unavailable, switched to default root', {
+          root,
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize data root')
       setNeedsInitialTemplateSetup(false)

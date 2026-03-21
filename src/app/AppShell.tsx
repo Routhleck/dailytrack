@@ -20,7 +20,7 @@ export function AppShell() {
         <div className="hidden md:block">
           <Sidebar />
         </div>
-        <main className="flex-1 px-4 py-4 pb-20 md:px-8 md:py-6 md:pb-6">
+        <main className="flex-1 px-4 pb-20 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-8 md:py-6 md:pb-6">
           <div className="mb-3 flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 md:hidden">
             <div className="flex items-center gap-2">
               <MobileMenu />

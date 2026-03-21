@@ -10,6 +10,10 @@ export function saveDataRootPreference(path: string): void {
   window.localStorage.setItem(DATA_ROOT_KEY, path)
 }
 
+export function clearDataRootPreference(): void {
+  window.localStorage.removeItem(DATA_ROOT_KEY)
+}
+
 export function loadActiveProfilePreference(): string | null {
   return window.localStorage.getItem(ACTIVE_PROFILE_KEY)
 }

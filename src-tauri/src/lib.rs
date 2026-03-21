@@ -9,6 +9,7 @@ use notify::{
 };
 use serde::Serialize;
 use tauri::Emitter;
+use tauri::Manager;
 mod webdav;
 
 const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
@@ -75,12 +76,17 @@ struct GenerateLlmReportResult {
   content: String,
 }
 
-fn default_data_root() -> Result<PathBuf, String> {
+fn default_data_root(app: Option<&tauri::AppHandle>) -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
     .ok();
 
   let Some(home) = home else {
+    if let Some(app_handle) = app {
+      if let Ok(app_data_dir) = app_handle.path().app_data_dir() {
+        return Ok(app_data_dir.join(DEFAULT_DATA_ROOT_DIR));
+      }
+    }
     let fallback = std::env::current_dir()
       .unwrap_or_else(|_| std::env::temp_dir())
       .join(DEFAULT_DATA_ROOT_DIR);
@@ -98,13 +104,31 @@ fn default_data_root() -> Result<PathBuf, String> {
     return Ok(legacy);
   }
 
+  if (cfg!(target_os = "android") || cfg!(target_os = "ios")) && app.is_some() {
+    if let Some(app_handle) = app {
+      if let Ok(app_data_dir) = app_handle.path().app_data_dir() {
+        return Ok(app_data_dir.join(DEFAULT_DATA_ROOT_DIR));
+      }
+    }
+  }
+
   Ok(preferred)
 }
 
 fn resolve_data_root(data_root: Option<String>) -> Result<PathBuf, String> {
   match data_root {
     Some(path) if !path.trim().is_empty() => Ok(PathBuf::from(path)),
-    _ => default_data_root(),
+    _ => default_data_root(None),
+  }
+}
+
+fn resolve_data_root_with_app(
+  data_root: Option<String>,
+  app: &tauri::AppHandle,
+) -> Result<PathBuf, String> {
+  match data_root {
+    Some(path) if !path.trim().is_empty() => Ok(PathBuf::from(path)),
+    _ => default_data_root(Some(app)),
   }
 }
 
@@ -578,8 +602,8 @@ fn is_data_root_empty(root: &Path) -> Result<bool, String> {
 }
 
 #[tauri::command]
-fn ensure_data_root(data_root: Option<String>) -> Result<EnsureDataRootResult, String> {
-  let root = resolve_data_root(data_root)?;
+fn ensure_data_root(app: tauri::AppHandle, data_root: Option<String>) -> Result<EnsureDataRootResult, String> {
+  let root = resolve_data_root_with_app(data_root, &app)?;
   let is_first_run = is_data_root_empty(root.as_path())?;
   fs::create_dir_all(root.as_path())
     .map_err(|err| format!("Failed to create data root {}: {err}", root.display()))?;
