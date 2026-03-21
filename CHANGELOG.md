@@ -29,7 +29,7 @@ The format is based on Keep a Changelog.
     - `realtime/files/*`
   - Sync page status panel with push/pull/both actions
   - unresolved conflict list with manual resolve strategies (`keep_local`, `apply_remote`, `mark_resolved`)
-  - conflict local/remote text preview panel for quick inspection
+  - line-level conflict diff view (local vs remote with line numbers and change highlights)
   - background realtime sync bridge with visibility-triggered sync
 - Structured editor for current profile templates in Profiles:
   - editable daily/weekly checklist items

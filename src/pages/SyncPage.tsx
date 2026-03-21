@@ -12,6 +12,7 @@ import {
   webdavRealtimeStatus,
   webdavRealtimeSyncNow,
 } from '../lib/fs/fileApi'
+import { buildLineDiffRows, type LineDiffRow } from '../lib/diff/lineDiff'
 import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged } from '../lib/liveSync'
 
@@ -19,6 +20,7 @@ type ConflictPreview = {
   loading: boolean
   local?: string
   remote?: string
+  rows?: LineDiffRow[]
   localError?: string
   remoteError?: string
 }
@@ -203,6 +205,7 @@ export function SyncPage() {
         loading: false,
         local,
         remote,
+        rows: buildLineDiffRows(local ?? '', remote ?? ''),
         localError,
         remoteError,
       },
@@ -341,7 +344,53 @@ export function SyncPage() {
                 </div>
 
                 {expanded ? (
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-md border border-slate-200 bg-white p-2">
+                      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
+                        <span className="font-semibold text-slate-700">{t('sync.diffView')}</span>
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{t('sync.diffSame')}</span>
+                        <span className="rounded bg-rose-100 px-1.5 py-0.5 text-rose-700">{t('sync.diffRemoved')}</span>
+                        <span className="rounded bg-teal-100 px-1.5 py-0.5 text-teal-700">{t('sync.diffAdded')}</span>
+                      </div>
+                      {preview?.loading ? (
+                        <p className="text-xs text-slate-600">{t('common.loading')}</p>
+                      ) : preview?.rows && preview.rows.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="min-w-[680px] w-full border-collapse text-[11px]">
+                            <thead>
+                              <tr className="border-b border-slate-200 text-slate-600">
+                                <th className="w-10 py-1 text-left">L#</th>
+                                <th className="py-1 text-left">{t('sync.localPreview')}</th>
+                                <th className="w-10 py-1 text-left">R#</th>
+                                <th className="py-1 text-left">{t('sync.remotePreview')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {preview.rows.map((row, idx) => {
+                                const rowClass =
+                                  row.kind === 'same'
+                                    ? 'bg-white'
+                                    : row.kind === 'remove'
+                                      ? 'bg-rose-50'
+                                      : 'bg-teal-50'
+                                return (
+                                  <tr key={`${item.id}-${idx}`} className={`${rowClass} border-b border-slate-100`}>
+                                    <td className="px-1 py-1 align-top text-slate-500">{row.leftLineNo ?? ''}</td>
+                                    <td className="px-1 py-1 align-top whitespace-pre-wrap break-words text-slate-800">{row.leftText || ' '}</td>
+                                    <td className="px-1 py-1 align-top text-slate-500">{row.rightLineNo ?? ''}</td>
+                                    <td className="px-1 py-1 align-top whitespace-pre-wrap break-words text-slate-800">{row.rightText || ' '}</td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-600">{t('sync.noDiff')}</p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <p className="mb-1 text-xs font-semibold text-slate-700">{t('sync.localPreview')}</p>
                       {preview?.loading ? (
@@ -362,6 +411,7 @@ export function SyncPage() {
                         <pre className="max-h-56 overflow-auto rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700">{preview?.remote || t('sync.previewUnavailable')}</pre>
                       )}
                     </div>
+                  </div>
                   </div>
                 ) : null}
               </div>
