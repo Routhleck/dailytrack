@@ -403,12 +403,30 @@ jobs:
         id: apk_paths
         shell: bash
         run: |
+          release_version="${{ steps.release_tag.outputs.tag }}"
+          release_version="${release_version#v}"
+          if [ -z "$release_version" ]; then
+            echo "::error::Failed to resolve release version from tag."
+            exit 1
+          fi
+
           mapfile -t apk_files < <(find src-tauri/gen/android -type f -name '*.apk' | sort)
           if [ "${#apk_files[@]}" -eq 0 ]; then
             echo "::error::No APK files found under src-tauri/gen/android"
             exit 1
           fi
-          printf '%s\n' "${apk_files[@]}" > /tmp/apk-files.txt
+
+          mkdir -p /tmp/dailytrack-apk-upload
+          : > /tmp/apk-upload-files.txt
+          for file in "${apk_files[@]}"; do
+            base_name="$(basename "$file")"
+            variant="${base_name#app-}"
+            variant="${variant%.apk}"
+            named_apk="/tmp/dailytrack-apk-upload/dailytrack_${release_version}_android_${variant}.apk"
+            cp "$file" "$named_apk"
+            echo "$named_apk" >> /tmp/apk-upload-files.txt
+          done
+
           echo "count=${#apk_files[@]}" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifacts
@@ -416,7 +434,7 @@ jobs:
         with:
           name: dailytrack-android-apk
           path: |
-            src-tauri/gen/android/**/build/outputs/apk/**/*.apk
+            /tmp/dailytrack-apk-upload/*.apk
           if-no-files-found: error
 
       - name: Upload APKs to GitHub release
@@ -427,4 +445,4 @@ jobs:
         run: |
           while IFS= read -r file; do
             gh release upload "$RELEASE_TAG" "$file" --clobber
-          done < /tmp/apk-files.txt
+          done < /tmp/apk-upload-files.txt
