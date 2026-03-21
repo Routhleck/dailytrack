@@ -16,7 +16,7 @@
 - [ ] Relevant docs in `docs/` updated.
 - [ ] `docs/PREFERENCES_SCHEMA.md` updated when schema changes.
 - [ ] DEVLOG entry appended for release session.
-- [ ] CHANGELOG updated with user-visible changes.
+- [ ] CHANGELOG updated with user-visible changes in `## [X.Y.Z] - YYYY-MM-DD` (not left only in `Unreleased`).
 - [ ] Release notes drafted with `skills/dailytrack-release` template/script and edited for readability.
 
 ## Packaging Readiness

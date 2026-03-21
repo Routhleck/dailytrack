@@ -262,6 +262,8 @@ Targets:
 Trigger release build by tag:
 
 ```bash
+# 1) Move release-ready items from CHANGELOG Unreleased
+#    to: ## [x.y.z] - YYYY-MM-DD
 git tag v0.3.2
 git push origin master --tags
 ```

@@ -12,7 +12,7 @@ Use this skill to run the end-to-end release workflow for `dailytrack` with cons
 1. Confirm release scope.
 2. Collect release context.
 3. Run quality gates.
-4. Update release docs.
+4. Update release docs (including versioned changelog section).
 5. Create tag and push.
 6. Monitor publish workflow.
 7. Verify artifacts and updater metadata.
@@ -45,3 +45,8 @@ Use [references/checks.md](references/checks.md) for release-specific verificati
 - artifact list validation
 - unsigned macOS helper verification
 - updater metadata presence checks
+
+## Changelog Requirement
+- Keep `## [Unreleased]` for pending work only.
+- For each release tag `vX.Y.Z`, create/update `## [X.Y.Z] - YYYY-MM-DD` in `CHANGELOG.md`.
+- Move relevant `Unreleased` bullets into that version section before tagging.

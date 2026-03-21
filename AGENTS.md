@@ -69,6 +69,13 @@ On Windows, default base root falls back to `%USERPROFILE%\\dailytrack-data`.
 4. Validate with tests/checklists.
 5. Update logs and changelog.
 
+## Changelog Versioning Rules
+- `CHANGELOG.md` must keep one `## [Unreleased]` section for not-yet-tagged work only.
+- Every tagged release must have a matching section: `## [x.y.z] - YYYY-MM-DD`.
+- Before pushing a new release tag, move relevant `Unreleased` entries into that version section.
+- Do not mix multiple release versions in a single section.
+- Keep entries user-facing and grouped under `Added`, `Changed`, `Fixed` when applicable.
+
 ## Definition of Done (DoD)
 A task is done only if:
 - Feature behavior matches documented schema/contracts.
@@ -76,7 +83,7 @@ A task is done only if:
 - Relevant tests/checklists are completed.
 - Docs are updated (`README.md` and affected files in `docs/`).
 - `docs/DEVLOG/*.md` entry is appended.
-- `CHANGELOG.md` is updated for user-visible changes.
+- `CHANGELOG.md` is updated for user-visible changes in the correct release-version section.
 
 ## Testing Requirements (MVP)
 - Parser/serializer roundtrip checks for daily/weekly notes.

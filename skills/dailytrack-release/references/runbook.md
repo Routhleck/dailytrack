@@ -29,7 +29,10 @@ cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
 ## 4) Update Docs
-- Update `CHANGELOG.md`.
+- Update `CHANGELOG.md` with release-versioned section:
+  - keep pending items in `## [Unreleased]`
+  - create/update `## [X.Y.Z] - YYYY-MM-DD` for this tag
+  - move releasable items from `Unreleased` into that version section
 - Append session entry in `docs/DEVLOG/YYYY-MM.md`.
 - Ensure `README.md` reflects new user-visible behavior.
 

@@ -1,186 +1,136 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here.
 
-The format is based on Keep a Changelog.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
-- New GitHub Actions workflow: `.github/workflows/android-apk.yml`
-  - supports manual APK build (`workflow_dispatch`)
-  - supports tag-triggered APK build (`v*`)
-  - uploads APK artifacts and can attach them to release tags
-- Mobile quick menu (`Menu`) for narrow-screen access to secondary routes:
-  - Dashboard
-  - Daily/Weekly lists
-  - Reports
-  - Profiles
-  - Preferences
-  - Settings
-- Mobile-adaptive navigation shell:
-  - desktop sidebar remains primary on wide screens
-  - bottom tab bar for narrow/mobile-like window widths
-  - new `Sync` route available in both nav layouts
-- WebDAV realtime file sync flow:
-  - Rust commands:
-    - `webdav_realtime_status`
-    - `webdav_realtime_sync_now`
-    - `webdav_realtime_conflicts_list`
-    - `webdav_realtime_conflict_resolve`
-  - remote realtime layout:
-    - `realtime/manifest.json`
-    - `realtime/files/*`
-  - Sync page status panel with push/pull/both actions
-  - unresolved conflict list with manual resolve strategies (`keep_local`, `apply_remote`, `mark_resolved`)
-  - line-level conflict diff view (local vs remote with line numbers and change highlights)
-  - background realtime sync bridge with visibility-triggered sync
-- Structured editor for current profile templates in Profiles:
-  - editable daily/weekly checklist items
-  - add/remove actions for template checklist items
-  - structured weekly reflection fields editing
-- One-click overwrite actions in Profiles to apply current templates to active files:
-  - `Apply Daily Template to Today`
-  - `Apply Weekly Template to This Week`
-- WebDAV cloud snapshot sync (whole-base-root scope):
-  - local WebDAV config storage (`webdav.config.json` in app config dir)
-  - manual `Push Now` / `Pull Latest` / `Pull Selected`
-  - snapshot list and delete actions
-  - optional interval auto-push bridge
-  - snapshot metadata (`meta.json`) + zip archives (`snapshots/*.zip`)
-- Repo-versioned release skill: `skills/dailytrack-release` with release runbook, verification checklist, and release-note template/scripts.
-- Documentation baseline for MVP development workflow.
-- `AGENTS.md` collaboration and engineering guardrails.
-- Architecture, data model, parser, storage, setup, QA, and release docs under `docs/`.
-- Initial ADRs for stack and markdown normalization strategy.
-- Tauri + React + TypeScript + Tailwind app shell with sidebar navigation and route structure.
-- Local data root bootstrap command to create `daily/`, `weekly/`, `templates/`, and `body.csv`.
-- Daily and weekly markdown parser/serializer/service modules.
-- Structured + raw editing workflows for daily and weekly notes.
-- Body CSV table/form editing with weight and waist trend charts.
-- Dashboard summaries and daily/weekly file list pages.
-- Parser and CSV roundtrip unit tests via Vitest.
-- Settings page export/import actions for local data portability across computers.
-- New Tauri commands:
-  - `export_data_bundle`
-  - `import_data_bundle`
-- Profile management workflow:
-  - create profile
-  - switch profile
-  - delete profile (with safeguards)
-- Template preset support for profile creation (Balanced / Minimal / Fitness Focus).
-- Profile template editing for current active profile.
-- Preferences page for per-profile toggles:
-  - daily optional section visibility
-  - weekly section visibility
-  - body metric visibility (weight/waist/body fat/muscle mass/chest/hip/note)
-- New Tauri profile commands:
-  - `list_profiles`
-  - `ensure_profile`
-  - `create_profile`
-  - `delete_profile`
-- Realtime sync utilities and event bus (`src/lib/liveSync.ts`) for cross-page refresh.
-- Data-root migration command and Settings workflow for one-click copy + switch.
-- GitHub Actions publish pipeline for Windows + macOS release artifacts (`.github/workflows/publish.yml`).
-- First-launch template setup workflow for brand-new empty data roots.
-- Bilingual UI framework with runtime language toggle (`EN` / `中文`) and persisted locale preference.
-- Expanded template preset pack with bilingual variants and Blank Skeleton option.
-- First-use guided tutorial overlay (5-step sidebar highlight flow) with auto-start after initial template setup.
-- Manual tutorial replay action in Settings (`Start Tutorial`).
-- Full reset action in Settings danger zone to wipe tracker data and return to first-run setup.
-- README PNG screenshot placeholder assets under `docs/assets/screenshots/` for public-repo presentation.
-- App logo/icon placeholder integrated into sidebar, favicon, and Tauri icon source.
-- In-app updater workflow:
-  - startup auto-check toggle
-  - manual check in Settings
-  - install-and-restart flow from banner and Settings
-  - updater status and progress messaging
-- Conditional updater release wiring:
-  - optional updater metadata generation (`latest.json`) in publish CI when updater secrets are provided
-  - updater config override file (`src-tauri/tauri.updater.conf.json`) for release builds
-- Body metric display formatting layer with per-metric:
-  - unit text
-  - decimal precision (0-3)
-  - shared formatter helpers + tests
-- Preferences schema versioning (`schemaVersion`) and sync mode setting (`sync.mode`: `watch`/`poll`).
-- Rust filesystem watcher bridge for realtime local change propagation (`dailytrack://fs-changed`).
-- Copy summary payloads for export/import/migration:
-  - copied files
-  - overwritten files
-  - skipped files
-  - created directories
-- Preferences normalization unit tests (`preferences.service.test.ts`).
-- `docs/PREFERENCES_SCHEMA.md` for runtime preference schema contract and compatibility rules.
-- macOS unsigned install helper scripts under `scripts/macos/`.
-- Release workflow step to inject helper files directly into unsigned macOS DMG.
-
 ### Changed
-- Android APK workflow performance tuning:
-  - default debug build compiles `aarch64` only (faster feedback loop)
-  - release mode keeps `aarch64 + x86_64`
-  - enabled Rust cache and Gradle cache in Android workflow
-- Release pipeline performance improved:
-  - frontend lint/test/build now runs once in `verify-frontend`
-  - platform matrix jobs reuse prebuilt `dist/` artifact
-  - Tauri packaging uses `src-tauri/tauri.ci.conf.json` to skip repeated frontend rebuild in matrix
-- Added local fast-build script `npm run build:desktop:fast` to skip slow bundling in iteration loops.
-- Sync diff view now supports `Only show changes` mode (enabled by default).
-- Mobile layout density improved on key screens:
-  - Dashboard cards use tighter spacing/typography on narrow widths
-  - Body page form/buttons/charts are compacted for small windows
-  - Settings actions are now mobile-friendly full-width buttons where appropriate
-- Body history now has a mobile card list view (table remains on desktop/tablet widths).
-- Body charts now use safer margins/tick sizing on small widths to avoid clipped axes/content.
-- Sync page now supports manual refresh and lightweight auto-refresh while the window is visible.
-- Sync conflict actions now disable while a resolve operation is running.
-- Mobile quick menu now closes when tapping outside the popup list.
-- Sync page now prunes stale expanded/preview state after conflict list refresh.
-- WebDAV background automation switched from snapshot auto-push to realtime sync loop.
-- Data-root fallback behavior now returns a safe current-dir/temp-dir path when user-home env vars are unavailable.
-- Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.
-- Create-profile template editor now also supports structured mode (default) with checklist add/remove, weekly reflection field editing, and raw markdown fallback.
-- README is reorganized around a user-first release download flow and now uses a compact HTML screenshot gallery to reduce vertical scrolling.
-- WebDAV settings now use debounced autosave; `Test/Push/Pull/Delete/Refresh` actions force-save draft config first, removing the need for manual save before testing.
-- Settings page now includes a `WebDAV Cloud Sync` section with connection test and snapshot operations.
-- Updated GitHub release summary for `v0.2.1` from automated placeholder to human-readable notes.
-- Replaced template starter UI with tracker-focused desktop layout.
-- Updated README with run/build/test instructions and markdown schema contracts.
-- Switched route pages to lazy-loaded chunks to reduce initial bundle size.
-- Improved default data root resolution for Windows by falling back to `USERPROFILE`.
-- Migrated runtime storage model to profile-based roots under `profiles/<profile>/`.
-- Dashboard, Daily, Weekly, and Body pages now respect profile preferences.
-- Eslint ignore updated to skip `src-tauri/target/**` artifacts produced by Rust builds.
-- Daily/Weekly pages now run in pure autosave mode (debounced) without manual save button.
-- Dashboard and note list pages now refresh from live events + periodic polling.
-- Body page now emits live change events and reloads external file updates via polling.
-- Renamed default base root to `dailytrack-data` and added automatic fallback to legacy `life-tracker-data` when present.
-- Settings now explicitly separates root switching (`Save Data Root`) from migration (`Migrate Data Root`).
-- Migration UI now validates unsafe paths early and provides quick "Use This Path for Migration" action.
-- README and release checklist now document tag-based automated release flow.
-- `ensure_data_root` now returns root metadata (`root`, `isFirstRun`) to drive first-launch onboarding behavior.
-- Profiles and onboarding flows now support selecting template language (English/中文).
-- Settings now includes tutorial replay entry; first-run tutorial auto-trigger uses persisted pending/completed/session-dismiss flags.
-- Settings now includes guarded `Reset Data` flow requiring `RESET` confirmation and re-triggering initial template setup.
-- README reorganized for open-source onboarding: screenshots, value proposition, quick start, data model summary, and CI/release guidance.
-- Replaced placeholder app branding with user-provided `dailytrack.png` across sidebar, favicon, and Tauri desktop icon assets.
-- Settings page now uses migration-only root flow (removed direct root-switch form from UI).
-- Sidebar navigation is now sticky and remains fixed while main content scrolls.
-- GitHub release workflow now supports optional macOS signing/notarization:
-  - signed/notarized build when secrets are configured
-  - unsigned preview build when secrets are absent
-- README now documents unsigned macOS install workaround and lower-cost pre-signing distribution options.
-- Body tracking now supports extended numeric metrics (`bodyFat`, `muscleMass`, `chest`, `hip`) with dynamic form/table/chart rendering based on Preferences.
-- Body CSV parser now supports both legacy 4-column and extended 8-column headers for backward-compatible profile data upgrades.
-- Added updater/process plugin permissions and plugin wiring in Tauri runtime.
-- Settings page now includes app update controls and updater configuration visibility.
-- Body/Dashboard views now render values and labels using profile-configured metric units and decimal precision.
-- Preferences now includes editable body metric display options (unit + decimals per metric).
-- Live sync now supports profile-level mode switching (`Watch` recommended, `Poll` fallback only).
-- Dashboard/Daily/Weekly/Body polling intervals now adapt to selected sync mode.
-- Export/import/migration UI messages now include file operation summary stats.
-- README includes explicit future TODOs and v0.2.0 milestone roadmap.
-- README now documents helper-script flow for unsigned macOS quarantine removal.
+- Reserve this section for changes not tagged yet.
+- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+
+## [0.4.1] - 2026-03-21
 
 ### Fixed
-- Removed unused scaffold assets and legacy starter styles.
-- Core text writes now use atomic file replacement in Tauri backend (`write_text_file`, template writes, bootstrap ensures).
+- App startup now recovers from stale/invalid saved data-root paths by falling back safely.
+- Android top safe-area spacing fixed to avoid status-bar overlap.
+- Android CI build now syncs app version from release tag (no more `0.1.0` fallback).
+
+### Changed
+- Android APK build merged into `publish.yml` so release assets are produced in one pipeline.
+- Android APK artifact naming normalized to release-style names.
+
+## [0.4.0] - 2026-03-21
+
+### Added
+- Responsive shell improvements for narrow/mobile layouts.
+- WebDAV realtime sync loop, conflict list/actions, and line-level diff preview.
+- Android APK CI workflow and release artifact upload path.
+
+### Changed
+- Release pipeline speed-up: shared frontend verify job + prebuilt dist reuse.
+- Sync diff supports "only changed lines" mode.
+
+### Fixed
+- Mobile menu backdrop-close behavior and stale sync preview state cleanup.
+
+## [0.3.3] - 2026-03-20
+
+### Added
+- Structured template editing in create-profile flow.
+- README user-first download flow and compact screenshot gallery.
+
+## [0.3.2] - 2026-03-20
+
+### Added
+- Structured template mode as default with add/remove checklist item support.
+
+## [0.3.1] - 2026-03-20
+
+### Fixed
+- WebDAV settings autosave reliability improved; sync actions force-save config first.
+
+## [0.3.0] - 2026-03-20
+
+### Added
+- WebDAV cloud snapshot sync (push/pull/list/delete) with settings controls.
+- Repo release skill (`skills/dailytrack-release`) and release-note workflow docs.
+
+## [0.2.1] - 2026-03-20
+
+### Added
+- Unsigned macOS DMG quarantine helper injection in release CI.
+
+### Fixed
+- Onboarding now always starts from language selection step.
+
+## [0.2.0] - 2026-03-20
+
+### Added
+- LLM-powered weekly/monthly report generation (provider-configurable).
+- Startup language-first onboarding step.
+- Filesystem watch mode with polling fallback for sync refresh.
+- Safer atomic writes and richer copy summary for data operations.
+
+### Changed
+- Default desktop window size and body-chart behavior optimized for smaller screens.
+
+## [0.1.8] - 2026-03-19
+
+### Added
+- Security hardening for CSP and Rust file-path root checks.
+- Parser refactor for shared checklist parse/serialize utilities.
+
+### Changed
+- Autosave/polling tuning and safer body sort behavior.
+
+## [0.1.7] - 2026-03-19
+
+### Fixed
+- Release version sync from tag to Tauri/Cargo versions.
+- Publish workflow now creates non-draft tagged releases.
+
+### Changed
+- Added MIT license and ignored local updater key artifacts.
+
+## [0.1.6] - 2026-03-19
+
+### Fixed
+- Updater public key handling switched to base64-compatible config path.
+
+## [0.1.5] - 2026-03-19
+
+### Fixed
+- Simplified updater signing env handling in CI and stabilized updater key wiring.
+
+## [0.1.4] - 2026-03-19
+
+### Fixed
+- Portable updater pubkey decoding across macOS and Windows runners.
+
+## [0.1.3] - 2026-03-19
+
+### Fixed
+- CI updater key normalization and empty mac-sign env edge-case handling.
+
+## [0.1.2] - 2026-03-19
+
+### Fixed
+- GitHub Actions expression fix to avoid `secrets` context misuse in step conditions.
+
+## [0.1.1] - 2026-03-19
+
+### Added
+- In-app updater flow and optional updater artifact generation in CI.
+- Extended body metrics and per-metric unit/decimal display configuration.
+
+### Changed
+- Release workflow supports unsigned macOS fallback when signing secrets are absent.
+
+## [0.1.0] - 2026-03-19
+
+### Added
+- Initial local-first Markdown/CSV tracker MVP (daily/weekly/body/dashboard/settings).
+- Profile workflows, template flows, autosave editor experience, and migration/import/export basics.
+- Baseline docs (`AGENTS.md`, architecture/data/storage/parser/release docs) and README scaffolding.
