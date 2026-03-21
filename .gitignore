@@ -27,3 +27,4 @@ dist-ssr
 .gh-cache/
 dailytrack-updater.key
 dailytrack-updater.key.pub
+.local-secrets/

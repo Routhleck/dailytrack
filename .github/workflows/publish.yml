@@ -290,6 +290,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+      ANDROID_KEY_BASE64_RAW: ${{ secrets.ANDROID_KEY_BASE64 }}
+      ANDROID_KEY_ALIAS_RAW: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD_RAW: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -386,6 +389,38 @@ jobs:
       - name: Initialize Android target
         run: npm run tauri -- android init --ci --skip-targets-install
 
+      - name: Prepare optional Android signing env
+        shell: bash
+        run: |
+          echo "ENABLE_ANDROID_SIGNING=false" >> "$GITHUB_ENV"
+          missing=()
+          for key in ANDROID_KEY_BASE64_RAW ANDROID_KEY_ALIAS_RAW ANDROID_KEY_PASSWORD_RAW; do
+            if [ -z "${!key}" ]; then
+              missing+=("$key")
+            fi
+          done
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            {
+              echo "ANDROID_KEY_ALIAS<<EOF"
+              printf '%s\n' "$ANDROID_KEY_ALIAS_RAW"
+              echo "EOF"
+              echo "ANDROID_KEY_PASSWORD<<EOF"
+              printf '%s\n' "$ANDROID_KEY_PASSWORD_RAW"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+
+            key_path="$RUNNER_TEMP/dailytrack-upload-keystore.jks"
+            base64 --decode <<< "$ANDROID_KEY_BASE64_RAW" > "$key_path"
+            chmod 600 "$key_path"
+            echo "ANDROID_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
+            echo "ENABLE_ANDROID_SIGNING=true" >> "$GITHUB_ENV"
+            echo "::notice::Android signing key found. Release APKs will be signed."
+          else
+            echo "::warning::Android signing secrets are incomplete: ${missing[*]}"
+            echo "::warning::This run will publish unsigned release APKs."
+          fi
+
       - name: Gradle cache
         uses: actions/cache@v4
         with:
@@ -399,6 +434,38 @@ jobs:
       - name: Build APK
         run: npm run tauri -- android build --ci --apk --target aarch64
 
+      - name: Sign release APKs
+        if: ${{ env.ENABLE_ANDROID_SIGNING == 'true' }}
+        shell: bash
+        run: |
+          apksigner_bin="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          if [ ! -x "$apksigner_bin" ]; then
+            apksigner_bin="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort | tail -n 1)"
+          fi
+          if [ ! -x "$apksigner_bin" ]; then
+            echo "::error::apksigner not found under Android build-tools."
+            exit 1
+          fi
+
+          mapfile -t unsigned_apks < <(find src-tauri/gen/android -type f -name '*-unsigned.apk' | sort)
+          if [ "${#unsigned_apks[@]}" -eq 0 ]; then
+            echo "::notice::No unsigned release APKs found to sign."
+            exit 0
+          fi
+
+          for unsigned_apk in "${unsigned_apks[@]}"; do
+            signed_apk="${unsigned_apk%-unsigned.apk}.apk"
+            "$apksigner_bin" sign \
+              --ks "$ANDROID_KEYSTORE_PATH" \
+              --ks-key-alias "$ANDROID_KEY_ALIAS" \
+              --ks-pass "pass:$ANDROID_KEY_PASSWORD" \
+              --key-pass "pass:$ANDROID_KEY_PASSWORD" \
+              --out "$signed_apk" \
+              "$unsigned_apk"
+            "$apksigner_bin" verify "$signed_apk"
+            echo "::notice::Signed APK: $signed_apk"
+          done
+
       - name: Collect APK paths
         id: apk_paths
         shell: bash
@@ -410,7 +477,10 @@ jobs:
             exit 1
           fi
 
-          mapfile -t apk_files < <(find src-tauri/gen/android -type f -name '*.apk' | sort)
+          mapfile -t apk_files < <(find src-tauri/gen/android -type f -name '*.apk' ! -name '*-unsigned.apk' | sort)
+          if [ "${#apk_files[@]}" -eq 0 ]; then
+            mapfile -t apk_files < <(find src-tauri/gen/android -type f -name '*.apk' | sort)
+          fi
           if [ "${#apk_files[@]}" -eq 0 ]; then
             echo "::error::No APK files found under src-tauri/gen/android"
             exit 1
