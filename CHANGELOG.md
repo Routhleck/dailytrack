@@ -7,6 +7,10 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- New GitHub Actions workflow: `.github/workflows/android-apk.yml`
+  - supports manual APK build (`workflow_dispatch`)
+  - supports tag-triggered APK build (`v*`)
+  - uploads APK artifacts and can attach them to release tags
 - Mobile quick menu (`Menu`) for narrow-screen access to secondary routes:
   - Dashboard
   - Daily/Weekly lists
@@ -111,6 +115,11 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Release pipeline performance improved:
+  - frontend lint/test/build now runs once in `verify-frontend`
+  - platform matrix jobs reuse prebuilt `dist/` artifact
+  - Tauri packaging uses `src-tauri/tauri.ci.conf.json` to skip repeated frontend rebuild in matrix
+- Added local fast-build script `npm run build:desktop:fast` to skip slow bundling in iteration loops.
 - Sync diff view now supports `Only show changes` mode (enabled by default).
 - Mobile layout density improved on key screens:
   - Dashboard cards use tighter spacing/typography on narrow widths

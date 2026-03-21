@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:frontend": "vite build",
+    "build:desktop:fast": "npm run build && npm run tauri -- build -- --no-bundle --config src-tauri/tauri.ci.conf.json",
     "test": "vitest run",
     "lint": "eslint .",
     "preview": "vite preview",

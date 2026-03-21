@@ -15,7 +15,36 @@ permissions:
   contents: write
 
 jobs:
+  verify-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit
+
+      - name: Frontend checks
+        run: |
+          npm run lint
+          npm run test -- --run
+          npm run build
+
+      - name: Upload prebuilt dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+          if-no-files-found: error
+
   publish-tauri:
+    needs: verify-frontend
     strategy:
       fail-fast: false
       matrix:
@@ -169,19 +198,20 @@ jobs:
           workspaces: ./src-tauri -> target
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit
 
-      - name: Frontend checks
-        run: |
-          npm run lint
-          npm run test
-          npm run build
+      - name: Download prebuilt dist
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
 
       - name: Resolve tauri build args
         id: tauri_args
         shell: bash
         run: |
           args="${{ matrix.args }}"
+          args="$args --config src-tauri/tauri.ci.conf.json"
           if [ "${UPDATER_READY:-false}" = "true" ]; then
             args="$args --config src-tauri/tauri.updater.conf.json"
           fi

@@ -246,12 +246,18 @@ For production/public distribution, signed + notarized artifacts are recommended
 ## Maintainer Release Workflow
 
 Release CI workflow: `.github/workflows/publish.yml`
+Android APK workflow: `.github/workflows/android-apk.yml`
 
 Targets:
 
 - windows-latest
 - macOS aarch64
 - macOS x86_64
+
+`publish` speed notes:
+- frontend lint/test/build now runs once in a dedicated `verify-frontend` job
+- prebuilt `dist/` is uploaded as artifact and reused by matrix packaging jobs
+- matrix jobs skip repeated frontend rebuild via `src-tauri/tauri.ci.conf.json`
 
 Trigger release build by tag:
 
@@ -265,6 +271,21 @@ Generate readable release notes draft:
 ```bash
 skills/dailytrack-release/scripts/make_release_notes.sh v0.3.1 v0.3.2 > /tmp/dailytrack-v0.3.2-notes.md
 gh release edit v0.3.2 --notes-file /tmp/dailytrack-v0.3.2-notes.md
+```
+
+Build Android APKs:
+
+- Run workflow `android-apk` from Actions page (artifact build, optional release upload).
+- On tag push (`v*`), workflow also runs automatically and uploads APK artifacts.
+
+Local build speed helpers:
+
+```bash
+# frontend only
+npm run build:frontend
+
+# desktop rust compile only (skip dmg/msi bundling for faster iteration)
+npm run build:desktop:fast
 ```
 
 Useful docs:

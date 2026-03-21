@@ -36,7 +36,9 @@
   - `TAURI_SIGNING_PRIVATE_KEY`
   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional)
 - [ ] GitHub Actions `publish` workflow green for target tag.
+- [ ] `publish` workflow `verify-frontend` job green (single-run lint/test/build gate).
 - [ ] Draft release contains Windows + macOS artifacts.
+- [ ] If Android packaging is enabled for this release, `android-apk` workflow green and APK artifacts uploaded/reviewed.
 - [ ] Unsigned macOS DMG includes `fix-dailytrack-quarantine.command` and `INSTALL_UNSIGNED_MAC.md`.
 - [ ] If updater secrets are set, draft release contains updater metadata (`latest.json` and signatures).
 - [ ] Draft release notes reviewed before publishing.

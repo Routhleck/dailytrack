@@ -15,7 +15,20 @@ npm run tauri:dev
 npm run test
 npm run build
 npm run tauri:build
+npm run build:desktop:fast
 ```
+
+## Build Speed Tips
+- Use `npm run build:desktop:fast` for local Rust/runtime checks without slow installer bundling.
+- In CI, reuse prebuilt frontend assets (`dist/`) across platform matrix jobs.
+- Keep Rust cache warm (`swatinem/rust-cache`) and avoid unnecessary lockfile churn.
+
+## Android APK Build
+- Local:
+  - `npm run tauri -- android init --ci`
+  - `npm run tauri -- android build --ci --apk --debug`
+- CI:
+  - Use `.github/workflows/android-apk.yml` (workflow_dispatch or tag-triggered).
 
 ## Environment Notes
 - Project is local-first and does not require API keys.
