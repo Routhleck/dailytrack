@@ -7,6 +7,13 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Mobile quick menu (`Menu`) for narrow-screen access to secondary routes:
+  - Dashboard
+  - Daily/Weekly lists
+  - Reports
+  - Profiles
+  - Preferences
+  - Settings
 - Mobile-adaptive navigation shell:
   - desktop sidebar remains primary on wide screens
   - bottom tab bar for narrow/mobile-like window widths
@@ -22,6 +29,7 @@ The format is based on Keep a Changelog.
     - `realtime/files/*`
   - Sync page status panel with push/pull/both actions
   - unresolved conflict list with manual resolve strategies (`keep_local`, `apply_remote`, `mark_resolved`)
+  - conflict local/remote text preview panel for quick inspection
   - background realtime sync bridge with visibility-triggered sync
 - Structured editor for current profile templates in Profiles:
   - editable daily/weekly checklist items
@@ -103,6 +111,8 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Sync page now supports manual refresh and lightweight auto-refresh while the window is visible.
+- Sync conflict actions now disable while a resolve operation is running.
 - WebDAV background automation switched from snapshot auto-push to realtime sync loop.
 - Data-root fallback behavior now returns a safe current-dir/temp-dir path when user-home env vars are unavailable.
 - Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.

@@ -36,6 +36,12 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 7. Serialize (or raw write) back to file.
 8. Re-read and parse to refresh UI consistency.
 
+## Responsive Shell
+- Desktop: sticky left sidebar navigation.
+- Narrow/mobile-like windows:
+  - bottom primary nav (Today/Week/Body/Sync)
+  - top quick menu for secondary routes (Dashboard/Lists/Reports/Profiles/Preferences/Settings)
+
 ## Runtime Boundaries
 - Frontend: React + TypeScript + Tailwind.
 - Desktop runtime: Tauri.

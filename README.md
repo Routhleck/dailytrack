@@ -50,6 +50,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Profile workflow: multiple profiles with separate templates and preferences.
 - Real-time feel: autosave + local file change refresh.
 - Adaptive shell: desktop sidebar + mobile bottom navigation.
+- Mobile quick menu for secondary routes (`Dashboard`, `Profiles`, `Settings`, etc.) on narrow screens.
 
 ## Screenshots
 
@@ -100,6 +101,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - WebDAV realtime file sync status
   - push/pull/both actions
   - unresolved conflict list + resolve actions
+  - local/remote text preview for conflict inspection
 
 ## Data Ownership and Storage
 
