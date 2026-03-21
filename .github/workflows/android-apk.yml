@@ -1,9 +1,6 @@
 name: android-apk
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -40,15 +37,11 @@ jobs:
         id: release_tag
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          tag="${{ github.event.inputs.release_tag }}"
+          if [ -n "$tag" ]; then
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
           else
-            tag="${{ github.event.inputs.release_tag }}"
-            if [ -n "$tag" ]; then
-              echo "tag=$tag" >> "$GITHUB_OUTPUT"
-            else
-              echo "tag=" >> "$GITHUB_OUTPUT"
-            fi
+            echo "tag=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Node.js
@@ -114,7 +107,7 @@ jobs:
         run: |
           mode="debug"
           targets="aarch64"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
+          if [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
             mode="release"
             targets="aarch64 x86_64"
           fi
@@ -146,7 +139,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload APKs to GitHub release
-        if: ${{ steps.release_tag.outputs.tag != '' && (github.event_name == 'push' || github.event.inputs.upload_to_release == 'true') }}
+        if: ${{ steps.release_tag.outputs.tag != '' && github.event.inputs.upload_to_release == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
