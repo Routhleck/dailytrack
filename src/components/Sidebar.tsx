@@ -14,6 +14,7 @@ export function Sidebar() {
     { to: '/weekly', label: t('nav.weeklyNotes') },
     { to: '/body', label: t('nav.bodyProgress'), tourTarget: 'nav-body' },
     { to: '/reports', label: t('nav.reports') },
+    { to: '/sync', label: t('nav.sync') },
     { to: '/profiles', label: t('nav.profiles'), tourTarget: 'nav-profiles' },
     { to: '/preferences', label: t('nav.preferences') },
     { to: '/settings', label: t('nav.settings'), tourTarget: 'nav-settings' },
