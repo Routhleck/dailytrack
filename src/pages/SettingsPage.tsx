@@ -543,21 +543,21 @@ export function SettingsPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
       <PageHeader
         title={t('settings.title')}
         description={t('settings.description')}
       />
 
-      <div className="max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+      <div className="w-full max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 sm:p-4">
         <p>
-          {t('settings.activeProfile')}: <span className="font-medium">{activeProfile || '-'}</span>
+          {t('settings.activeProfile')}: <span className="font-medium break-all">{activeProfile || '-'}</span>
         </p>
         <p>
-          {t('settings.baseDataRootPath')}: <span className="font-medium">{baseDataRoot || '-'}</span>
+          {t('settings.baseDataRootPath')}: <span className="font-medium break-all">{baseDataRoot || '-'}</span>
         </p>
         <p>
-          {t('settings.activeProfileRoot')}: <span className="font-medium">{dataRoot || '-'}</span>
+          {t('settings.activeProfileRoot')}: <span className="font-medium break-all">{dataRoot || '-'}</span>
         </p>
         <p className="mt-1 text-xs text-slate-500">{t('settings.migrateOnlyHint')}</p>
         <div className="mt-4 border-t border-slate-200 pt-3">
@@ -573,7 +573,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <section className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <section className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.updater')}</h2>
         <p className="text-sm text-slate-600">{t('settings.updaterDescription')}</p>
         <p className="text-sm text-slate-700">
@@ -600,7 +600,7 @@ export function SettingsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
             disabled={!updaterConfigured || updaterChecking || updaterInstalling}
             onClick={() => void checkForUpdates(true)}
           >
@@ -609,7 +609,7 @@ export function SettingsPage() {
           {availableUpdate ? (
             <button
               type="button"
-              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
               disabled={updaterInstalling || updaterChecking}
               onClick={() => void installUpdate()}
             >
@@ -629,7 +629,7 @@ export function SettingsPage() {
         {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
       </section>
 
-      <section className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <section className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.webdavTitle')}</h2>
         <p className="text-sm text-slate-600">{t('settings.webdavDescription')}</p>
 
@@ -744,7 +744,7 @@ export function SettingsPage() {
           <button
             type="button"
             disabled={webdavLoading || webdavTesting || webdavSaving}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+            className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60 sm:w-auto"
             onClick={() => void handleTestWebdav()}
           >
             {webdavTesting ? t('settings.webdavTesting') : t('settings.webdavTest')}
@@ -752,7 +752,7 @@ export function SettingsPage() {
           <button
             type="button"
             disabled={webdavLoading || webdavRefreshing || webdavSaving}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+            className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60 sm:w-auto"
             onClick={() => void refreshWebdavSnapshots()}
           >
             {webdavRefreshing ? t('settings.webdavRefreshing') : t('settings.webdavRefresh')}
@@ -779,7 +779,7 @@ export function SettingsPage() {
             <button
               type="button"
               disabled={webdavPushing || webdavPulling || webdavSaving || !baseDataRoot}
-              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
               onClick={() => void handlePushWebdav()}
             >
               {webdavPushing ? t('settings.webdavPushing') : t('settings.webdavPushNow')}
@@ -787,7 +787,7 @@ export function SettingsPage() {
             <button
               type="button"
               disabled={webdavPushing || webdavPulling || webdavSaving || webdavSnapshots.length === 0 || !baseDataRoot}
-              className="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="w-full rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
               onClick={() => void pullSnapshot()}
             >
               {webdavPulling ? t('settings.webdavPulling') : t('settings.webdavPullLatest')}
@@ -827,7 +827,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   disabled={!selectedSnapshotId || webdavPulling || webdavSaving || !baseDataRoot}
-                  className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-60"
+                  className="w-full rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-60 sm:w-auto"
                   onClick={() => void pullSnapshot(selectedSnapshotId)}
                 >
                   {webdavPulling ? t('settings.webdavPulling') : t('settings.webdavPullSelected')}
@@ -835,7 +835,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   disabled={!selectedSnapshotId || webdavDeleting || webdavSaving}
-                  className="rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 disabled:opacity-60"
+                  className="w-full rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 disabled:opacity-60 sm:w-auto"
                   onClick={() => void handleDeleteSnapshot()}
                 >
                   {webdavDeleting ? t('settings.webdavDeleting') : t('settings.webdavDeleteSelected')}
@@ -848,7 +848,7 @@ export function SettingsPage() {
         {webdavMessage ? <p className="break-all text-sm text-slate-600">{webdavMessage}</p> : null}
       </section>
 
-      <form onSubmit={handleMigrate} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleMigrate} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.migrateDescription')}
@@ -876,7 +876,7 @@ export function SettingsPage() {
         <button
           type="submit"
           disabled={loading || migrateBusy || !migrateTarget.trim() || Boolean(migrateValidationMessage)}
-          className="rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
         >
           {migrateBusy ? t('settings.migrating') : t('settings.migrateAndSwitch')}
         </button>
@@ -884,7 +884,7 @@ export function SettingsPage() {
         {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleExport} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleExport} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.exportData')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.exportDescription')}
@@ -903,14 +903,14 @@ export function SettingsPage() {
         <button
           type="submit"
           disabled={loading || exportBusy}
-          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
         >
           {exportBusy ? t('settings.exporting') : t('settings.export')}
         </button>
         {exportMessage ? <p className="break-all text-sm text-slate-600">{exportMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleImport} className="max-w-3xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleImport} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.importData')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.importDescription')}
@@ -940,14 +940,14 @@ export function SettingsPage() {
         <button
           type="submit"
           disabled={loading || importBusy}
-          className="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
         >
           {importBusy ? t('settings.importing') : t('settings.import')}
         </button>
         {importMessage ? <p className="break-all text-sm text-slate-600">{importMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleReset} className="max-w-3xl space-y-3 rounded-lg border border-rose-300 bg-rose-50/40 p-4">
+      <form onSubmit={handleReset} className="w-full max-w-3xl space-y-3 rounded-lg border border-rose-300 bg-rose-50/40 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-rose-800">{t('settings.resetSection')}</h2>
         <p className="text-sm text-rose-700">{t('settings.resetDescription')}</p>
         <p className="break-all text-xs text-rose-700">
@@ -969,7 +969,7 @@ export function SettingsPage() {
         <button
           type="submit"
           disabled={loading || resetBusy || resetConfirmText.trim() !== 'RESET'}
-          className="rounded-md bg-rose-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded-md bg-rose-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
         >
           {resetBusy ? t('settings.resetting') : t('settings.resetAction')}
         </button>

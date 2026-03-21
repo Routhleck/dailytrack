@@ -278,7 +278,7 @@ export function BodyPage() {
   const showNote = preferences.body.note
 
   return (
-    <section className="min-w-0 space-y-6">
+    <section className="min-w-0 space-y-4 md:space-y-6">
       <PageHeader
         title={t('body.title')}
         description={t('body.description')}
@@ -286,7 +286,7 @@ export function BodyPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-3 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4"
       >
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -313,21 +313,21 @@ export function BodyPage() {
 
         {showNote ? (
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2 lg:col-span-2"
             placeholder={t('body.note')}
             value={form.note}
             onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
           />
         ) : null}
 
-        <div className="md:col-span-4 flex items-center gap-2">
-          <button className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white" type="submit">
+        <div className="col-span-full flex flex-wrap items-center gap-2">
+          <button className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white sm:w-auto" type="submit">
             {editingIndex == null ? t('body.addRecord') : t('body.updateRecord')}
           </button>
           {editingIndex != null ? (
             <button
               type="button"
-              className="rounded-md bg-slate-300 px-4 py-2 text-sm text-slate-800"
+              className="w-full rounded-md bg-slate-300 px-4 py-2 text-sm text-slate-800 sm:w-auto"
               onClick={() => {
                 setEditingIndex(null)
                 setForm(toFormState())
@@ -336,24 +336,25 @@ export function BodyPage() {
               {t('common.cancelEdit')}
             </button>
           ) : null}
-          {message ? <span className="text-sm text-slate-600">{message}</span> : null}
+          {message ? <span className="w-full text-sm text-slate-600 sm:w-auto">{message}</span> : null}
         </div>
       </form>
 
       {enabledNumericMetrics.length > 0 ? (
-        <div className={`grid min-w-0 gap-4 ${enabledNumericMetrics.length > 1 ? 'xl:grid-cols-2' : 'xl:grid-cols-1'}`}>
+        <div className={`grid min-w-0 gap-3 md:gap-4 ${enabledNumericMetrics.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
           {enabledNumericMetrics.map((metric) => (
-            <article key={metric.key} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-4">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">
+            <article key={metric.key} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-3 sm:p-4">
+              <h2 className="mb-2 text-sm font-semibold text-slate-900 sm:mb-3 sm:text-base">
                 {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
               </h2>
-              <div className="h-56 min-w-0">
+              <div className="h-44 min-w-0 sm:h-52 md:h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <LineChart data={chartData} margin={{ top: 8, right: 12, left: 6, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={24} interval="preserveStartEnd" />
                     <YAxis
-                      tick={{ fontSize: 12 }}
+                      width={48}
+                      tick={{ fontSize: 11 }}
                       tickFormatter={(value) => {
                         const numeric = Number(value)
                         if (!Number.isFinite(numeric)) {
@@ -389,7 +390,44 @@ export function BodyPage() {
 
       <article className="rounded-lg border border-slate-200 p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
-        <div className="overflow-auto">
+
+        <div className="space-y-3 md:hidden">
+          {records.map((record, index) => (
+            <div key={`${record.date}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+              <p className="font-medium text-slate-900">{record.date}</p>
+              <div className="mt-1 space-y-1 text-slate-700">
+                {enabledNumericMetrics.map((metric) => (
+                  <p key={metric.key}>
+                    {metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}:{' '}
+                    {formatBodyMetricValue(record[metric.key], preferences.body.display[metric.key])}
+                  </p>
+                ))}
+                {showNote ? <p>{t('body.note')}: {record.note || '-'}</p> : null}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
+                  onClick={() => {
+                    setEditingIndex(index)
+                    setForm(toFormState(record))
+                  }}
+                  type="button"
+                >
+                  {t('common.edit')}
+                </button>
+                <button
+                  className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
+                  onClick={() => void handleDelete(index)}
+                  type="button"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-auto md:block">
           <table className="w-full min-w-[980px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">

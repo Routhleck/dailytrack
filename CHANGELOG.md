@@ -111,6 +111,12 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- Mobile layout density improved on key screens:
+  - Dashboard cards use tighter spacing/typography on narrow widths
+  - Body page form/buttons/charts are compacted for small windows
+  - Settings actions are now mobile-friendly full-width buttons where appropriate
+- Body history now has a mobile card list view (table remains on desktop/tablet widths).
+- Body charts now use safer margins/tick sizing on small widths to avoid clipped axes/content.
 - Sync page now supports manual refresh and lightweight auto-refresh while the window is visible.
 - Sync conflict actions now disable while a resolve operation is running.
 - Mobile quick menu now closes when tapping outside the popup list.
