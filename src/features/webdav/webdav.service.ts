@@ -3,6 +3,7 @@ import type { WebdavConfig } from '../../lib/fs/fileApi'
 export function defaultWebdavConfig(): WebdavConfig {
   return {
     enabled: false,
+    autoPullEnabled: false,
     remoteBaseUrl: '',
     username: '',
     password: '',
@@ -17,6 +18,7 @@ export function defaultWebdavConfig(): WebdavConfig {
 export function normalizeWebdavConfig(config: WebdavConfig): WebdavConfig {
   return {
     ...config,
+    autoPullEnabled: Boolean(config.autoPullEnabled),
     remoteBaseUrl: config.remoteBaseUrl.trim(),
     username: config.username.trim(),
     password: config.password.trim(),

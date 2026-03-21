@@ -25,9 +25,11 @@ const WEBDAV_REALTIME_MANIFEST_FILE: &str = "realtime/manifest.json";
 const WEBDAV_REALTIME_STATE_SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(default)]
 #[serde(rename_all = "camelCase")]
 pub struct WebdavConfig {
   pub enabled: bool,
+  pub auto_pull_enabled: bool,
   pub remote_base_url: String,
   pub username: String,
   pub password: String,
@@ -36,6 +38,23 @@ pub struct WebdavConfig {
   pub max_snapshots: u32,
   pub verify_tls: bool,
   pub device_id: String,
+}
+
+impl Default for WebdavConfig {
+  fn default() -> Self {
+    WebdavConfig {
+      enabled: false,
+      auto_pull_enabled: false,
+      remote_base_url: String::new(),
+      username: String::new(),
+      password: String::new(),
+      auto_push_interval_min: 0,
+      request_timeout_sec: 90,
+      max_snapshots: 30,
+      verify_tls: true,
+      device_id: format!("device-{}", Uuid::new_v4()),
+    }
+  }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -213,17 +232,7 @@ fn now_unix_seconds() -> u64 {
 }
 
 fn default_webdav_config() -> WebdavConfig {
-  WebdavConfig {
-    enabled: false,
-    remote_base_url: String::new(),
-    username: String::new(),
-    password: String::new(),
-    auto_push_interval_min: 0,
-    request_timeout_sec: 90,
-    max_snapshots: 30,
-    verify_tls: true,
-    device_id: format!("device-{}", Uuid::new_v4()),
-  }
+  WebdavConfig::default()
 }
 
 fn normalize_webdav_config(mut config: WebdavConfig) -> WebdavConfig {

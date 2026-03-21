@@ -4,16 +4,27 @@ import { getWebdavConfig, webdavRealtimeSyncNow } from '../../lib/fs/fileApi'
 import { emitDataChanged, onDataChanged } from '../../lib/liveSync'
 import { useDataRoot } from '../settings/DataRootContext'
 
+const AUTO_PULL_INTERVAL_MS = 30_000
+
 export function WebdavSyncBridge() {
   const { baseDataRoot } = useDataRoot()
   const [reloadToken, setReloadToken] = useState(0)
   const busyRef = useRef(false)
+  const pendingAutoPullRef = useRef(false)
+  const suppressEventsBeforeMsRef = useRef(0)
 
   useEffect(() => {
     const unsubscribe = onDataChanged((detail) => {
       if (detail.scope === 'settings') {
         setReloadToken((value) => value + 1)
+        return
       }
+
+      if (Date.now() < suppressEventsBeforeMsRef.current) {
+        return
+      }
+
+      pendingAutoPullRef.current = true
     })
 
     return unsubscribe
@@ -26,7 +37,8 @@ export function WebdavSyncBridge() {
     const root = baseDataRoot
 
     let disposed = false
-    let intervalId: number | null = null
+    let autoSyncIntervalId: number | null = null
+    let autoPullIntervalId: number | null = null
 
     async function sync(direction: 'push' | 'pull' | 'both') {
       if (busyRef.current) {
@@ -41,6 +53,7 @@ export function WebdavSyncBridge() {
         }
 
         if (result.pushed > 0 || result.pulled > 0 || result.conflicts > 0) {
+          suppressEventsBeforeMsRef.current = Date.now() + 1500
           emitDataChanged({ scope: 'all' })
         }
       } catch (error) {
@@ -53,23 +66,44 @@ export function WebdavSyncBridge() {
     async function setup() {
       try {
         const config = await getWebdavConfig()
-        if (disposed || !config.enabled || config.autoPushIntervalMin <= 0) {
+        if (disposed || !config.enabled) {
           return
         }
 
-        void sync('both')
-
-        intervalId = window.setInterval(() => {
+        if (config.autoPushIntervalMin > 0) {
           void sync('both')
-        }, config.autoPushIntervalMin * 60 * 1000)
+
+          autoSyncIntervalId = window.setInterval(() => {
+            void sync('both')
+          }, config.autoPushIntervalMin * 60 * 1000)
+        }
+
+        if (config.autoPullEnabled) {
+          pendingAutoPullRef.current = true
+          autoPullIntervalId = window.setInterval(() => {
+            if (!pendingAutoPullRef.current) {
+              return
+            }
+
+            pendingAutoPullRef.current = false
+            void sync('pull')
+          }, AUTO_PULL_INTERVAL_MS)
+        }
 
         const onVisibility = () => {
           if (document.visibilityState === 'visible') {
-            void sync('both')
+            if (config.autoPullEnabled) {
+              pendingAutoPullRef.current = true
+            }
+            if (config.autoPushIntervalMin > 0) {
+              void sync('both')
+            }
             return
           }
 
-          void sync('push')
+          if (config.autoPushIntervalMin > 0) {
+            void sync('push')
+          }
         }
 
         document.addEventListener('visibilitychange', onVisibility)
@@ -92,8 +126,11 @@ export function WebdavSyncBridge() {
       if (cleanupVisibility) {
         cleanupVisibility()
       }
-      if (intervalId != null) {
-        window.clearInterval(intervalId)
+      if (autoSyncIntervalId != null) {
+        window.clearInterval(autoSyncIntervalId)
+      }
+      if (autoPullIntervalId != null) {
+        window.clearInterval(autoPullIntervalId)
       }
     }
   }, [baseDataRoot, reloadToken])

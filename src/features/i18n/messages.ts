@@ -359,6 +359,7 @@ export const enMessages = {
   'settings.webdavDescription':
     'Configure WebDAV backup sync for the whole base data root. Local markdown/csv remains the source of truth.',
   'settings.webdavEnabled': 'Enable WebDAV sync',
+  'settings.webdavAutoPullEnabled': 'Enable auto-pull (checks every 30s after file changes)',
   'settings.webdavBaseUrl': 'Remote base URL',
   'settings.webdavUsername': 'Username',
   'settings.webdavPassword': 'Password / App Password',
@@ -810,6 +811,7 @@ export const zhMessages: Record<MessageKey, string> = {
   'settings.webdavTitle': 'WebDAV 云同步',
   'settings.webdavDescription': '为整个基础数据根目录配置 WebDAV 备份同步。本地 markdown/csv 仍是唯一真源。',
   'settings.webdavEnabled': '启用 WebDAV 同步',
+  'settings.webdavAutoPullEnabled': '启用自动拉取（文件变更后按 30 秒节流检查）',
   'settings.webdavBaseUrl': '远端基础 URL',
   'settings.webdavUsername': '用户名',
   'settings.webdavPassword': '密码 / 应用专用密码',

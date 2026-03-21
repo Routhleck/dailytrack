@@ -33,6 +33,7 @@ export type GenerateLlmReportResult = {
 
 export type WebdavConfig = {
   enabled: boolean
+  autoPullEnabled: boolean
   remoteBaseUrl: string
   username: string
   password: string

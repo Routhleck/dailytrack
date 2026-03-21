@@ -652,6 +652,17 @@ export function SettingsPage() {
           />
           {t('settings.webdavEnabled')}
         </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={webdavConfig.autoPullEnabled}
+            onChange={(event) =>
+              setWebdavConfig((current) => ({ ...current, autoPullEnabled: event.target.checked }))
+            }
+            disabled={webdavLoading || webdavSaving}
+          />
+          {t('settings.webdavAutoPullEnabled')}
+        </label>
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-url">
           {t('settings.webdavBaseUrl')}
