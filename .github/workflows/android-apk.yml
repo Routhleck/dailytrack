@@ -10,7 +10,7 @@ on:
       build_mode:
         description: 'Android build mode'
         required: true
-        default: debug
+        default: release
         type: choice
         options:
           - debug
@@ -138,12 +138,11 @@ jobs:
       - name: Build APK
         shell: bash
         run: |
-          mode="debug"
-          targets="aarch64"
-          if [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
+          mode="${{ github.event.inputs.build_mode }}"
+          if [ -z "$mode" ]; then
             mode="release"
-            targets="aarch64 x86_64"
           fi
+          targets="aarch64"
 
           if [ "$mode" = "release" ]; then
             npm run tauri -- android build --ci --apk --target $targets

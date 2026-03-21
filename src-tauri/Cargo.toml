@@ -32,3 +32,9 @@ url = "2.5"
 uuid = { version = "1.18", features = ["v4"] }
 walkdir = "2.5"
 zip = "0.6"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = "symbols"

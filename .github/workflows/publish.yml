@@ -397,7 +397,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build APK
-        run: npm run tauri -- android build --ci --apk --debug --target aarch64
+        run: npm run tauri -- android build --ci --apk --target aarch64
 
       - name: Collect APK paths
         id: apk_paths
