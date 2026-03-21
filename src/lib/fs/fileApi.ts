@@ -74,6 +74,41 @@ export type WebdavDeleteSnapshotResult = {
   deleted: boolean
 }
 
+export type RealtimeConflict = {
+  id: string
+  path: string
+  localSha: string
+  remoteSha: string
+  conflictCopyPath?: string | null
+  createdAt: number
+  status: string
+  remotePresent: boolean
+}
+
+export type RealtimeSyncStatus = {
+  running: boolean
+  lastPushAt?: number | null
+  lastPullAt?: number | null
+  lastError?: string | null
+  pendingChanges: number
+  conflictsCount: number
+}
+
+export type RealtimeSyncResult = {
+  pushed: number
+  pulled: number
+  conflicts: number
+  skippedConflicts: number
+  revision: number
+  status: RealtimeSyncStatus
+}
+
+export type RealtimeConflictResolveResult = {
+  resolved: boolean
+  strategy: string
+  conflict?: RealtimeConflict | null
+}
+
 export type FsChangedEventPayload = {
   scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
   path: string
@@ -228,4 +263,31 @@ export async function deleteWebdavSnapshot(
   snapshotId: string,
 ): Promise<WebdavDeleteSnapshotResult> {
   return invoke<WebdavDeleteSnapshotResult>('webdav_delete_snapshot', { snapshotId })
+}
+
+export async function webdavRealtimeStatus(dataRoot: string): Promise<RealtimeSyncStatus> {
+  return invoke<RealtimeSyncStatus>('webdav_realtime_status', { dataRoot })
+}
+
+export async function webdavRealtimeSyncNow(
+  dataRoot: string,
+  direction: 'push' | 'pull' | 'both' = 'both',
+): Promise<RealtimeSyncResult> {
+  return invoke<RealtimeSyncResult>('webdav_realtime_sync_now', { dataRoot, direction })
+}
+
+export async function webdavRealtimeConflictsList(dataRoot: string): Promise<RealtimeConflict[]> {
+  return invoke<RealtimeConflict[]>('webdav_realtime_conflicts_list', { dataRoot })
+}
+
+export async function webdavRealtimeConflictResolve(
+  dataRoot: string,
+  conflictId: string,
+  strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
+): Promise<RealtimeConflictResolveResult> {
+  return invoke<RealtimeConflictResolveResult>('webdav_realtime_conflict_resolve', {
+    dataRoot,
+    conflictId,
+    strategy,
+  })
 }

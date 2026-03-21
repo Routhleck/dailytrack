@@ -70,3 +70,12 @@
 - [ ] Pull with backup enabled creates `dailytrack-webdav-backup-<timestamp>` in parent directory.
 - [ ] Auto-push interval triggers background push when enabled.
 - [ ] Snapshot deletion removes selected snapshot from remote meta/list.
+
+## WebDAV Realtime Sync
+- [ ] Sync page can load realtime status (`pendingChanges`, `conflicts`, `lastPush`, `lastPull`).
+- [ ] `Sync Both` applies bidirectional updates and refreshes other pages.
+- [ ] `Push Only` uploads local-only changes without pulling remote-only changes.
+- [ ] `Pull Only` downloads remote-only changes without pushing local-only changes.
+- [ ] Conflict case generates unresolved entry and conflict copy file under `conflicts/`.
+- [ ] Conflict resolve actions (`Keep Local`, `Apply Remote`, `Mark Resolved`) update conflict list and data files correctly.
+- [ ] Background realtime bridge sync does not block editing and emits refresh events on updates.

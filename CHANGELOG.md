@@ -7,6 +7,22 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Mobile-adaptive navigation shell:
+  - desktop sidebar remains primary on wide screens
+  - bottom tab bar for narrow/mobile-like window widths
+  - new `Sync` route available in both nav layouts
+- WebDAV realtime file sync flow:
+  - Rust commands:
+    - `webdav_realtime_status`
+    - `webdav_realtime_sync_now`
+    - `webdav_realtime_conflicts_list`
+    - `webdav_realtime_conflict_resolve`
+  - remote realtime layout:
+    - `realtime/manifest.json`
+    - `realtime/files/*`
+  - Sync page status panel with push/pull/both actions
+  - unresolved conflict list with manual resolve strategies (`keep_local`, `apply_remote`, `mark_resolved`)
+  - background realtime sync bridge with visibility-triggered sync
 - Structured editor for current profile templates in Profiles:
   - editable daily/weekly checklist items
   - add/remove actions for template checklist items
@@ -87,6 +103,8 @@ The format is based on Keep a Changelog.
 - Release workflow step to inject helper files directly into unsigned macOS DMG.
 
 ### Changed
+- WebDAV background automation switched from snapshot auto-push to realtime sync loop.
+- Data-root fallback behavior now returns a safe current-dir/temp-dir path when user-home env vars are unavailable.
 - Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.
 - Create-profile template editor now also supports structured mode (default) with checklist add/remove, weekly reflection field editing, and raw markdown fallback.
 - README is reorganized around a user-first release download flow and now uses a compact HTML screenshot gallery to reduce vertical scrolling.

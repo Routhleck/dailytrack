@@ -40,7 +40,9 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - Frontend: React + TypeScript + Tailwind.
 - Desktop runtime: Tauri.
 - Persistence: local filesystem.
-- Optional remote transport: WebDAV snapshot backup/sync (config + snapshots + metadata).
+- Optional remote transport:
+  - WebDAV snapshot backup/sync (config + snapshots + metadata)
+  - WebDAV realtime manifest/file sync (`realtime/manifest.json` + `realtime/files/*`)
 - Remote transport must not replace local markdown/csv source-of-truth files.
 
 ## Feature Modules
@@ -49,8 +51,20 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - `features/body`: CSV read/edit/save and trend source data.
 - `features/preferences`: per-profile preferences read/save and context.
 - `features/settings`: base root + profile state management.
-- `features/webdav`: WebDAV config, snapshot sync controls, and auto-push bridge.
+- `features/webdav`: WebDAV config, snapshot sync controls, realtime sync bridge.
 - `features/dashboard`: summary and recent-file aggregation.
+- `pages/SyncPage.tsx`: realtime sync status/actions/conflict resolution UI.
+
+## WebDAV Realtime Flow
+1. Frontend triggers `webdav_realtime_sync_now` (push/pull/both) from Sync page or bridge.
+2. Rust backend scans active data root, compares local state vs base manifest vs remote manifest.
+3. Non-conflicting deltas are pushed/pulled as files under `realtime/files`.
+4. Manifest revision is bumped on remote writes.
+5. Conflicts are recorded in local realtime state and remote copy is written into `conflicts/*`.
+6. Frontend exposes unresolved conflicts and lets user resolve by strategy:
+   - `keep_local`
+   - `apply_remote`
+   - `mark_resolved`
 
 ## Key Constraints
 - Markdown/CSV is the single source of truth.

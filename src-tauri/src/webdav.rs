@@ -19,6 +19,10 @@ const WEBDAV_CONFIG_FILE_NAME: &str = "webdav.config.json";
 const WEBDAV_META_FILE_NAME: &str = "meta.json";
 const WEBDAV_SNAPSHOTS_DIR: &str = "snapshots";
 const WEBDAV_SCHEMA_VERSION: u32 = 1;
+const WEBDAV_REALTIME_DIR: &str = "realtime";
+const WEBDAV_REALTIME_FILES_DIR: &str = "realtime/files";
+const WEBDAV_REALTIME_MANIFEST_FILE: &str = "realtime/manifest.json";
+const WEBDAV_REALTIME_STATE_SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -84,6 +88,70 @@ pub struct WebdavDeleteSnapshotResult {
   pub deleted: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeFileEntry {
+  pub path: String,
+  pub sha256: String,
+  pub size: u64,
+  pub mtime_ms: u64,
+  pub updated_by: String,
+  pub updated_at: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeManifest {
+  pub schema_version: u32,
+  pub revision: u64,
+  pub updated_at: u64,
+  pub updated_by: String,
+  pub files: Vec<RealtimeFileEntry>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeConflict {
+  pub id: String,
+  pub path: String,
+  pub local_sha: String,
+  pub remote_sha: String,
+  pub conflict_copy_path: Option<String>,
+  pub created_at: u64,
+  pub status: String,
+  pub remote_present: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeSyncStatus {
+  pub running: bool,
+  pub last_push_at: Option<u64>,
+  pub last_pull_at: Option<u64>,
+  pub last_error: Option<String>,
+  pub pending_changes: u64,
+  pub conflicts_count: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeSyncResult {
+  pub pushed: u64,
+  pub pulled: u64,
+  pub conflicts: u64,
+  pub skipped_conflicts: u64,
+  pub revision: u64,
+  pub status: RealtimeSyncStatus,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeConflictResolveResult {
+  pub resolved: bool,
+  pub strategy: String,
+  pub conflict: Option<RealtimeConflict>,
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct WebdavMeta {
@@ -103,6 +171,31 @@ struct WebdavClient {
 struct MetaWithEtag {
   meta: WebdavMeta,
   etag: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct RealtimeState {
+  schema_version: u32,
+  data_root: String,
+  base_revision: u64,
+  base_files: Vec<RealtimeFileEntry>,
+  conflicts: Vec<RealtimeConflict>,
+  last_push_at: Option<u64>,
+  last_pull_at: Option<u64>,
+  last_error: Option<String>,
+}
+
+struct ManifestWithEtag {
+  manifest: RealtimeManifest,
+  etag: Option<String>,
+}
+
+#[derive(Clone)]
+struct LocalFileMeta {
+  sha256: String,
+  size: u64,
+  mtime_ms: u64,
 }
 
 fn now_unix_millis() -> u64 {
@@ -218,6 +311,463 @@ fn save_webdav_config_internal(app: &AppHandle, config: WebdavConfig) -> Result<
     .map_err(|err| format!("Failed to serialize WebDAV config: {err}"))?;
   write_text_atomic(path.as_path(), format!("{text}\n").as_str())?;
   Ok(normalized)
+}
+
+fn default_realtime_manifest(device_id: String) -> RealtimeManifest {
+  RealtimeManifest {
+    schema_version: WEBDAV_SCHEMA_VERSION,
+    revision: 0,
+    updated_at: now_unix_millis(),
+    updated_by: device_id,
+    files: Vec::new(),
+  }
+}
+
+fn default_realtime_state(data_root: String) -> RealtimeState {
+  RealtimeState {
+    schema_version: WEBDAV_REALTIME_STATE_SCHEMA_VERSION,
+    data_root,
+    base_revision: 0,
+    base_files: Vec::new(),
+    conflicts: Vec::new(),
+    last_push_at: None,
+    last_pull_at: None,
+    last_error: None,
+  }
+}
+
+fn write_bytes_atomic(path: &Path, content: &[u8]) -> Result<(), String> {
+  let parent = path
+    .parent()
+    .ok_or_else(|| format!("Path {} has no parent directory", path.display()))?;
+  fs::create_dir_all(parent)
+    .map_err(|err| format!("Failed to create directory {}: {err}", parent.display()))?;
+
+  let temp_path = parent.join(format!(
+    ".{}.tmp-{}-{}",
+    path.file_name().and_then(|name| name.to_str()).unwrap_or("dailytrack-temp"),
+    std::process::id(),
+    now_unix_millis()
+  ));
+
+  fs::write(temp_path.as_path(), content)
+    .map_err(|err| format!("Failed to write temporary file {}: {err}", temp_path.display()))?;
+
+  if let Err(rename_err) = fs::rename(temp_path.as_path(), path) {
+    if path.exists() {
+      fs::remove_file(path)
+        .map_err(|err| format!("Failed to replace existing file {}: {err}", path.display()))?;
+      fs::rename(temp_path.as_path(), path)
+        .map_err(|err| format!("Failed to atomically replace file {} after remove: {err}", path.display()))?;
+    } else {
+      let _ = fs::remove_file(temp_path.as_path());
+      return Err(format!("Failed to atomically write file {}: {rename_err}", path.display()));
+    }
+  }
+
+  Ok(())
+}
+
+fn realtime_state_path(app: &AppHandle, data_root: &Path) -> Result<PathBuf, String> {
+  let config_dir = app
+    .path()
+    .app_config_dir()
+    .map_err(|err| format!("Failed to resolve app config directory: {err}"))?;
+  fs::create_dir_all(config_dir.as_path())
+    .map_err(|err| format!("Failed to create app config directory {}: {err}", config_dir.display()))?;
+
+  let root_key = data_root.to_string_lossy().to_string();
+  let digest = sha256_hex(root_key.as_bytes());
+  let suffix = digest.chars().take(16).collect::<String>();
+  Ok(config_dir.join(format!("webdav.realtime.state.{suffix}.json")))
+}
+
+fn load_realtime_state(app: &AppHandle, data_root: &Path) -> Result<RealtimeState, String> {
+  let state_path = realtime_state_path(app, data_root)?;
+  let root = data_root.to_string_lossy().to_string();
+
+  if !state_path.exists() {
+    let state = default_realtime_state(root);
+    let text = serde_json::to_string_pretty(&state)
+      .map_err(|err| format!("Failed to serialize default realtime state: {err}"))?;
+    write_text_atomic(state_path.as_path(), format!("{text}\n").as_str())?;
+    return Ok(state);
+  }
+
+  let raw = fs::read_to_string(state_path.as_path())
+    .map_err(|err| format!("Failed to read realtime state {}: {err}", state_path.display()))?;
+  let mut state: RealtimeState = serde_json::from_str(raw.as_str())
+    .map_err(|err| format!("Failed to parse realtime state {}: {err}", state_path.display()))?;
+  state.data_root = root;
+  if state.schema_version != WEBDAV_REALTIME_STATE_SCHEMA_VERSION {
+    state.schema_version = WEBDAV_REALTIME_STATE_SCHEMA_VERSION;
+  }
+  Ok(state)
+}
+
+fn save_realtime_state(app: &AppHandle, data_root: &Path, state: &RealtimeState) -> Result<(), String> {
+  let state_path = realtime_state_path(app, data_root)?;
+  let text = serde_json::to_string_pretty(state)
+    .map_err(|err| format!("Failed to serialize realtime state: {err}"))?;
+  write_text_atomic(state_path.as_path(), format!("{text}\n").as_str())
+}
+
+fn normalize_relative_path(value: &str) -> String {
+  value.trim_start_matches('/').replace('\\', "/")
+}
+
+fn relative_path_from_absolute(root: &Path, absolute: &Path) -> Result<String, String> {
+  let relative = absolute
+    .strip_prefix(root)
+    .map_err(|err| format!("Failed to strip data root prefix for {}: {err}", absolute.display()))?;
+  let value = normalize_relative_path(relative.to_string_lossy().as_ref());
+  Ok(value)
+}
+
+fn manifest_to_map(
+  entries: &[RealtimeFileEntry],
+) -> std::collections::HashMap<String, RealtimeFileEntry> {
+  entries
+    .iter()
+    .cloned()
+    .map(|entry| (entry.path.clone(), entry))
+    .collect()
+}
+
+fn scan_local_files(root: &Path) -> Result<std::collections::HashMap<String, LocalFileMeta>, String> {
+  let mut files = std::collections::HashMap::new();
+
+  for entry in WalkDir::new(root).min_depth(1) {
+    let entry = entry.map_err(|err| format!("Failed to walk {}: {err}", root.display()))?;
+    if !entry.file_type().is_file() {
+      continue;
+    }
+
+    let absolute = entry.path().to_path_buf();
+    let relative = relative_path_from_absolute(root, absolute.as_path())?;
+    if relative.starts_with("conflicts/") || relative.ends_with(".DS_Store") {
+      continue;
+    }
+
+    let bytes = fs::read(absolute.as_path())
+      .map_err(|err| format!("Failed to read local file {}: {err}", absolute.display()))?;
+    let sha256 = sha256_hex(bytes.as_slice());
+    let metadata = fs::metadata(absolute.as_path())
+      .map_err(|err| format!("Failed to read metadata {}: {err}", absolute.display()))?;
+    let mtime_ms = metadata
+      .modified()
+      .ok()
+      .and_then(|value| value.duration_since(UNIX_EPOCH).ok())
+      .map(|value| value.as_millis() as u64)
+      .unwrap_or(0);
+
+    files.insert(
+      relative,
+      LocalFileMeta {
+        sha256,
+        size: metadata.len(),
+        mtime_ms,
+      },
+    );
+  }
+
+  Ok(files)
+}
+
+fn unresolved_conflict_paths(conflicts: &[RealtimeConflict]) -> std::collections::HashSet<String> {
+  conflicts
+    .iter()
+    .filter(|item| item.status == "unresolved")
+    .map(|item| item.path.clone())
+    .collect()
+}
+
+fn calculate_pending_changes(
+  base_map: &std::collections::HashMap<String, RealtimeFileEntry>,
+  local_map: &std::collections::HashMap<String, LocalFileMeta>,
+  unresolved_paths: &std::collections::HashSet<String>,
+) -> u64 {
+  let mut all_paths = std::collections::HashSet::new();
+  all_paths.extend(base_map.keys().cloned());
+  all_paths.extend(local_map.keys().cloned());
+
+  let mut changed: u64 = 0;
+  for path in all_paths {
+    if unresolved_paths.contains(path.as_str()) {
+      continue;
+    }
+    let base_sha = base_map.get(path.as_str()).map(|entry| entry.sha256.as_str());
+    let local_sha = local_map.get(path.as_str()).map(|entry| entry.sha256.as_str());
+    if base_sha != local_sha {
+      changed += 1;
+    }
+  }
+
+  changed + unresolved_paths.len() as u64
+}
+
+fn sanitize_conflict_file_name(path: &str) -> String {
+  path
+    .replace('/', "__")
+    .replace('\\', "__")
+    .replace(':', "_")
+}
+
+fn build_conflict_copy_relative_path(path: &str, device_id: &str) -> String {
+  let name = sanitize_conflict_file_name(path);
+  format!(
+    "conflicts/{}.conflict-{}-{}",
+    name,
+    now_unix_seconds(),
+    sanitize_conflict_file_name(device_id)
+  )
+}
+
+fn list_sorted_union_paths(
+  base_map: &std::collections::HashMap<String, RealtimeFileEntry>,
+  local_map: &std::collections::HashMap<String, LocalFileMeta>,
+  remote_map: &std::collections::HashMap<String, RealtimeFileEntry>,
+) -> Vec<String> {
+  let mut all_paths = std::collections::HashSet::new();
+  all_paths.extend(base_map.keys().cloned());
+  all_paths.extend(local_map.keys().cloned());
+  all_paths.extend(remote_map.keys().cloned());
+  let mut sorted = all_paths.into_iter().collect::<Vec<_>>();
+  sorted.sort();
+  sorted
+}
+
+fn upsert_unresolved_conflict(
+  state: &mut RealtimeState,
+  path: &str,
+  local_sha: Option<&str>,
+  remote_sha: Option<&str>,
+  conflict_copy_path: Option<String>,
+  remote_present: bool,
+) {
+  if state
+    .conflicts
+    .iter()
+    .any(|item| item.path == path && item.status == "unresolved")
+  {
+    return;
+  }
+
+  state.conflicts.push(RealtimeConflict {
+    id: Uuid::new_v4().to_string(),
+    path: path.to_string(),
+    local_sha: local_sha.unwrap_or("").to_string(),
+    remote_sha: remote_sha.unwrap_or("").to_string(),
+    conflict_copy_path,
+    created_at: now_unix_millis(),
+    status: "unresolved".to_string(),
+    remote_present,
+  });
+}
+
+fn summarize_realtime_status(
+  state: &RealtimeState,
+  local_map: &std::collections::HashMap<String, LocalFileMeta>,
+) -> RealtimeSyncStatus {
+  let base_map = manifest_to_map(state.base_files.as_slice());
+  let unresolved = unresolved_conflict_paths(state.conflicts.as_slice());
+  let pending_changes = calculate_pending_changes(&base_map, local_map, &unresolved);
+  RealtimeSyncStatus {
+    running: false,
+    last_push_at: state.last_push_at,
+    last_pull_at: state.last_pull_at,
+    last_error: state.last_error.clone(),
+    pending_changes,
+    conflicts_count: unresolved.len() as u64,
+  }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RealtimeSyncDirection {
+  Push,
+  Pull,
+  Both,
+}
+
+impl RealtimeSyncDirection {
+  fn allows_push(self) -> bool {
+    matches!(self, RealtimeSyncDirection::Push | RealtimeSyncDirection::Both)
+  }
+
+  fn allows_pull(self) -> bool {
+    matches!(self, RealtimeSyncDirection::Pull | RealtimeSyncDirection::Both)
+  }
+}
+
+fn parse_realtime_sync_direction(value: Option<String>) -> Result<RealtimeSyncDirection, String> {
+  let normalized = value
+    .unwrap_or_else(|| "both".to_string())
+    .trim()
+    .to_ascii_lowercase();
+  match normalized.as_str() {
+    "push" => Ok(RealtimeSyncDirection::Push),
+    "pull" => Ok(RealtimeSyncDirection::Pull),
+    "both" => Ok(RealtimeSyncDirection::Both),
+    _ => Err("Invalid sync direction. Use push, pull, or both".to_string()),
+  }
+}
+
+fn save_state_error(
+  app: &AppHandle,
+  data_root: &Path,
+  mut state: RealtimeState,
+  error: String,
+) -> Result<(), String> {
+  state.last_error = Some(error);
+  save_realtime_state(app, data_root, &state)
+}
+
+fn realtime_sync_once(
+  app: &AppHandle,
+  data_root: &Path,
+  direction: RealtimeSyncDirection,
+) -> Result<RealtimeSyncResult, String> {
+  let config = load_webdav_config(app)?;
+  let client = WebdavClient::new(&config)?;
+  client.ensure_remote_layout()?;
+  client.ensure_realtime_layout()?;
+
+  let mut state = load_realtime_state(app, data_root)?;
+  let manifest_with_etag = client.get_realtime_manifest(config.device_id.as_str())?;
+  let mut remote_manifest = manifest_with_etag.manifest.clone();
+  let mut remote_map = manifest_to_map(remote_manifest.files.as_slice());
+  let base_map = manifest_to_map(state.base_files.as_slice());
+  let local_map = scan_local_files(data_root)?;
+  let unresolved = unresolved_conflict_paths(state.conflicts.as_slice());
+  let mut pushed: u64 = 0;
+  let mut pulled: u64 = 0;
+  let mut conflicts: u64 = 0;
+  let mut skipped_conflicts: u64 = 0;
+  let mut remote_touched = false;
+  let now_ms = now_unix_millis();
+
+  for path in list_sorted_union_paths(&base_map, &local_map, &remote_map) {
+    if unresolved.contains(path.as_str()) {
+      skipped_conflicts += 1;
+      continue;
+    }
+
+    let base_sha = base_map.get(path.as_str()).map(|entry| entry.sha256.as_str());
+    let local_sha = local_map.get(path.as_str()).map(|entry| entry.sha256.as_str());
+    let remote_sha = remote_map.get(path.as_str()).map(|entry| entry.sha256.as_str());
+
+    let local_changed = local_sha != base_sha;
+    let remote_changed = remote_sha != base_sha;
+
+    if local_changed && remote_changed {
+      if local_sha == remote_sha {
+        continue;
+      }
+
+      let conflict_copy_path = if remote_map.contains_key(path.as_str()) {
+        let bytes = client.download_realtime_file(path.as_str())?;
+        let relative_conflict_path = build_conflict_copy_relative_path(path.as_str(), config.device_id.as_str());
+        let absolute = data_root.join(relative_conflict_path.as_str());
+        write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
+        Some(relative_conflict_path)
+      } else {
+        None
+      };
+
+      upsert_unresolved_conflict(
+        &mut state,
+        path.as_str(),
+        local_sha,
+        remote_sha,
+        conflict_copy_path,
+        remote_map.contains_key(path.as_str()),
+      );
+      conflicts += 1;
+      continue;
+    }
+
+    if local_changed && direction.allows_push() {
+      if let Some(local_meta) = local_map.get(path.as_str()) {
+        let bytes = fs::read(data_root.join(path.as_str()).as_path())
+          .map_err(|err| format!("Failed to read local file {} for push: {err}", path))?;
+        client.upload_realtime_file(path.as_str(), bytes)?;
+        remote_map.insert(
+          path.clone(),
+          RealtimeFileEntry {
+            path: path.clone(),
+            sha256: local_meta.sha256.clone(),
+            size: local_meta.size,
+            mtime_ms: local_meta.mtime_ms,
+            updated_by: config.device_id.clone(),
+            updated_at: now_ms,
+          },
+        );
+      } else {
+        let _ = client.delete_realtime_file(path.as_str())?;
+        remote_map.remove(path.as_str());
+      }
+      pushed += 1;
+      remote_touched = true;
+      continue;
+    }
+
+    if remote_changed && direction.allows_pull() {
+      if remote_map.contains_key(path.as_str()) {
+        let bytes = client.download_realtime_file(path.as_str())?;
+        let absolute = data_root.join(path.as_str());
+        write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
+      } else {
+        let absolute = data_root.join(path.as_str());
+        if absolute.exists() {
+          fs::remove_file(absolute.as_path())
+            .map_err(|err| format!("Failed to remove local file {}: {err}", absolute.display()))?;
+        }
+      }
+      pulled += 1;
+    }
+  }
+
+  if remote_touched {
+    let mut updated_files = remote_map.into_values().collect::<Vec<_>>();
+    updated_files.sort_by(|a, b| a.path.cmp(&b.path));
+    remote_manifest.files = updated_files;
+    remote_manifest.revision = remote_manifest.revision.saturating_add(1);
+    remote_manifest.updated_at = now_ms;
+    remote_manifest.updated_by = config.device_id.clone();
+
+    client.put_realtime_manifest(&remote_manifest, manifest_with_etag.etag.as_deref())?;
+  }
+
+  let latest_manifest = if remote_touched {
+    remote_manifest
+  } else {
+    manifest_with_etag.manifest
+  };
+  let latest_local = scan_local_files(data_root)?;
+
+  state.base_revision = latest_manifest.revision;
+  state.base_files = latest_manifest.files.clone();
+  state.schema_version = WEBDAV_REALTIME_STATE_SCHEMA_VERSION;
+  state.data_root = data_root.to_string_lossy().to_string();
+  if pushed > 0 {
+    state.last_push_at = Some(now_ms);
+  }
+  if pulled > 0 {
+    state.last_pull_at = Some(now_ms);
+  }
+  state.last_error = None;
+  save_realtime_state(app, data_root, &state)?;
+
+  let status = summarize_realtime_status(&state, &latest_local);
+
+  Ok(RealtimeSyncResult {
+    pushed,
+    pulled,
+    conflicts,
+    skipped_conflicts,
+    revision: state.base_revision,
+    status,
+  })
 }
 
 fn ensure_config_ready(config: &WebdavConfig) -> Result<(), String> {
@@ -449,6 +999,163 @@ impl WebdavClient {
     let status = response.status();
     let body = response.text().unwrap_or_else(|_| "".to_string());
     Err(format!("WebDAV delete failed for {file_name}: {status} {body}"))
+  }
+
+  fn ensure_realtime_layout(&self) -> Result<(), String> {
+    self.mkcol(WEBDAV_REALTIME_DIR)?;
+    self.mkcol(WEBDAV_REALTIME_FILES_DIR)?;
+    Ok(())
+  }
+
+  fn ensure_realtime_file_parent_dirs(&self, relative_path: &str) -> Result<(), String> {
+    let normalized = normalize_relative_path(relative_path);
+    let parent = Path::new(normalized.as_str()).parent();
+    let Some(parent) = parent else {
+      return Ok(());
+    };
+
+    let mut current = String::from(WEBDAV_REALTIME_FILES_DIR);
+    for segment in parent.iter() {
+      let value = segment.to_string_lossy();
+      if value.is_empty() {
+        continue;
+      }
+      current.push('/');
+      current.push_str(value.as_ref());
+      self.mkcol(current.as_str())?;
+    }
+
+    Ok(())
+  }
+
+  fn get_realtime_manifest(&self, device_id: &str) -> Result<ManifestWithEtag, String> {
+    let response = self
+      .request(reqwest::Method::GET, WEBDAV_REALTIME_MANIFEST_FILE)?
+      .send()
+      .map_err(|err| format!("Failed to GET WebDAV realtime manifest: {err}"))?;
+
+    if response.status() == StatusCode::NOT_FOUND {
+      return Ok(ManifestWithEtag {
+        manifest: default_realtime_manifest(device_id.to_string()),
+        etag: None,
+      });
+    }
+
+    if !response.status().is_success() {
+      let status = response.status();
+      let body = response.text().unwrap_or_else(|_| "".to_string());
+      return Err(format!("WebDAV GET realtime manifest failed: {status} {body}"));
+    }
+
+    let etag = response
+      .headers()
+      .get(ETAG)
+      .and_then(|value| value.to_str().ok())
+      .map(|value| value.to_string());
+
+    let mut manifest: RealtimeManifest = response
+      .json()
+      .map_err(|err| format!("Failed to parse realtime manifest: {err}"))?;
+    if manifest.schema_version != WEBDAV_SCHEMA_VERSION {
+      manifest.schema_version = WEBDAV_SCHEMA_VERSION;
+    }
+
+    Ok(ManifestWithEtag { manifest, etag })
+  }
+
+  fn put_realtime_manifest(
+    &self,
+    manifest: &RealtimeManifest,
+    etag: Option<&str>,
+  ) -> Result<(), String> {
+    let payload = serde_json::to_vec_pretty(manifest)
+      .map_err(|err| format!("Failed to serialize realtime manifest: {err}"))?;
+    let mut request = self
+      .request(reqwest::Method::PUT, WEBDAV_REALTIME_MANIFEST_FILE)?
+      .header(reqwest::header::CONTENT_TYPE, "application/json")
+      .body(payload);
+
+    request = if let Some(value) = etag {
+      request.header(IF_MATCH, value)
+    } else {
+      request.header(IF_NONE_MATCH, "*")
+    };
+
+    let response = request
+      .send()
+      .map_err(|err| format!("Failed to PUT realtime manifest: {err}"))?;
+
+    if response.status() == StatusCode::PRECONDITION_FAILED {
+      return Err("WEBDAV_REALTIME_ETAG_CONFLICT".to_string());
+    }
+
+    if !response.status().is_success() {
+      let status = response.status();
+      let body = response.text().unwrap_or_else(|_| "".to_string());
+      return Err(format!("WebDAV PUT realtime manifest failed: {status} {body}"));
+    }
+
+    Ok(())
+  }
+
+  fn upload_realtime_file(&self, relative_path: &str, bytes: Vec<u8>) -> Result<(), String> {
+    let normalized = normalize_relative_path(relative_path);
+    self.ensure_realtime_file_parent_dirs(normalized.as_str())?;
+    let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
+    let response = self
+      .request(reqwest::Method::PUT, remote_file.as_str())?
+      .header(reqwest::header::CONTENT_TYPE, "application/octet-stream")
+      .body(bytes)
+      .send()
+      .map_err(|err| format!("Failed to upload realtime file {normalized}: {err}"))?;
+
+    if !response.status().is_success() {
+      let status = response.status();
+      let body = response.text().unwrap_or_else(|_| "".to_string());
+      return Err(format!("WebDAV upload realtime file failed for {normalized}: {status} {body}"));
+    }
+
+    Ok(())
+  }
+
+  fn download_realtime_file(&self, relative_path: &str) -> Result<Vec<u8>, String> {
+    let normalized = normalize_relative_path(relative_path);
+    let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
+    let response = self
+      .request(reqwest::Method::GET, remote_file.as_str())?
+      .send()
+      .map_err(|err| format!("Failed to download realtime file {normalized}: {err}"))?;
+
+    if !response.status().is_success() {
+      let status = response.status();
+      let body = response.text().unwrap_or_else(|_| "".to_string());
+      return Err(format!("WebDAV download realtime file failed for {normalized}: {status} {body}"));
+    }
+
+    response
+      .bytes()
+      .map(|bytes| bytes.to_vec())
+      .map_err(|err| format!("Failed to read downloaded realtime file bytes: {err}"))
+  }
+
+  fn delete_realtime_file(&self, relative_path: &str) -> Result<bool, String> {
+    let normalized = normalize_relative_path(relative_path);
+    let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
+    let response = self
+      .request(reqwest::Method::DELETE, remote_file.as_str())?
+      .send()
+      .map_err(|err| format!("Failed to delete realtime file {normalized}: {err}"))?;
+
+    if response.status().is_success() {
+      return Ok(true);
+    }
+    if response.status() == StatusCode::NOT_FOUND {
+      return Ok(false);
+    }
+
+    let status = response.status();
+    let body = response.text().unwrap_or_else(|_| "".to_string());
+    Err(format!("WebDAV delete realtime file failed for {normalized}: {status} {body}"))
   }
 }
 
@@ -906,4 +1613,114 @@ pub fn webdav_delete_snapshot(app: AppHandle, snapshot_id: String) -> Result<Web
   }
 
   Ok(WebdavDeleteSnapshotResult { deleted: true })
+}
+
+#[tauri::command]
+pub fn webdav_realtime_status(app: AppHandle, data_root: String) -> Result<RealtimeSyncStatus, String> {
+  let root = ensure_dir_canonical(data_root.as_str())?;
+  let state = load_realtime_state(&app, root.as_path())?;
+  let local_map = scan_local_files(root.as_path())?;
+  Ok(summarize_realtime_status(&state, &local_map))
+}
+
+#[tauri::command]
+pub fn webdav_realtime_sync_now(
+  app: AppHandle,
+  data_root: String,
+  direction: Option<String>,
+) -> Result<RealtimeSyncResult, String> {
+  let root = ensure_dir_canonical(data_root.as_str())?;
+  let state = load_realtime_state(&app, root.as_path())?;
+  let parsed_direction = parse_realtime_sync_direction(direction)?;
+
+  match realtime_sync_once(&app, root.as_path(), parsed_direction) {
+    Ok(result) => Ok(result),
+    Err(error) => {
+      let _ = save_state_error(&app, root.as_path(), state, error.clone());
+      Err(error)
+    }
+  }
+}
+
+#[tauri::command]
+pub fn webdav_realtime_conflicts_list(
+  app: AppHandle,
+  data_root: String,
+) -> Result<Vec<RealtimeConflict>, String> {
+  let root = ensure_dir_canonical(data_root.as_str())?;
+  let mut state = load_realtime_state(&app, root.as_path())?;
+  state
+    .conflicts
+    .sort_by(|left, right| right.created_at.cmp(&left.created_at));
+  Ok(state.conflicts)
+}
+
+#[tauri::command]
+pub fn webdav_realtime_conflict_resolve(
+  app: AppHandle,
+  data_root: String,
+  conflict_id: String,
+  strategy: String,
+) -> Result<RealtimeConflictResolveResult, String> {
+  let root = ensure_dir_canonical(data_root.as_str())?;
+  let mut state = load_realtime_state(&app, root.as_path())?;
+  let normalized_strategy = strategy.trim().to_ascii_lowercase();
+  if normalized_strategy != "keep_local"
+    && normalized_strategy != "apply_remote"
+    && normalized_strategy != "mark_resolved"
+  {
+    return Err("Invalid resolve strategy. Use keep_local, apply_remote, or mark_resolved".to_string());
+  }
+
+  let Some(conflict) = state
+    .conflicts
+    .iter_mut()
+    .find(|item| item.id == conflict_id && item.status == "unresolved")
+  else {
+    return Ok(RealtimeConflictResolveResult {
+      resolved: false,
+      strategy: normalized_strategy,
+      conflict: None,
+    });
+  };
+
+  if normalized_strategy == "apply_remote" {
+    if conflict.remote_present {
+      let relative_conflict_path = conflict
+        .conflict_copy_path
+        .clone()
+        .ok_or_else(|| "Missing conflict copy path for remote content".to_string())?;
+      let absolute_conflict = root.join(relative_conflict_path.as_str());
+      if !absolute_conflict.exists() {
+        return Err(format!(
+          "Conflict copy file does not exist: {}",
+          absolute_conflict.display()
+        ));
+      }
+      let bytes = fs::read(absolute_conflict.as_path()).map_err(|err| {
+        format!(
+          "Failed to read conflict copy {}: {err}",
+          absolute_conflict.display()
+        )
+      })?;
+      let target = root.join(conflict.path.as_str());
+      write_bytes_atomic(target.as_path(), bytes.as_slice())?;
+    } else {
+      let target = root.join(conflict.path.as_str());
+      if target.exists() {
+        fs::remove_file(target.as_path())
+          .map_err(|err| format!("Failed to remove local file {}: {err}", target.display()))?;
+      }
+    }
+  }
+
+  conflict.status = "resolved".to_string();
+  let output = conflict.clone();
+  save_realtime_state(&app, root.as_path(), &state)?;
+
+  Ok(RealtimeConflictResolveResult {
+    resolved: true,
+    strategy: normalized_strategy,
+    conflict: Some(output),
+  })
 }

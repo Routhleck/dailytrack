@@ -78,7 +78,14 @@ struct GenerateLlmReportResult {
 fn default_data_root() -> Result<PathBuf, String> {
   let home = std::env::var("HOME")
     .or_else(|_| std::env::var("USERPROFILE"))
-    .map_err(|_| "Failed to resolve user home directory".to_string())?;
+    .ok();
+
+  let Some(home) = home else {
+    let fallback = std::env::current_dir()
+      .unwrap_or_else(|_| std::env::temp_dir())
+      .join(DEFAULT_DATA_ROOT_DIR);
+    return Ok(fallback);
+  };
 
   let preferred = PathBuf::from(&home).join(DEFAULT_DATA_ROOT_DIR);
   let legacy = PathBuf::from(home).join(LEGACY_DATA_ROOT_DIR);
@@ -1070,7 +1077,11 @@ pub fn run() {
       webdav::webdav_list_snapshots,
       webdav::webdav_push_snapshot,
       webdav::webdav_pull_snapshot,
-      webdav::webdav_delete_snapshot
+      webdav::webdav_delete_snapshot,
+      webdav::webdav_realtime_status,
+      webdav::webdav_realtime_sync_now,
+      webdav::webdav_realtime_conflicts_list,
+      webdav::webdav_realtime_conflict_resolve
     ])
     .setup(|app| {
       #[cfg(desktop)]

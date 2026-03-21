@@ -49,6 +49,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Structured + raw editing: fast checkbox toggles with raw markdown fallback.
 - Profile workflow: multiple profiles with separate templates and preferences.
 - Real-time feel: autosave + local file change refresh.
+- Adaptive shell: desktop sidebar + mobile bottom navigation.
 
 ## Screenshots
 
@@ -91,10 +92,14 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Settings:
   - data root migration (copy + switch)
   - export/import
-  - WebDAV cloud snapshot sync
+  - WebDAV snapshot backup controls
   - updater controls (auto-check, manual check, install+restart)
   - tutorial replay
   - full reset to first-run state
+- Sync:
+  - WebDAV realtime file sync status
+  - push/pull/both actions
+  - unresolved conflict list + resolve actions
 
 ## Data Ownership and Storage
 
@@ -193,9 +198,18 @@ date,weight,waist,bodyFat,muscleMass,chest,hip,note
   - operation summary includes copied/overwritten/skipped/new-dir counts
 - WebDAV snapshots (optional):
   - `Push Now`, `Pull Latest`, `Pull Selected`, snapshot list/delete
-  - optional interval auto-push
+  - optional interval realtime sync bridge
   - remote `meta.json` + `snapshots/*.zip`
   - optional local backup before pull overwrite
+- WebDAV realtime file sync (optional):
+  - Sync page: `Sync Both`, `Push Only`, `Pull Only`
+  - automatic periodic background sync (when WebDAV enabled)
+  - remote manifest + per-file transport:
+    - `realtime/manifest.json`
+    - `realtime/files/...`
+  - conflict strategy: keep both and resolve manually
+  - conflict copies stored under active profile root:
+    - `conflicts/*.conflict-<timestamp>-<device>`
 
 ## Onboarding
 
@@ -273,3 +287,4 @@ Useful docs:
 - Native folder picker for all root/import/export/migration paths.
 - Optional history snapshots for safer rollback.
 - More built-in template packs and community-contributed templates.
+- Optional mobile app client aligned with existing WebDAV realtime sync protocol.

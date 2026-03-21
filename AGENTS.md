@@ -16,7 +16,7 @@ The app reads and writes local Markdown/CSV files and provides a structured edit
 - Markdown and CSV files are the only source of truth.
 - The app must not introduce hidden app-only data formats.
 - Structured editing and raw editing must both map back to local files.
-- Optional WebDAV snapshot sync is transport/backup only and must not replace local source-of-truth files.
+- Optional WebDAV sync (snapshot + realtime) is transport/backup only and must not replace local source-of-truth files.
 
 ## Preferred Stack
 - Tauri

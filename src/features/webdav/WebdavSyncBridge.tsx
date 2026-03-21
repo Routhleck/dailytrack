@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { getWebdavConfig, pushWebdavSnapshot } from '../../lib/fs/fileApi'
-import { onDataChanged } from '../../lib/liveSync'
+import { getWebdavConfig, webdavRealtimeSyncNow } from '../../lib/fs/fileApi'
+import { emitDataChanged, onDataChanged } from '../../lib/liveSync'
 import { useDataRoot } from '../settings/DataRootContext'
 
 export function WebdavSyncBridge() {
@@ -28,6 +28,28 @@ export function WebdavSyncBridge() {
     let disposed = false
     let intervalId: number | null = null
 
+    async function sync(direction: 'push' | 'pull' | 'both') {
+      if (busyRef.current) {
+        return
+      }
+
+      busyRef.current = true
+      try {
+        const result = await webdavRealtimeSyncNow(root, direction)
+        if (disposed) {
+          return
+        }
+
+        if (result.pushed > 0 || result.pulled > 0 || result.conflicts > 0) {
+          emitDataChanged({ scope: 'all' })
+        }
+      } catch (error) {
+        console.warn('[webdav] realtime sync failed', error)
+      } finally {
+        busyRef.current = false
+      }
+    }
+
     async function setup() {
       try {
         const config = await getWebdavConfig()
@@ -35,29 +57,41 @@ export function WebdavSyncBridge() {
           return
         }
 
+        void sync('both')
+
         intervalId = window.setInterval(() => {
-          if (busyRef.current) {
+          void sync('both')
+        }, config.autoPushIntervalMin * 60 * 1000)
+
+        const onVisibility = () => {
+          if (document.visibilityState === 'visible') {
+            void sync('both')
             return
           }
 
-          busyRef.current = true
-          void pushWebdavSnapshot(root, 'Auto push')
-            .catch((error) => {
-              console.warn('[webdav] auto push failed', error)
-            })
-            .finally(() => {
-              busyRef.current = false
-            })
-        }, config.autoPushIntervalMin * 60 * 1000)
+          void sync('push')
+        }
+
+        document.addEventListener('visibilitychange', onVisibility)
+
+        return () => {
+          document.removeEventListener('visibilitychange', onVisibility)
+        }
       } catch (error) {
-        console.warn('[webdav] failed to start auto push bridge', error)
+        console.warn('[webdav] failed to start realtime sync bridge', error)
       }
     }
 
-    void setup()
+    let cleanupVisibility: (() => void) | null = null
+    void setup().then((cleanup) => {
+      cleanupVisibility = cleanup ?? null
+    })
 
     return () => {
       disposed = true
+      if (cleanupVisibility) {
+        cleanupVisibility()
+      }
       if (intervalId != null) {
         window.clearInterval(intervalId)
       }

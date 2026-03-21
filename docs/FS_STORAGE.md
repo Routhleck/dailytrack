@@ -2,7 +2,7 @@
 
 ## Local-Only Storage Policy
 - All data is stored on local disk.
-- Optional cloud transport is available via WebDAV snapshot sync.
+- Optional cloud transport is available via WebDAV snapshot sync and WebDAV realtime file sync.
 - WebDAV does not replace local files as source of truth.
 - No database.
 
@@ -77,6 +77,23 @@ On startup:
 - Snapshot retention:
   - controlled by `maxSnapshots`
   - old snapshots are pruned after successful push.
+
+## WebDAV Realtime File Sync
+- Scope: active data-root files (`profiles/*`) with file-level merge behavior.
+- Remote layout:
+  - `realtime/manifest.json`
+  - `realtime/files/<relative-path>`
+- Trigger:
+  - Sync page manual actions: `Sync Both`, `Push Only`, `Pull Only`
+  - background bridge interval when WebDAV is enabled
+  - visibility-change opportunistic sync
+- Conflict behavior:
+  - if both local and remote changed from same base and content differs, conflict is recorded
+  - remote side copy is written to local `conflicts/*.conflict-<timestamp>-<device>`
+  - unresolved conflicts are shown in Sync page and require manual resolve
+- Realtime state file:
+  - stored in app config dir as `webdav.realtime.state.<hash>.json`
+  - tracked fields include `baseRevision`, `baseFiles`, `conflicts`, `lastPushAt`, `lastPullAt`, `lastError`
 
 ## WebDAV Config Storage
 - Stored outside data root in Tauri app config directory:
