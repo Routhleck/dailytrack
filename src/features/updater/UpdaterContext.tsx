@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { isUpdaterConfigured } from '../../lib/fs/fileApi'
+import { isUpdaterConfigured, isUpdaterSupported } from '../../lib/fs/fileApi'
 import { useI18n } from '../i18n/I18nContext'
 import {
   checkForAvailableUpdate,
@@ -19,6 +19,7 @@ import {
 import { loadAutoUpdatePreference, saveAutoUpdatePreference } from './updater.store'
 
 type UpdaterContextValue = {
+  supported: boolean
   configured: boolean
   resolved: boolean
   currentVersion: string
@@ -50,6 +51,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   const { t } = useI18n()
 
   const [resolved, setResolved] = useState(false)
+  const [supported, setSupported] = useState(false)
   const [configured, setConfigured] = useState(false)
   const [currentVersion, setCurrentVersion] = useState('-')
   const [autoCheckEnabled, setAutoCheckEnabledState] = useState(loadAutoUpdatePreference())
@@ -75,14 +77,16 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
         // ignore version resolution failures on unsupported runtimes
       })
 
-    void isUpdaterConfigured()
-      .then((enabled) => {
+    void Promise.all([isUpdaterSupported(), isUpdaterConfigured()])
+      .then(([isSupported, enabled]) => {
         if (!cancelled) {
-          setConfigured(enabled)
+          setSupported(isSupported)
+          setConfigured(isSupported && enabled)
         }
       })
       .catch(() => {
         if (!cancelled) {
+          setSupported(false)
           setConfigured(false)
         }
       })
@@ -99,6 +103,13 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
   const checkForUpdates = useCallback(
     async (manual = true) => {
+      if (!supported) {
+        if (manual) {
+          setError(t('updater.notSupported'))
+        }
+        return
+      }
+
       if (!configured) {
         if (manual) {
           setError(t('updater.notConfigured'))
@@ -134,7 +145,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
         setChecking(false)
       }
     },
-    [configured, t],
+    [configured, supported, t],
   )
 
   const installUpdate = useCallback(async () => {
@@ -189,6 +200,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   const value = useMemo<UpdaterContextValue>(
     () => ({
       configured,
+      supported,
       resolved,
       currentVersion,
       autoCheckEnabled,
@@ -206,6 +218,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     }),
     [
       configured,
+      supported,
       resolved,
       currentVersion,
       autoCheckEnabled,

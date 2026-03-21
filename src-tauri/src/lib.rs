@@ -579,7 +579,16 @@ fn updater_pubkey() -> Option<String> {
 }
 
 #[tauri::command]
+fn updater_is_supported() -> bool {
+  cfg!(desktop)
+}
+
+#[tauri::command]
 fn updater_is_configured(app: tauri::AppHandle) -> bool {
+  if !cfg!(desktop) {
+    return false;
+  }
+
   if updater_pubkey().is_some() {
     return true;
   }
@@ -1079,6 +1088,7 @@ pub fn run() {
     .manage(FsWatchState::default())
     .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![
+      updater_is_supported,
       updater_is_configured,
       ensure_data_root,
       list_profiles,

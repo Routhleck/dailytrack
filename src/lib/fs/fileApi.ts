@@ -115,6 +115,10 @@ export type FsChangedEventPayload = {
   at: number
 }
 
+export async function isUpdaterSupported(): Promise<boolean> {
+  return invoke<boolean>('updater_is_supported')
+}
+
 export async function isUpdaterConfigured(): Promise<boolean> {
   return invoke<boolean>('updater_is_configured')
 }

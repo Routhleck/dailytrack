@@ -73,6 +73,7 @@ function webdavConfigSignature(config: WebdavConfig): string {
 export function SettingsPage() {
   const { t } = useI18n()
   const {
+    supported: updaterSupported,
     configured: updaterConfigured,
     resolved: updaterResolved,
     currentVersion,
@@ -580,12 +581,21 @@ export function SettingsPage() {
           {t('settings.currentVersion')}: <span className="font-medium">{currentVersion}</span>
         </p>
         <p className="text-sm text-slate-700">
+          {t('settings.updaterSupported')}:{' '}
+          <span className={`font-medium ${updaterSupported ? 'text-teal-700' : 'text-slate-500'}`}>
+            {updaterResolved ? (updaterSupported ? t('common.yes') : t('common.no')) : t('common.loading')}
+          </span>
+        </p>
+        <p className="text-sm text-slate-700">
           {t('settings.updaterConfigured')}:{' '}
           <span className={`font-medium ${updaterConfigured ? 'text-teal-700' : 'text-amber-700'}`}>
             {updaterResolved ? (updaterConfigured ? t('common.yes') : t('common.no')) : t('common.loading')}
           </span>
         </p>
-        {!updaterConfigured && updaterResolved ? (
+        {!updaterSupported && updaterResolved ? (
+          <p className="text-sm text-slate-600">{t('updater.notSupported')}</p>
+        ) : null}
+        {!updaterConfigured && updaterSupported && updaterResolved ? (
           <p className="text-sm text-amber-700">{t('updater.notConfigured')}</p>
         ) : null}
         <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -593,7 +603,7 @@ export function SettingsPage() {
             type="checkbox"
             checked={autoCheckEnabled}
             onChange={(event) => setAutoCheckEnabled(event.target.checked)}
-            disabled={!updaterConfigured || updaterInstalling}
+            disabled={!updaterSupported || !updaterConfigured || updaterInstalling}
           />
           {t('settings.autoCheckUpdates')}
         </label>
@@ -601,7 +611,7 @@ export function SettingsPage() {
           <button
             type="button"
             className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
-            disabled={!updaterConfigured || updaterChecking || updaterInstalling}
+            disabled={!updaterSupported || !updaterConfigured || updaterChecking || updaterInstalling}
             onClick={() => void checkForUpdates(true)}
           >
             {updaterChecking ? t('updater.checking') : t('settings.checkUpdatesNow')}
