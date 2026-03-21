@@ -67,8 +67,16 @@ export function SyncPage() {
         webdavRealtimeStatus(baseDataRoot),
         webdavRealtimeConflictsList(baseDataRoot),
       ])
+      const unresolved = nextConflicts.filter((item) => item.status === 'unresolved')
+      const unresolvedIds = new Set(unresolved.map((item) => item.id))
       setStatus(nextStatus)
-      setConflicts(nextConflicts.filter((item) => item.status === 'unresolved'))
+      setConflicts(unresolved)
+      setExpandedMap((prev) =>
+        Object.fromEntries(Object.entries(prev).filter(([id]) => unresolvedIds.has(id))),
+      )
+      setPreviewMap((prev) =>
+        Object.fromEntries(Object.entries(prev).filter(([id]) => unresolvedIds.has(id))),
+      )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('sync.loadFailed'))
     } finally {

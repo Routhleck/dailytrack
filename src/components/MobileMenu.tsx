@@ -19,9 +19,17 @@ export function MobileMenu() {
 
   return (
     <div className="relative md:hidden">
+      {open ? (
+        <button
+          type="button"
+          aria-label={t('nav.menu')}
+          className="fixed inset-0 z-40 bg-transparent"
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
       <button
         type="button"
-        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700"
+        className="relative z-50 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >

@@ -113,6 +113,8 @@ The format is based on Keep a Changelog.
 ### Changed
 - Sync page now supports manual refresh and lightweight auto-refresh while the window is visible.
 - Sync conflict actions now disable while a resolve operation is running.
+- Mobile quick menu now closes when tapping outside the popup list.
+- Sync page now prunes stale expanded/preview state after conflict list refresh.
 - WebDAV background automation switched from snapshot auto-push to realtime sync loop.
 - Data-root fallback behavior now returns a safe current-dir/temp-dir path when user-home env vars are unavailable.
 - Current profile template editing now defaults to structured mode, with raw markdown mode kept as fallback.
