@@ -10,6 +10,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reserve this section for changes not tagged yet.
 - Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
 
+## [0.4.2] - 2026-03-21
+
+### Added
+- WebDAV now supports an `Auto Pull` toggle with 30-second throttled pull checks after local data-change events.
+- Settings now clearly shows updater platform support status (supported/configured split).
+
+### Changed
+- Android release pipeline now builds release APKs by default in both `publish.yml` and manual `android-apk.yml`.
+- Android manual APK workflow now defaults to `release` mode and keeps `aarch64` target for faster, smaller builds.
+- Rust release profile now uses size-oriented optimization (`opt-level=s`, `lto`, `strip`).
+- App icon generation flow now uses a manifest-based source setup for consistent desktop/mobile outputs.
+
+### Fixed
+- In-app updater checks no longer run on mobile builds, avoiding false "check updates failed" errors on Android.
+- Android launcher icon assets regenerated to avoid cropped/incorrect wordmark rendering.
+
 ## [0.4.1] - 2026-03-21
 
 ### Fixed
