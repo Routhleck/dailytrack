@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri": "tauri",
+    "icon:generate": "tauri icon src-tauri/icons/icon-manifest.json",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
