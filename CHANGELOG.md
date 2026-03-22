@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Reserve this section for changes not tagged yet.
+- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+
+## [0.5.0] - 2026-03-22
+
 ### Added
 - Sync page now supports diagnostic export to local `sync-diagnostics/*.json` (with WebDAV password redaction).
 - Sync conflict handling now supports batch actions (`keep_local`, `apply_remote`, `mark_resolved`) for selected conflicts.
