@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
 import { useI18n } from '../features/i18n/I18nContext'
@@ -6,7 +6,10 @@ import { useDataRoot } from '../features/settings/DataRootContext'
 import {
   type RealtimeConflict,
   type RealtimeSyncStatus,
+  type WebdavConfig,
+  getWebdavConfig,
   readTextFile,
+  writeTextFile,
   webdavRealtimeConflictResolve,
   webdavRealtimeConflictsList,
   webdavRealtimeStatus,
@@ -25,6 +28,9 @@ type ConflictPreview = {
   remoteError?: string
 }
 
+type SyncHealth = 'healthy' | 'degraded' | 'syncing'
+type SyncErrorCategory = 'none' | 'auth' | 'network' | 'config' | 'conflict' | 'local' | 'remote' | 'unknown'
+
 const PREVIEW_MAX_LINES = 40
 const PREVIEW_MAX_CHARS = 3000
 const AUTO_REFRESH_MS = 10000
@@ -42,19 +48,99 @@ function previewText(raw: string): string {
   return clipped
 }
 
+function classifySyncError(lastError?: string | null): SyncErrorCategory {
+  if (!lastError || !lastError.trim()) {
+    return 'none'
+  }
+
+  const normalized = lastError.toLowerCase()
+  if (
+    normalized.includes('401')
+    || normalized.includes('403')
+    || normalized.includes('unauthorized')
+    || normalized.includes('forbidden')
+    || normalized.includes('authentication')
+    || normalized.includes('credentials')
+  ) {
+    return 'auth'
+  }
+  if (
+    normalized.includes('timeout')
+    || normalized.includes('timed out')
+    || normalized.includes('dns')
+    || normalized.includes('connect')
+    || normalized.includes('network')
+    || normalized.includes('connection')
+  ) {
+    return 'network'
+  }
+  if (
+    normalized.includes('required')
+    || normalized.includes('disabled')
+    || normalized.includes('invalid webdav remote url')
+    || normalized.includes('invalid sync direction')
+    || normalized.includes('must use http or https')
+  ) {
+    return 'config'
+  }
+  if (
+    normalized.includes('conflict')
+    || normalized.includes('etag')
+    || normalized.includes('precondition')
+  ) {
+    return 'conflict'
+  }
+  if (
+    normalized.includes('failed to read local file')
+    || normalized.includes('failed to remove local file')
+    || normalized.includes('path ')
+    || normalized.includes('outside data root')
+  ) {
+    return 'local'
+  }
+  if (
+    normalized.includes('webdav')
+    || normalized.includes('upload')
+    || normalized.includes('download')
+    || normalized.includes('manifest')
+  ) {
+    return 'remote'
+  }
+  return 'unknown'
+}
+
+function deriveSyncHealth(status: RealtimeSyncStatus | null, busy: boolean): SyncHealth {
+  if (busy) {
+    return 'syncing'
+  }
+  if (status?.lastError) {
+    return 'degraded'
+  }
+  return 'healthy'
+}
+
+function buildDiagnosticFileName() {
+  return `sync-diagnostic-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+}
+
 export function SyncPage() {
   const { t } = useI18n()
   const { baseDataRoot } = useDataRoot()
   const [status, setStatus] = useState<RealtimeSyncStatus | null>(null)
+  const [webdavConfig, setWebdavConfig] = useState<WebdavConfig | null>(null)
   const [conflicts, setConflicts] = useState<RealtimeConflict[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [batchResolving, setBatchResolving] = useState(false)
+  const [exportingDiagnostics, setExportingDiagnostics] = useState(false)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [selectedConflictIds, setSelectedConflictIds] = useState<Record<string, boolean>>({})
   const [message, setMessage] = useState('')
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
   const [previewMap, setPreviewMap] = useState<Record<string, ConflictPreview>>({})
   const [showOnlyChanges, setShowOnlyChanges] = useState(true)
+  const [nowMs, setNowMs] = useState(() => Date.now())
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!baseDataRoot) {
@@ -66,19 +152,26 @@ export function SyncPage() {
     }
 
     try {
-      const [nextStatus, nextConflicts] = await Promise.all([
+      const [nextStatus, nextConflicts, nextConfig] = await Promise.all([
         webdavRealtimeStatus(baseDataRoot),
         webdavRealtimeConflictsList(baseDataRoot),
+        getWebdavConfig(),
       ])
       const unresolved = nextConflicts.filter((item) => item.status === 'unresolved')
       const unresolvedIds = new Set(unresolved.map((item) => item.id))
       setStatus(nextStatus)
+      setWebdavConfig(nextConfig)
       setConflicts(unresolved)
       setExpandedMap((prev) =>
         Object.fromEntries(Object.entries(prev).filter(([id]) => unresolvedIds.has(id))),
       )
       setPreviewMap((prev) =>
         Object.fromEntries(Object.entries(prev).filter(([id]) => unresolvedIds.has(id))),
+      )
+      setSelectedConflictIds((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(([id, selected]) => unresolvedIds.has(id) && Boolean(selected)),
+        ),
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('sync.loadFailed'))
@@ -108,6 +201,16 @@ export function SyncPage() {
       window.clearInterval(timerId)
     }
   }, [baseDataRoot, load])
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setNowMs(Date.now())
+    }, 1000)
+
+    return () => {
+      window.clearInterval(timerId)
+    }
+  }, [])
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -144,6 +247,17 @@ export function SyncPage() {
     }
   }
 
+  async function runResolve(
+    conflictId: string,
+    strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
+  ) {
+    if (!baseDataRoot) {
+      return
+    }
+
+    await webdavRealtimeConflictResolve(baseDataRoot, conflictId, strategy)
+  }
+
   async function handleResolve(
     conflictId: string,
     strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
@@ -151,9 +265,14 @@ export function SyncPage() {
     if (!baseDataRoot) {
       return
     }
+
+    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteSingle'))) {
+      return
+    }
+
     setResolvingId(conflictId)
     try {
-      await webdavRealtimeConflictResolve(baseDataRoot, conflictId, strategy)
+      await runResolve(conflictId, strategy)
       setMessage(t('sync.resolveDone'))
       await load()
       emitDataChanged({ scope: 'all' })
@@ -161,6 +280,52 @@ export function SyncPage() {
       setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
     } finally {
       setResolvingId(null)
+    }
+  }
+
+  async function handleResolveSelected(strategy: 'keep_local' | 'apply_remote' | 'mark_resolved') {
+    if (!baseDataRoot) {
+      return
+    }
+
+    const selectedIds = conflicts.filter((item) => selectedConflictIds[item.id]).map((item) => item.id)
+    if (selectedIds.length === 0) {
+      return
+    }
+
+    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteBatch'))) {
+      return
+    }
+    if (strategy === 'mark_resolved' && !window.confirm(t('sync.confirmMarkResolvedBatch'))) {
+      return
+    }
+
+    setBatchResolving(true)
+    setMessage('')
+    let success = 0
+    let failed = 0
+
+    try {
+      for (const conflictId of selectedIds) {
+        try {
+          await runResolve(conflictId, strategy)
+          success += 1
+        } catch {
+          failed += 1
+        }
+      }
+
+      await load()
+      emitDataChanged({ scope: 'all' })
+      if (failed > 0) {
+        setMessage(t('sync.batchResolvePartial', { success, failed }))
+      } else {
+        setMessage(t('sync.batchResolveDone', { success }))
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
+    } finally {
+      setBatchResolving(false)
     }
   }
 
@@ -232,6 +397,115 @@ export function SyncPage() {
     return new Date(value).toLocaleString()
   }
 
+  function categoryLabel(category: SyncErrorCategory) {
+    switch (category) {
+      case 'none':
+        return t('sync.errorCategoryNone')
+      case 'auth':
+        return t('sync.errorCategoryAuth')
+      case 'network':
+        return t('sync.errorCategoryNetwork')
+      case 'config':
+        return t('sync.errorCategoryConfig')
+      case 'conflict':
+        return t('sync.errorCategoryConflict')
+      case 'local':
+        return t('sync.errorCategoryLocal')
+      case 'remote':
+        return t('sync.errorCategoryRemote')
+      default:
+        return t('sync.errorCategoryUnknown')
+    }
+  }
+
+  function healthLabel(health: SyncHealth) {
+    switch (health) {
+      case 'healthy':
+        return t('sync.healthHealthy')
+      case 'degraded':
+        return t('sync.healthDegraded')
+      default:
+        return t('sync.healthSyncing')
+    }
+  }
+
+  async function handleExportDiagnostics() {
+    if (!baseDataRoot) {
+      return
+    }
+
+    setExportingDiagnostics(true)
+    setMessage('')
+    try {
+      const fileName = buildDiagnosticFileName()
+      const path = joinPath(baseDataRoot, 'sync-diagnostics', fileName)
+      const safeConfig = webdavConfig
+        ? {
+            ...webdavConfig,
+            password: webdavConfig.password ? '[REDACTED]' : '',
+          }
+        : null
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        dataRoot: baseDataRoot,
+        status,
+        health: syncHealth,
+        errorCategory,
+        autoPull: {
+          enabled: Boolean(webdavConfig?.autoPullEnabled),
+          intervalSec: webdavConfig?.autoPullIntervalSec ?? null,
+          nextAttemptInSec: nextAutoPullInSec,
+        },
+        conflicts: conflicts.map((item) => ({
+          id: item.id,
+          path: item.path,
+          localSha: item.localSha,
+          remoteSha: item.remoteSha,
+          conflictCopyPath: item.conflictCopyPath ?? null,
+          createdAt: item.createdAt,
+          status: item.status,
+          remotePresent: item.remotePresent,
+        })),
+        webdavConfig: safeConfig,
+        runtime: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          platform: navigator.platform,
+        },
+      }
+
+      await writeTextFile(baseDataRoot, path, JSON.stringify(payload, null, 2))
+      setMessage(t('sync.diagnosticExported', { path }))
+    } catch (error) {
+      const details = error instanceof Error ? error.message : t('sync.diagnosticExportFailed')
+      setMessage(`${t('sync.diagnosticExportFailed')} ${details}`)
+    } finally {
+      setExportingDiagnostics(false)
+    }
+  }
+
+  const selectedCount = useMemo(
+    () => conflicts.reduce((count, item) => count + (selectedConflictIds[item.id] ? 1 : 0), 0),
+    [conflicts, selectedConflictIds],
+  )
+  const allSelected = conflicts.length > 0 && selectedCount === conflicts.length
+  const hasSelection = selectedCount > 0
+  const isResolvingBusy = Boolean(resolvingId) || batchResolving
+  const syncHealth = deriveSyncHealth(status, syncing || batchResolving)
+  const errorCategory = classifySyncError(status?.lastError)
+  const lastSyncAt = Math.max(status?.lastPullAt ?? 0, status?.lastPushAt ?? 0)
+  const nextAutoPullInSec = useMemo(() => {
+    if (!webdavConfig?.enabled || !webdavConfig.autoPullEnabled) {
+      return null
+    }
+    const intervalSec = Math.max(5, Math.round(webdavConfig.autoPullIntervalSec || 30))
+    const lastPoint = Math.max(status?.lastPullAt ?? 0, status?.lastPushAt ?? 0)
+    if (!lastPoint) {
+      return 0
+    }
+    return Math.max(0, Math.ceil((lastPoint + intervalSec * 1000 - nowMs) / 1000))
+  }, [nowMs, status?.lastPullAt, status?.lastPushAt, webdavConfig])
+
   return (
     <section className="space-y-4">
       <PageHeader
@@ -242,14 +516,24 @@ export function SyncPage() {
       <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900">{t('sync.statusTitle')}</h2>
-          <button
-            type="button"
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
-            disabled={loading || refreshing || syncing || !baseDataRoot}
-            onClick={() => void handleRefresh()}
-          >
-            {refreshing ? t('sync.refreshing') : t('sync.refresh')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              disabled={loading || refreshing || syncing || !baseDataRoot}
+              onClick={() => void handleRefresh()}
+            >
+              {refreshing ? t('sync.refreshing') : t('sync.refresh')}
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              disabled={loading || exportingDiagnostics || !baseDataRoot}
+              onClick={() => void handleExportDiagnostics()}
+            >
+              {exportingDiagnostics ? t('sync.exportingDiagnostics') : t('sync.exportDiagnostics')}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -280,20 +564,79 @@ export function SyncPage() {
         </div>
 
         <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <p>{t('sync.health')}: {healthLabel(syncHealth)}</p>
+          <p>{t('sync.errorCategory')}: {categoryLabel(errorCategory)}</p>
           <p>{t('sync.pendingChanges')}: {status?.pendingChanges ?? '-'}</p>
           <p>{t('sync.conflicts')}: {status?.conflictsCount ?? '-'}</p>
           <p>{t('sync.lastPush')}: {formatTime(status?.lastPushAt)}</p>
           <p>{t('sync.lastPull')}: {formatTime(status?.lastPullAt)}</p>
+          <p>{t('sync.lastSync')}: {formatTime(lastSyncAt || null)}</p>
+          <p>
+            {t('sync.nextAutoPull')}:{' '}
+            {!webdavConfig?.enabled || !webdavConfig.autoPullEnabled
+              ? t('sync.autoPullDisabled')
+              : nextAutoPullInSec == null || nextAutoPullInSec <= 0
+                ? t('sync.nextAutoPullNow')
+                : t('sync.autoPullEvery', { seconds: nextAutoPullInSec })}
+          </p>
         </div>
         {status?.lastError ? <p className="mt-2 text-sm text-rose-700">{status.lastError}</p> : null}
         {message ? <p className="mt-2 text-sm text-slate-700">{message}</p> : null}
       </article>
 
       <article className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-base font-semibold text-slate-900">{t('sync.conflictList')}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-slate-900">{t('sync.conflictList')}</h2>
+          <p className="text-xs text-slate-600">{t('sync.selectedCount', { count: selectedCount })}</p>
+        </div>
         {loading ? <p className="mt-2 text-sm text-slate-600">{t('common.loading')}</p> : null}
         {!loading && conflicts.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">{t('sync.noConflicts')}</p>
+        ) : null}
+        {conflicts.length > 0 ? (
+          <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
+            <p className="text-xs font-semibold text-slate-700">{t('sync.batchActions')}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 disabled:opacity-60"
+                disabled={batchResolving}
+                onClick={() =>
+                  setSelectedConflictIds(
+                    allSelected
+                      ? {}
+                      : Object.fromEntries(conflicts.map((item) => [item.id, true])),
+                  )
+                }
+              >
+                {allSelected ? t('sync.clearSelection') : t('sync.selectAll')}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 disabled:opacity-60"
+                disabled={!hasSelection || batchResolving}
+                onClick={() => void handleResolveSelected('keep_local')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.batchKeepLocal')}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs text-indigo-700 disabled:opacity-60"
+                disabled={!hasSelection || batchResolving}
+                onClick={() => void handleResolveSelected('apply_remote')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.batchApplyRemote')}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 disabled:opacity-60"
+                disabled={!hasSelection || batchResolving}
+                onClick={() => void handleResolveSelected('mark_resolved')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.batchMarkResolved')}
+              </button>
+            </div>
+          </div>
         ) : null}
         <div className="mt-3 space-y-3">
           {conflicts.map((item) => {
@@ -303,6 +646,20 @@ export function SyncPage() {
             const diffRows = (preview?.rows ?? []).filter((row) => !showOnlyChanges || row.kind !== 'same')
             return (
               <div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+                <label className="mb-1 flex items-center gap-2 text-xs text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selectedConflictIds[item.id])}
+                    onChange={(event) =>
+                      setSelectedConflictIds((prev) => ({
+                        ...prev,
+                        [item.id]: event.target.checked,
+                      }))
+                    }
+                    disabled={batchResolving}
+                  />
+                  {t('sync.selectThis')}
+                </label>
                 <p className="font-medium text-slate-900">{item.path}</p>
                 <p className="mt-1 text-xs text-slate-600">{t('sync.createdAt')}: {formatTime(item.createdAt)}</p>
                 <p className="mt-1 text-xs break-all text-slate-600">{t('sync.localSha')}: {item.localSha || '-'}</p>
@@ -316,7 +673,7 @@ export function SyncPage() {
                     type="button"
                     className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
                     onClick={() => void handleResolve(item.id, 'keep_local')}
-                    disabled={resolving}
+                    disabled={resolving || isResolvingBusy}
                   >
                     {resolving ? t('sync.resolving') : t('sync.keepLocal')}
                   </button>
@@ -324,7 +681,7 @@ export function SyncPage() {
                     type="button"
                     className="rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs text-indigo-700"
                     onClick={() => void handleResolve(item.id, 'apply_remote')}
-                    disabled={resolving}
+                    disabled={resolving || isResolvingBusy}
                   >
                     {resolving ? t('sync.resolving') : t('sync.applyRemote')}
                   </button>
@@ -332,7 +689,7 @@ export function SyncPage() {
                     type="button"
                     className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
                     onClick={() => void handleResolve(item.id, 'mark_resolved')}
-                    disabled={resolving}
+                    disabled={resolving || isResolvingBusy}
                   >
                     {resolving ? t('sync.resolving') : t('sync.markResolved')}
                   </button>
