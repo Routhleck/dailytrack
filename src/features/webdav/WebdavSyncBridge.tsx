@@ -75,17 +75,18 @@ export function WebdavSyncBridge() {
               ? Math.round(config.autoPullIntervalSec * 1000)
               : DEFAULT_AUTO_PULL_INTERVAL_MS,
           )
+          const autoPullDirection: 'pull' | 'both' = config.autoPushIntervalMin > 0 ? 'pull' : 'both'
 
-          void sync('pull')
+          void sync(autoPullDirection)
           autoPullIntervalId = window.setInterval(() => {
-            void sync('pull')
+            void sync(autoPullDirection)
           }, pullIntervalMs)
         }
 
         const onVisibility = () => {
           if (document.visibilityState === 'visible') {
             if (config.autoPullEnabled) {
-              void sync('pull')
+              void sync(config.autoPushIntervalMin > 0 ? 'pull' : 'both')
             }
             if (config.autoPushIntervalMin > 0) {
               void sync('both')
