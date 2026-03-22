@@ -179,6 +179,15 @@ pub struct RealtimeConflictResolveResult {
   pub conflict: Option<RealtimeConflict>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeConflictBatchResolveResult {
+  pub requested: u64,
+  pub resolved: u64,
+  pub failed_ids: Vec<String>,
+  pub strategy: String,
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct WebdavMeta {
@@ -652,6 +661,57 @@ fn parse_realtime_sync_direction(value: Option<String>) -> Result<RealtimeSyncDi
     "both" => Ok(RealtimeSyncDirection::Both),
     _ => Err("Invalid sync direction. Use push, pull, or both".to_string()),
   }
+}
+
+fn normalize_conflict_resolve_strategy(strategy: &str) -> Result<String, String> {
+  let normalized_strategy = strategy.trim().to_ascii_lowercase();
+  if normalized_strategy == "keep_local"
+    || normalized_strategy == "apply_remote"
+    || normalized_strategy == "mark_resolved"
+  {
+    Ok(normalized_strategy)
+  } else {
+    Err("Invalid resolve strategy. Use keep_local, apply_remote, or mark_resolved".to_string())
+  }
+}
+
+fn apply_conflict_resolve_strategy(
+  root: &Path,
+  conflict: &mut RealtimeConflict,
+  strategy: &str,
+) -> Result<(), String> {
+  if strategy == "apply_remote" {
+    if conflict.remote_present {
+      let relative_conflict_path = conflict
+        .conflict_copy_path
+        .clone()
+        .ok_or_else(|| "Missing conflict copy path for remote content".to_string())?;
+      let absolute_conflict = root.join(relative_conflict_path.as_str());
+      if !absolute_conflict.exists() {
+        return Err(format!(
+          "Conflict copy file does not exist: {}",
+          absolute_conflict.display()
+        ));
+      }
+      let bytes = fs::read(absolute_conflict.as_path()).map_err(|err| {
+        format!(
+          "Failed to read conflict copy {}: {err}",
+          absolute_conflict.display()
+        )
+      })?;
+      let target = root.join(conflict.path.as_str());
+      write_bytes_atomic(target.as_path(), bytes.as_slice())?;
+    } else {
+      let target = root.join(conflict.path.as_str());
+      if target.exists() {
+        fs::remove_file(target.as_path())
+          .map_err(|err| format!("Failed to remove local file {}: {err}", target.display()))?;
+      }
+    }
+  }
+
+  conflict.status = "resolved".to_string();
+  Ok(())
 }
 
 fn save_state_error(
@@ -1716,13 +1776,7 @@ pub fn webdav_realtime_conflict_resolve(
 ) -> Result<RealtimeConflictResolveResult, String> {
   let root = ensure_dir_canonical(data_root.as_str())?;
   let mut state = load_realtime_state(&app, root.as_path())?;
-  let normalized_strategy = strategy.trim().to_ascii_lowercase();
-  if normalized_strategy != "keep_local"
-    && normalized_strategy != "apply_remote"
-    && normalized_strategy != "mark_resolved"
-  {
-    return Err("Invalid resolve strategy. Use keep_local, apply_remote, or mark_resolved".to_string());
-  }
+  let normalized_strategy = normalize_conflict_resolve_strategy(strategy.as_str())?;
 
   let Some(conflict) = state
     .conflicts
@@ -1736,37 +1790,7 @@ pub fn webdav_realtime_conflict_resolve(
     });
   };
 
-  if normalized_strategy == "apply_remote" {
-    if conflict.remote_present {
-      let relative_conflict_path = conflict
-        .conflict_copy_path
-        .clone()
-        .ok_or_else(|| "Missing conflict copy path for remote content".to_string())?;
-      let absolute_conflict = root.join(relative_conflict_path.as_str());
-      if !absolute_conflict.exists() {
-        return Err(format!(
-          "Conflict copy file does not exist: {}",
-          absolute_conflict.display()
-        ));
-      }
-      let bytes = fs::read(absolute_conflict.as_path()).map_err(|err| {
-        format!(
-          "Failed to read conflict copy {}: {err}",
-          absolute_conflict.display()
-        )
-      })?;
-      let target = root.join(conflict.path.as_str());
-      write_bytes_atomic(target.as_path(), bytes.as_slice())?;
-    } else {
-      let target = root.join(conflict.path.as_str());
-      if target.exists() {
-        fs::remove_file(target.as_path())
-          .map_err(|err| format!("Failed to remove local file {}: {err}", target.display()))?;
-      }
-    }
-  }
-
-  conflict.status = "resolved".to_string();
+  apply_conflict_resolve_strategy(root.as_path(), conflict, normalized_strategy.as_str())?;
   let output = conflict.clone();
   save_realtime_state(&app, root.as_path(), &state)?;
 
@@ -1774,5 +1798,53 @@ pub fn webdav_realtime_conflict_resolve(
     resolved: true,
     strategy: normalized_strategy,
     conflict: Some(output),
+  })
+}
+
+#[tauri::command]
+pub fn webdav_realtime_conflicts_resolve_batch(
+  app: AppHandle,
+  data_root: String,
+  conflict_ids: Vec<String>,
+  strategy: String,
+) -> Result<RealtimeConflictBatchResolveResult, String> {
+  let root = ensure_dir_canonical(data_root.as_str())?;
+  let mut state = load_realtime_state(&app, root.as_path())?;
+  let normalized_strategy = normalize_conflict_resolve_strategy(strategy.as_str())?;
+  let mut seen = std::collections::HashSet::new();
+  let mut requested: u64 = 0;
+  let mut resolved: u64 = 0;
+  let mut failed_ids: Vec<String> = Vec::new();
+
+  for conflict_id in conflict_ids {
+    let normalized_id = conflict_id.trim().to_string();
+    if normalized_id.is_empty() || !seen.insert(normalized_id.clone()) {
+      continue;
+    }
+
+    requested = requested.saturating_add(1);
+    let Some(conflict) = state
+      .conflicts
+      .iter_mut()
+      .find(|item| item.id == normalized_id && item.status == "unresolved")
+    else {
+      failed_ids.push(normalized_id);
+      continue;
+    };
+
+    if apply_conflict_resolve_strategy(root.as_path(), conflict, normalized_strategy.as_str()).is_ok() {
+      resolved = resolved.saturating_add(1);
+    } else {
+      failed_ids.push(normalized_id);
+    }
+  }
+
+  save_realtime_state(&app, root.as_path(), &state)?;
+
+  Ok(RealtimeConflictBatchResolveResult {
+    requested,
+    resolved,
+    failed_ids,
+    strategy: normalized_strategy,
   })
 }

@@ -117,6 +117,13 @@ export type RealtimeConflictResolveResult = {
   conflict?: RealtimeConflict | null
 }
 
+export type RealtimeConflictBatchResolveResult = {
+  requested: number
+  resolved: number
+  failedIds: string[]
+  strategy: string
+}
+
 export type FsChangedEventPayload = {
   scope: 'daily' | 'weekly' | 'body' | 'preferences' | 'settings' | 'all'
   path: string
@@ -300,6 +307,18 @@ export async function webdavRealtimeConflictResolve(
   return invoke<RealtimeConflictResolveResult>('webdav_realtime_conflict_resolve', {
     dataRoot,
     conflictId,
+    strategy,
+  })
+}
+
+export async function webdavRealtimeConflictsResolveBatch(
+  dataRoot: string,
+  conflictIds: string[],
+  strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
+): Promise<RealtimeConflictBatchResolveResult> {
+  return invoke<RealtimeConflictBatchResolveResult>('webdav_realtime_conflicts_resolve_batch', {
+    dataRoot,
+    conflictIds,
     strategy,
   })
 }

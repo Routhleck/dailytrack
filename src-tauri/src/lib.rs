@@ -1115,7 +1115,8 @@ pub fn run() {
       webdav::webdav_realtime_status,
       webdav::webdav_realtime_sync_now,
       webdav::webdav_realtime_conflicts_list,
-      webdav::webdav_realtime_conflict_resolve
+      webdav::webdav_realtime_conflict_resolve,
+      webdav::webdav_realtime_conflicts_resolve_batch
     ])
     .setup(|app| {
       #[cfg(desktop)]

@@ -10,6 +10,7 @@ import {
   getWebdavConfig,
   readTextFile,
   writeTextFile,
+  webdavRealtimeConflictsResolveBatch,
   webdavRealtimeConflictResolve,
   webdavRealtimeConflictsList,
   webdavRealtimeStatus,
@@ -284,18 +285,11 @@ export function SyncPage() {
 
     setBatchResolving(true)
     setMessage('')
-    let success = 0
-    let failed = 0
 
     try {
-      for (const conflictId of conflictIds) {
-        try {
-          await runResolve(conflictId, strategy)
-          success += 1
-        } catch {
-          failed += 1
-        }
-      }
+      const result = await webdavRealtimeConflictsResolveBatch(baseDataRoot, conflictIds, strategy)
+      const success = result.resolved
+      const failed = result.failedIds.length
 
       await load()
       emitDataChanged({ scope: 'all' })
