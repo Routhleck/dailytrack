@@ -63,7 +63,11 @@ function formatCopySummary(
   })
 }
 
-type WebdavNumericField = 'autoPushIntervalMin' | 'requestTimeoutSec' | 'maxSnapshots'
+type WebdavNumericField =
+  | 'autoPushIntervalMin'
+  | 'autoPullIntervalSec'
+  | 'requestTimeoutSec'
+  | 'maxSnapshots'
 type WebdavTextField = 'remoteBaseUrl' | 'username' | 'password'
 
 function webdavConfigSignature(config: WebdavConfig): string {
@@ -663,6 +667,21 @@ export function SettingsPage() {
           />
           {t('settings.webdavAutoPullEnabled')}
         </label>
+        <div className="max-w-xs">
+          <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-auto-pull-interval">
+            {t('settings.webdavAutoPullInterval')}
+          </label>
+          <input
+            id="webdav-auto-pull-interval"
+            type="number"
+            min={5}
+            max={3600}
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+            value={webdavConfig.autoPullIntervalSec}
+            onChange={(event) => setWebdavNumericField('autoPullIntervalSec', event.target.value)}
+            disabled={webdavLoading || webdavSaving || !webdavConfig.autoPullEnabled}
+          />
+        </div>
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="webdav-url">
           {t('settings.webdavBaseUrl')}

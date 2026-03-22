@@ -4,7 +4,7 @@ import { getWebdavConfig, webdavRealtimeSyncNow } from '../../lib/fs/fileApi'
 import { emitDataChanged, onDataChanged } from '../../lib/liveSync'
 import { useDataRoot } from '../settings/DataRootContext'
 
-const AUTO_PULL_INTERVAL_MS = 30_000
+const DEFAULT_AUTO_PULL_INTERVAL_MS = 30_000
 
 export function WebdavSyncBridge() {
   const { baseDataRoot } = useDataRoot()
@@ -69,10 +69,17 @@ export function WebdavSyncBridge() {
         }
 
         if (config.autoPullEnabled) {
+          const pullIntervalMs = Math.max(
+            5_000,
+            Number.isFinite(config.autoPullIntervalSec)
+              ? Math.round(config.autoPullIntervalSec * 1000)
+              : DEFAULT_AUTO_PULL_INTERVAL_MS,
+          )
+
           void sync('pull')
           autoPullIntervalId = window.setInterval(() => {
             void sync('pull')
-          }, AUTO_PULL_INTERVAL_MS)
+          }, pullIntervalMs)
         }
 
         const onVisibility = () => {

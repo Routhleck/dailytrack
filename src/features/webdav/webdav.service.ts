@@ -4,6 +4,7 @@ export function defaultWebdavConfig(): WebdavConfig {
   return {
     enabled: false,
     autoPullEnabled: false,
+    autoPullIntervalSec: 30,
     remoteBaseUrl: '',
     username: '',
     password: '',
@@ -19,6 +20,9 @@ export function normalizeWebdavConfig(config: WebdavConfig): WebdavConfig {
   return {
     ...config,
     autoPullEnabled: Boolean(config.autoPullEnabled),
+    autoPullIntervalSec: Number.isFinite(config.autoPullIntervalSec)
+      ? Math.max(5, Math.min(3600, Math.round(config.autoPullIntervalSec)))
+      : 30,
     remoteBaseUrl: config.remoteBaseUrl.trim(),
     username: config.username.trim(),
     password: config.password.trim(),

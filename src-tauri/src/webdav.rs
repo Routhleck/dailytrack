@@ -30,6 +30,7 @@ const WEBDAV_REALTIME_STATE_SCHEMA_VERSION: u32 = 1;
 pub struct WebdavConfig {
   pub enabled: bool,
   pub auto_pull_enabled: bool,
+  pub auto_pull_interval_sec: u32,
   pub remote_base_url: String,
   pub username: String,
   pub password: String,
@@ -45,6 +46,7 @@ impl Default for WebdavConfig {
     WebdavConfig {
       enabled: false,
       auto_pull_enabled: false,
+      auto_pull_interval_sec: 30,
       remote_base_url: String::new(),
       username: String::new(),
       password: String::new(),
@@ -239,6 +241,7 @@ fn normalize_webdav_config(mut config: WebdavConfig) -> WebdavConfig {
   config.remote_base_url = config.remote_base_url.trim().to_string();
   config.username = config.username.trim().to_string();
   config.password = config.password.trim().to_string();
+  config.auto_pull_interval_sec = config.auto_pull_interval_sec.clamp(5, 3600);
   config.auto_push_interval_min = config.auto_push_interval_min.min(24 * 60);
   config.request_timeout_sec = config.request_timeout_sec.clamp(10, 600);
   config.max_snapshots = config.max_snapshots.clamp(1, 365);
