@@ -1,6 +1,6 @@
 use std::fs;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use notify::{
@@ -186,6 +186,31 @@ fn validate_existing_dir_under_root(root: &Path, path: &str) -> Result<PathBuf, 
   Ok(canonical)
 }
 
+fn canonicalize_nearest_existing_ancestor(path: &Path) -> Result<PathBuf, String> {
+  let mut cursor = Some(path);
+  while let Some(current) = cursor {
+    if current.exists() {
+      return fs::canonicalize(current)
+        .map_err(|err| format!("Failed to resolve existing path {}: {err}", current.display()));
+    }
+    cursor = current.parent();
+  }
+
+  Err(format!("Path {} has no existing ancestor", path.display()))
+}
+
+fn validate_relative_path_components(path: &Path) -> Result<(), String> {
+  for component in path.components() {
+    if matches!(component, Component::ParentDir | Component::RootDir | Component::Prefix(_)) {
+      return Err(format!(
+        "Path contains disallowed component for writable target: {}",
+        path.display()
+      ));
+    }
+  }
+  Ok(())
+}
+
 fn validate_writable_file_under_root(root: &Path, path: &str) -> Result<PathBuf, String> {
   let raw = PathBuf::from(path);
   if raw.exists() {
@@ -201,14 +226,31 @@ fn validate_writable_file_under_root(root: &Path, path: &str) -> Result<PathBuf,
   let parent = raw
     .parent()
     .ok_or_else(|| format!("Path {} has no parent directory", raw.display()))?;
-  let canonical_parent = fs::canonicalize(parent)
-    .map_err(|err| format!("Failed to resolve parent path {}: {err}", parent.display()))?;
-  ensure_path_within_root(root, canonical_parent.as_path())?;
+  let canonical_ancestor = canonicalize_nearest_existing_ancestor(parent)?;
+  ensure_path_within_root(root, canonical_ancestor.as_path())?;
 
-  let file_name = raw
-    .file_name()
-    .ok_or_else(|| format!("Path {} has no file name", raw.display()))?;
-  Ok(canonical_parent.join(file_name))
+  let relative_target = raw
+    .strip_prefix(canonical_ancestor.as_path())
+    .map_err(|err| {
+      format!(
+        "Path {} is not under writable ancestor {}: {err}",
+        raw.display(),
+        canonical_ancestor.display()
+      )
+    })?;
+  if relative_target.as_os_str().is_empty() {
+    return Err(format!("Path {} has no writable target", raw.display()));
+  }
+  validate_relative_path_components(relative_target)?;
+
+  let target = canonical_ancestor.join(relative_target);
+  ensure_path_within_root(root, target.as_path())?;
+
+  if target.file_name().is_none() {
+    return Err(format!("Path {} has no file name", target.display()));
+  }
+
+  Ok(target)
 }
 
 fn profiles_root(base_root: &Path) -> PathBuf {

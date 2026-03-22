@@ -178,6 +178,7 @@ export function SyncPage() {
   const [previewMap, setPreviewMap] = useState<Record<string, ConflictPreview>>({})
   const [showOnlyChanges, setShowOnlyChanges] = useState(true)
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [autoPullAnchorMs, setAutoPullAnchorMs] = useState<number | null>(null)
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!baseDataRoot) {
@@ -248,6 +249,31 @@ export function SyncPage() {
       window.clearInterval(timerId)
     }
   }, [])
+
+  useEffect(() => {
+    if (!webdavConfig?.enabled || !webdavConfig.autoPullEnabled) {
+      setAutoPullAnchorMs(null)
+      return
+    }
+
+    const statusAnchor = Math.max(
+      status?.lastPullAt ?? 0,
+      status?.lastPushAt ?? 0,
+      status?.lastAttemptAt ?? 0,
+    )
+    if (statusAnchor > 0) {
+      setAutoPullAnchorMs(statusAnchor)
+      return
+    }
+
+    setAutoPullAnchorMs((current) => current ?? Date.now())
+  }, [
+    status?.lastAttemptAt,
+    status?.lastPullAt,
+    status?.lastPushAt,
+    webdavConfig?.autoPullEnabled,
+    webdavConfig?.enabled,
+  ])
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -582,12 +608,17 @@ export function SyncPage() {
       return null
     }
     const intervalSec = Math.max(5, Math.round(webdavConfig.autoPullIntervalSec || 30))
-    const lastPoint = Math.max(status?.lastPullAt ?? 0, status?.lastPushAt ?? 0)
+    const lastPoint = Math.max(
+      status?.lastPullAt ?? 0,
+      status?.lastPushAt ?? 0,
+      status?.lastAttemptAt ?? 0,
+      autoPullAnchorMs ?? 0,
+    )
     if (!lastPoint) {
-      return 0
+      return intervalSec
     }
     return Math.max(0, Math.ceil((lastPoint + intervalSec * 1000 - nowMs) / 1000))
-  }, [nowMs, status?.lastPullAt, status?.lastPushAt, webdavConfig])
+  }, [autoPullAnchorMs, nowMs, status?.lastAttemptAt, status?.lastPullAt, status?.lastPushAt, webdavConfig])
   const selectedIds = useMemo(
     () => conflicts.filter((item) => selectedConflictIds[item.id]).map((item) => item.id),
     [conflicts, selectedConflictIds],

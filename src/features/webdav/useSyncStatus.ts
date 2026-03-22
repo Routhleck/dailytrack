@@ -21,14 +21,20 @@ function deriveNextAutoPullInSec(
   status: RealtimeSyncStatus | null,
   config: WebdavConfig | null,
   nowMs: number,
+  anchorMs: number | null,
 ): number | null {
   if (!config?.enabled || !config.autoPullEnabled) {
     return null
   }
   const intervalSec = Math.max(5, Math.round(config.autoPullIntervalSec || 30))
-  const lastPoint = Math.max(status?.lastPullAt ?? 0, status?.lastPushAt ?? 0)
+  const lastPoint = Math.max(
+    status?.lastPullAt ?? 0,
+    status?.lastPushAt ?? 0,
+    status?.lastAttemptAt ?? 0,
+    anchorMs ?? 0,
+  )
   if (!lastPoint) {
-    return 0
+    return intervalSec
   }
   return Math.max(0, Math.ceil((lastPoint + intervalSec * 1000 - nowMs) / 1000))
 }
@@ -41,6 +47,7 @@ export function useSyncStatus(): SyncStatusSnapshot {
   const [error, setError] = useState<string | null>(null)
   const [online, setOnline] = useState(() => navigator.onLine)
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [autoPullAnchorMs, setAutoPullAnchorMs] = useState<number | null>(null)
 
   const refresh = useCallback(async () => {
     if (!baseDataRoot) {
@@ -102,9 +109,35 @@ export function useSyncStatus(): SyncStatusSnapshot {
     }
   }, [])
 
+  useEffect(() => {
+    if (!config?.enabled || !config.autoPullEnabled) {
+      setAutoPullAnchorMs(null)
+      return
+    }
+
+    const statusAnchor = Math.max(
+      status?.lastPullAt ?? 0,
+      status?.lastPushAt ?? 0,
+      status?.lastAttemptAt ?? 0,
+    )
+
+    if (statusAnchor > 0) {
+      setAutoPullAnchorMs(statusAnchor)
+      return
+    }
+
+    setAutoPullAnchorMs((current) => current ?? Date.now())
+  }, [
+    config?.enabled,
+    config?.autoPullEnabled,
+    status?.lastPullAt,
+    status?.lastPushAt,
+    status?.lastAttemptAt,
+  ])
+
   const nextAutoPullInSec = useMemo(
-    () => deriveNextAutoPullInSec(status, config, nowMs),
-    [config, nowMs, status],
+    () => deriveNextAutoPullInSec(status, config, nowMs, autoPullAnchorMs),
+    [autoPullAnchorMs, config, nowMs, status],
   )
 
   return {
@@ -119,4 +152,3 @@ export function useSyncStatus(): SyncStatusSnapshot {
     refresh,
   }
 }
-
