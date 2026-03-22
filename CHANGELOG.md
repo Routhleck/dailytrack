@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Reserve this section for changes not tagged yet.
+- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+
+## [0.6.0] - 2026-03-22
+
 ### Added
 - Repository-editable template catalog moved to `config/template-presets.json` + `config/templates/**` markdown files.
 - Profile template update flow now supports dry-run preview and apply modes (`merge` recommended, `overwrite` optional).
@@ -15,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Onboarding and profile-creation flows now persist template source metadata when applying selected presets.
 - Profile template parsing/serialization utilities are shared through dedicated schema helpers.
+- Profiles page now follows active UI language for template-language default and displays localized template names more clearly.
+
+### Fixed
+- Completed bilingual preset descriptions so each template preset has both Chinese and English explanation text.
 
 ## [0.5.0] - 2026-03-22
 
