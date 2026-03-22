@@ -521,6 +521,19 @@ export function SyncPage() {
   const syncHealth = deriveSyncHealth(status, syncing || batchResolving)
   const errorCategory = classifySyncError(status?.lastError)
   const lastSyncAt = Math.max(status?.lastPullAt ?? 0, status?.lastPushAt ?? 0)
+  const retryBackoffSec = useMemo(() => {
+    const failures = status?.consecutiveFailures ?? 0
+    if (failures <= 0) {
+      return 0
+    }
+    return Math.min(300, 5 * 2 ** Math.max(0, failures - 1))
+  }, [status?.consecutiveFailures])
+  const nextRetryInSec = useMemo(() => {
+    if (!status?.lastFailureAt || retryBackoffSec <= 0) {
+      return null
+    }
+    return Math.max(0, Math.ceil((status.lastFailureAt + retryBackoffSec * 1000 - nowMs) / 1000))
+  }, [nowMs, retryBackoffSec, status?.lastFailureAt])
   const nextAutoPullInSec = useMemo(() => {
     if (!webdavConfig?.enabled || !webdavConfig.autoPullEnabled) {
       return null
@@ -588,6 +601,16 @@ export function SyncPage() {
           >
             {t('sync.syncPull')}
           </button>
+          {syncHealth === 'degraded' ? (
+            <button
+              type="button"
+              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm text-amber-800 disabled:opacity-60"
+              disabled={syncing || !baseDataRoot}
+              onClick={() => void handleSync('both')}
+            >
+              {t('sync.retryNow')}
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
@@ -603,6 +626,18 @@ export function SyncPage() {
           <p>{t('sync.consecutiveFailures')}: {status?.consecutiveFailures ?? 0}</p>
           <p>{t('sync.totalSuccesses')}: {status?.totalSuccesses ?? 0}</p>
           <p>{t('sync.totalFailures')}: {status?.totalFailures ?? 0}</p>
+          <p>
+            {t('sync.retryBackoff')}:{' '}
+            {retryBackoffSec > 0 ? t('sync.autoPullEvery', { seconds: retryBackoffSec }) : '-'}
+          </p>
+          <p>
+            {t('sync.nextRetry')}:{' '}
+            {nextRetryInSec == null
+              ? '-'
+              : nextRetryInSec <= 0
+                ? t('sync.nextAutoPullNow')
+                : t('sync.autoPullEvery', { seconds: nextRetryInSec })}
+          </p>
           <p>{t('sync.lastSync')}: {formatTime(lastSyncAt || null)}</p>
           <p>
             {t('sync.nextAutoPull')}:{' '}
@@ -614,6 +649,11 @@ export function SyncPage() {
           </p>
         </div>
         {status?.lastError ? <p className="mt-2 text-sm text-rose-700">{status.lastError}</p> : null}
+        {syncHealth === 'degraded' && retryBackoffSec > 0 ? (
+          <p className="mt-1 text-xs text-amber-800">
+            {t('sync.retryHint', { seconds: retryBackoffSec })}
+          </p>
+        ) : null}
         {message ? <p className="mt-2 text-sm text-slate-700">{message}</p> : null}
       </article>
 
