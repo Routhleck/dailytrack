@@ -32,6 +32,12 @@ type ConflictPreview = {
 type SyncHealth = 'healthy' | 'degraded' | 'syncing'
 type SyncErrorCategory = 'none' | 'auth' | 'network' | 'config' | 'conflict' | 'local' | 'remote' | 'unknown'
 type ResolveStrategy = 'keep_local' | 'apply_remote' | 'mark_resolved'
+type DryRunSummary = {
+  total: number
+  overwriteCount: number
+  deleteCount: number
+  markOnlyCount: number
+}
 
 const PREVIEW_MAX_LINES = 40
 const PREVIEW_MAX_CHARS = 3000
@@ -123,6 +129,35 @@ function deriveSyncHealth(status: RealtimeSyncStatus | null, busy: boolean): Syn
 
 function buildDiagnosticFileName() {
   return `sync-diagnostic-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+}
+
+function summarizeDryRun(
+  conflictById: Record<string, RealtimeConflict>,
+  conflictIds: string[],
+  strategy: ResolveStrategy,
+): DryRunSummary {
+  const targets = conflictIds
+    .map((id) => conflictById[id])
+    .filter((item): item is RealtimeConflict => Boolean(item))
+  const total = targets.length
+
+  if (strategy === 'apply_remote') {
+    const overwriteCount = targets.filter((item) => item.remotePresent).length
+    const deleteCount = total - overwriteCount
+    return {
+      total,
+      overwriteCount,
+      deleteCount,
+      markOnlyCount: 0,
+    }
+  }
+
+  return {
+    total,
+    overwriteCount: 0,
+    deleteCount: 0,
+    markOnlyCount: total,
+  }
 }
 
 export function SyncPage() {
@@ -271,14 +306,14 @@ export function SyncPage() {
     }
 
     if (strategy === 'apply_remote') {
-      const confirmKey = mode === 'preset' ? 'sync.confirmApplyRemotePreset' : 'sync.confirmApplyRemoteBatch'
-      if (!window.confirm(t(confirmKey))) {
+      const dryRun = summarizeDryRun(conflictById, conflictIds, strategy)
+      if (!window.confirm(t('sync.confirmApplyRemoteDryRun', dryRun))) {
         return
       }
     }
     if (strategy === 'mark_resolved') {
-      const confirmKey = mode === 'preset' ? 'sync.confirmMarkResolvedPreset' : 'sync.confirmMarkResolvedBatch'
-      if (!window.confirm(t(confirmKey))) {
+      const dryRun = summarizeDryRun(conflictById, conflictIds, strategy)
+      if (!window.confirm(t('sync.confirmMarkResolvedDryRun', dryRun))) {
         return
       }
     }
@@ -322,8 +357,18 @@ export function SyncPage() {
       return
     }
 
-    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteSingle'))) {
-      return
+    if (strategy === 'apply_remote') {
+      const dryRun = summarizeDryRun(conflictById, [conflictId], strategy)
+      if (!window.confirm(t('sync.confirmApplyRemoteDryRun', dryRun))) {
+        return
+      }
+    }
+
+    if (strategy === 'mark_resolved') {
+      const dryRun = summarizeDryRun(conflictById, [conflictId], strategy)
+      if (!window.confirm(t('sync.confirmMarkResolvedDryRun', dryRun))) {
+        return
+      }
     }
 
     setResolvingId(conflictId)
@@ -509,6 +554,10 @@ export function SyncPage() {
     () => conflicts.reduce((count, item) => count + (selectedConflictIds[item.id] ? 1 : 0), 0),
     [conflicts, selectedConflictIds],
   )
+  const conflictById = useMemo(
+    () => Object.fromEntries(conflicts.map((item) => [item.id, item])),
+    [conflicts],
+  )
   const allSelected = conflicts.length > 0 && selectedCount === conflicts.length
   const hasSelection = selectedCount > 0
   const isResolvingBusy = Boolean(resolvingId) || batchResolving
@@ -539,6 +588,18 @@ export function SyncPage() {
     }
     return Math.max(0, Math.ceil((lastPoint + intervalSec * 1000 - nowMs) / 1000))
   }, [nowMs, status?.lastPullAt, status?.lastPushAt, webdavConfig])
+  const selectedIds = useMemo(
+    () => conflicts.filter((item) => selectedConflictIds[item.id]).map((item) => item.id),
+    [conflicts, selectedConflictIds],
+  )
+  const selectedApplyDryRun = useMemo(
+    () => summarizeDryRun(conflictById, selectedIds, 'apply_remote'),
+    [selectedIds, conflictById],
+  )
+  const presetApplyDryRun = useMemo(
+    () => summarizeDryRun(conflictById, conflicts.map((item) => item.id), 'apply_remote'),
+    [conflicts, conflictById],
+  )
 
   return (
     <section className="space-y-4">
@@ -663,6 +724,13 @@ export function SyncPage() {
         {conflicts.length > 0 ? (
           <div className="mt-3 rounded-md border border-indigo-200 bg-indigo-50/40 p-2">
             <p className="text-xs font-semibold text-indigo-800">{t('sync.presetActions')}</p>
+            <p className="mt-1 text-[11px] text-indigo-800">
+              {t('sync.dryRunPresetApply', {
+                total: presetApplyDryRun.total,
+                overwriteCount: presetApplyDryRun.overwriteCount,
+                deleteCount: presetApplyDryRun.deleteCount,
+              })}
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -694,6 +762,13 @@ export function SyncPage() {
         {conflicts.length > 0 ? (
           <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
             <p className="text-xs font-semibold text-slate-700">{t('sync.batchActions')}</p>
+            <p className="mt-1 text-[11px] text-slate-700">
+              {t('sync.dryRunSelectionApply', {
+                total: selectedApplyDryRun.total,
+                overwriteCount: selectedApplyDryRun.overwriteCount,
+                deleteCount: selectedApplyDryRun.deleteCount,
+              })}
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 type="button"
