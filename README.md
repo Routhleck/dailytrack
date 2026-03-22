@@ -312,8 +312,34 @@ Useful docs:
 
 ## Future Roadmap
 
-- Better import overwrite preview before confirm.
-- Native folder picker for all root/import/export/migration paths.
-- Optional history snapshots for safer rollback.
-- More built-in template packs and community-contributed templates.
-- Optional mobile app client aligned with existing WebDAV realtime sync protocol.
+Milestones are intentionally scoped for solo, iterative shipping and may adjust based on user feedback.
+
+### v0.5.0 - Sync Reliability
+
+- Improve WebDAV status visibility (last successful pull/push time, retry states, clearer error categories).
+- Simplify conflict resolution with safer defaults and optional batch actions.
+- Add sync diagnostic export for easier issue triage.
+
+### v0.6.0 - Profiles and Templates
+
+- Unify structured template editing across profile creation and profile settings.
+- Add more built-in bilingual template packs with cleaner onboarding selection.
+- Add template update flow that preserves user customizations where possible.
+
+### v0.7.0 - Mobile Usability
+
+- Improve Android layout and chart behavior on smaller screens.
+- Expand "show only changes" style views to more high-frequency workflows.
+- Improve offline status and sync queue visibility for mobile scenarios.
+
+### v0.8.0 - Reports and AI Assist
+
+- Add weekly/monthly report generation with configurable prompts.
+- Support report style presets (training-focused, life-focused, research-focused).
+- Add one-click export for generated summaries (Markdown first, optional PDF later).
+
+### v1.0.0 - Distribution and Ops
+
+- Separate signed stable distribution and unsigned testing distribution strategy.
+- Add automated release verification checklist coverage (sync, update, onboarding, migration).
+- Improve release documentation and troubleshooting playbooks for users.
