@@ -9,10 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Sync page now supports diagnostic export to local `sync-diagnostics/*.json` (with WebDAV password redaction).
 - Sync conflict handling now supports batch actions (`keep_local`, `apply_remote`, `mark_resolved`) for selected conflicts.
+- Sync page now supports one-click conflict strategy presets for all unresolved conflicts.
 
 ### Changed
 - Sync page now shows sync health, error category, last sync timestamp, and next auto-pull countdown for clearer reliability visibility.
 - Applying remote content now asks for confirmation (single and batch flows) to reduce accidental local overwrite risk.
+- Realtime sync status now includes retry telemetry (last attempt/success/failure, consecutive failures, total successes/failures).
 
 ## [0.4.3] - 2026-03-22
 
