@@ -406,7 +406,9 @@ jobs:
           cp -R "$source_dir"/. "$target_dir"/
           echo "::notice::Applied branded Android launcher icons from $source_dir"
 
-          find "$target_dir" -type f | rg 'mipmap.*/ic_launcher(\\.png|_round\\.png|_foreground\\.png)|mipmap-anydpi-v26/ic_launcher\\.xml|values/ic_launcher_background\\.xml' | sort
+          find "$target_dir" -type f \
+            | grep -E 'mipmap.*/ic_launcher(\.png|_round\.png|_foreground\.png)|mipmap-anydpi-v26/ic_launcher\.xml|values/ic_launcher_background\.xml' \
+            | sort || true
 
       - name: Prepare optional Android signing env
         shell: bash
