@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reserve this section for changes not tagged yet.
 - Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
 
+## [0.7.1] - 2026-03-22
+
+### Fixed
+- Fixed WebDAV auto-pull countdown getting stuck at "Now" by using `lastAttemptAt` and a stable local fallback anchor when no pull/push timestamp is available.
+- Fixed Sync diagnostics export failure when writing to new nested directories (for example `sync-diagnostics/`) under data root.
+
 ## [0.7.0] - 2026-03-22
 
 ### Added
