@@ -8,6 +8,8 @@ import { summarizeChecklist } from '../features/dashboard/dashboard.service'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { diffWeeklyAgainstTemplate } from '../features/weekly/weekly.diff'
+import { parseWeeklyMarkdown } from '../features/weekly/weekly.parser'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { serializeWeeklyMarkdown } from '../features/weekly/weekly.serializer'
 import {
@@ -16,6 +18,8 @@ import {
   saveWeeklyStructured,
 } from '../features/weekly/weekly.service'
 import { currentWeekId } from '../lib/date/week'
+import { readTextFile } from '../lib/fs/fileApi'
+import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
@@ -26,10 +30,11 @@ export function WeeklyNotePage() {
   const { weekId } = useParams()
   const activeWeekId = useMemo(() => weekId ?? currentWeekId(), [weekId])
   const { dataRoot, loading: rootLoading } = useDataRoot()
-  const { preferences, loading: preferencesLoading } = usePreferences()
+  const { preferences, loading: preferencesLoading, updatePreferences } = usePreferences()
 
   const [mode, setMode] = useState<Mode>('structured')
   const [note, setNote] = useState<WeeklyNote | null>(null)
+  const [templateNote, setTemplateNote] = useState<WeeklyNote | null>(null)
   const [rawDraft, setRawDraft] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -42,6 +47,11 @@ export function WeeklyNotePage() {
     () => (note ? serializeWeeklyMarkdown(note) : ''),
     [note],
   )
+  const templateDiff = useMemo(
+    () => (note && templateNote ? diffWeeklyAgainstTemplate(note, templateNote) : null),
+    [note, templateNote],
+  )
+  const showOnlyChanges = preferences.ui.showOnlyChanges.weekly
   const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
   const rawDirty = rawDraft !== savedRawRef.current
 
@@ -83,6 +93,30 @@ export function WeeklyNotePage() {
       cancelled = true
     }
   }, [activeWeekId, dataRoot, markSaved, t])
+
+  useEffect(() => {
+    if (!dataRoot) {
+      return
+    }
+
+    let cancelled = false
+    void readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md'))
+      .then((templateRaw) => {
+        if (cancelled) {
+          return
+        }
+        setTemplateNote(parseWeeklyMarkdown(templateRaw.replaceAll('{{week}}', activeWeekId), activeWeekId))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTemplateNote(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeWeekId, dataRoot])
 
   const performSave = useCallback(
     async () => {
@@ -232,6 +266,20 @@ export function WeeklyNotePage() {
   }
 
   const enabledSections = WEEKLY_SECTION_ORDER.filter((section) => preferences.weekly.sections[section])
+  const visibleSections = showOnlyChanges && templateDiff
+    ? enabledSections.filter(
+      (section) =>
+        templateDiff.sections[section].changedIds.size > 0
+        || templateDiff.sections[section].missingTemplateCount > 0,
+    )
+    : enabledSections
+  const showNoChangesHint = showOnlyChanges && templateDiff != null && !templateDiff.hasAnyChange
+  const missingTemplateCount = showOnlyChanges && templateDiff
+    ? enabledSections.reduce(
+      (count, section) => count + templateDiff.sections[section].missingTemplateCount,
+      0,
+    )
+    : 0
 
   return (
     <section className="space-y-4">
@@ -260,16 +308,52 @@ export function WeeklyNotePage() {
         <span className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
           {saving ? t('common.saving') : t('common.autoSaveOn')}
         </span>
+        <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={showOnlyChanges}
+            onChange={(event) => {
+              void updatePreferences({
+                ...preferences,
+                ui: {
+                  ...preferences.ui,
+                  showOnlyChanges: {
+                    ...preferences.ui.showOnlyChanges,
+                    weekly: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('sync.showOnlyChanges')}
+        </label>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/weekly">
           {t('weeklyNote.backToList')}
         </Link>
       </div>
+      {showOnlyChanges && !templateDiff ? (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {t('common.templateDiffUnavailable')}
+        </p>
+      ) : null}
+      {showNoChangesHint ? (
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {t('common.noTemplateChanges')}
+        </p>
+      ) : null}
+      {missingTemplateCount > 0 ? (
+        <p className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
+          {t('common.templateItemsMissing', { count: missingTemplateCount })}
+        </p>
+      ) : null}
 
       {mode === 'structured' ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          {enabledSections.map((section) => {
-            const items = note.sections[section]
+          {visibleSections.map((section) => {
+            const items = showOnlyChanges && templateDiff
+              ? note.sections[section].filter((item) => templateDiff.sections[section].changedIds.has(item.id))
+              : note.sections[section]
             const summary = summarizeChecklist(items)
 
             return (
@@ -282,7 +366,7 @@ export function WeeklyNotePage() {
                 </div>
                 <ProgressBar value={summary.percent} />
                 <div className="mt-4 space-y-2">
-                  {items.map((item, index) => (
+                  {items.map((item) => (
                     <label
                       key={item.id}
                       className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2"
@@ -291,6 +375,7 @@ export function WeeklyNotePage() {
                         type="checkbox"
                         checked={item.checked}
                         onChange={(event) => {
+                          const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
                           updateChecklist(section, index, { checked: event.target.checked })
                         }}
                       />
@@ -298,6 +383,7 @@ export function WeeklyNotePage() {
                         className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
                         value={item.text}
                         onChange={(event) => {
+                          const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
                           updateChecklist(section, index, { text: event.target.value })
                         }}
                       />
@@ -314,7 +400,11 @@ export function WeeklyNotePage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 rounded-md bg-slate-50 p-3">
                 <h3 className="text-sm font-medium text-slate-700">{t('weeklyNote.goodThings')}</h3>
-                {note.reflection.goodThings.map((value, index) => (
+                {note.reflection.goodThings.map((value, index) => {
+                  if (showOnlyChanges && templateDiff && !templateDiff.reflection.goodThings.has(index)) {
+                    return null
+                  }
+                  return (
                   <input
                     key={`good-${index}`}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -324,14 +414,19 @@ export function WeeklyNotePage() {
                     }}
                     placeholder={`${index + 1}.`}
                   />
-                ))}
+                  )
+                })}
               </div>
 
               <div className="space-y-2 rounded-md bg-slate-50 p-3">
                 <h3 className="text-sm font-medium text-slate-700">
                   {t('weeklyNote.nextTop3')}
                 </h3>
-                {note.reflection.nextWeekTop3.map((value, index) => (
+                {note.reflection.nextWeekTop3.map((value, index) => {
+                  if (showOnlyChanges && templateDiff && !templateDiff.reflection.nextWeekTop3.has(index)) {
+                    return null
+                  }
+                  return (
                   <input
                     key={`next-${index}`}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -341,7 +436,8 @@ export function WeeklyNotePage() {
                     }}
                     placeholder={`${index + 1}.`}
                   />
-                ))}
+                  )
+                })}
               </div>
             </div>
           </article>

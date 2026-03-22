@@ -187,6 +187,87 @@ export function PreferencesPage() {
             {t('preferences.syncPoll')}
           </label>
         </div>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.ui.mobile.showSyncBanner}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                ui: {
+                  ...draft.ui,
+                  mobile: {
+                    ...draft.ui.mobile,
+                    showSyncBanner: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('preferences.mobileSyncBanner')}
+        </label>
+      </article>
+
+      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('preferences.viewFilters')}</h2>
+        <p className="text-xs text-slate-500">{t('preferences.viewFiltersHint')}</p>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.ui.showOnlyChanges.daily}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                ui: {
+                  ...draft.ui,
+                  showOnlyChanges: {
+                    ...draft.ui.showOnlyChanges,
+                    daily: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('preferences.showOnlyChangesDaily')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.ui.showOnlyChanges.weekly}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                ui: {
+                  ...draft.ui,
+                  showOnlyChanges: {
+                    ...draft.ui.showOnlyChanges,
+                    weekly: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('preferences.showOnlyChangesWeekly')}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.ui.showOnlyChanges.body}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                ui: {
+                  ...draft.ui,
+                  showOnlyChanges: {
+                    ...draft.ui.showOnlyChanges,
+                    body: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('preferences.showOnlyChangesBody')}
+        </label>
       </article>
 
       <article className="space-y-3 rounded-lg border border-slate-200 p-4">

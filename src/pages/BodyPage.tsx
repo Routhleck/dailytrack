@@ -3,13 +3,14 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 
+import { MeasuredChartContainer } from '../components/MeasuredChartContainer'
 import { PageHeader } from '../components/PageHeader'
+import { diffBodyRecord } from '../features/body/body.diff'
 import {
   decimalInputStep,
   formatBodyMetricNumber,
@@ -130,7 +131,7 @@ function areBodyRecordsEqual(left: BodyRecord[], right: BodyRecord[]): boolean {
 export function BodyPage() {
   const { t } = useI18n()
   const { dataRoot } = useDataRoot()
-  const { preferences, loading: preferencesLoading } = usePreferences()
+  const { preferences, loading: preferencesLoading, updatePreferences } = usePreferences()
 
   const [records, setRecords] = useState<BodyRecord[]>([])
   const [form, setForm] = useState<FormState>(toFormState())
@@ -265,6 +266,8 @@ export function BodyPage() {
   }
 
   const chartData = useMemo(() => [...records].reverse(), [records])
+  const showOnlyChanges = preferences.ui.showOnlyChanges.body
+  const recordDiffs = useMemo(() => records.map((record) => diffBodyRecord(record)), [records])
 
   if (preferencesLoading) {
     return (
@@ -275,7 +278,21 @@ export function BodyPage() {
   }
 
   const enabledNumericMetrics = BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key])
+  const visibleNumericMetrics = showOnlyChanges
+    ? enabledNumericMetrics.filter((metric) =>
+      records.some((_, index) => recordDiffs[index].changedMetrics[metric.key]),
+    )
+    : enabledNumericMetrics
   const showNote = preferences.body.note
+  const showNoteColumn = showNote && (!showOnlyChanges || records.some((_, index) => recordDiffs[index].noteChanged))
+  const visibleRecordEntries = records
+    .map((record, index) => ({
+      record,
+      index,
+      diff: recordDiffs[index],
+    }))
+    .filter((entry) => !showOnlyChanges || entry.diff.hasAnyChange)
+  const showNoChangesHint = showOnlyChanges && visibleRecordEntries.length === 0
 
   return (
     <section className="min-w-0 space-y-4 md:space-y-6">
@@ -283,6 +300,30 @@ export function BodyPage() {
         title={t('body.title')}
         description={t('body.description')}
       />
+      <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={showOnlyChanges}
+          onChange={(event) => {
+            void updatePreferences({
+              ...preferences,
+              ui: {
+                ...preferences.ui,
+                showOnlyChanges: {
+                  ...preferences.ui.showOnlyChanges,
+                  body: event.target.checked,
+                },
+              },
+            })
+          }}
+        />
+        {t('sync.showOnlyChanges')}
+      </label>
+      {showNoChangesHint ? (
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {t('common.noTemplateChanges')}
+        </p>
+      ) : null}
 
       <form
         onSubmit={handleSubmit}
@@ -340,16 +381,16 @@ export function BodyPage() {
         </div>
       </form>
 
-      {enabledNumericMetrics.length > 0 ? (
-        <div className={`grid min-w-0 gap-3 md:gap-4 ${enabledNumericMetrics.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
-          {enabledNumericMetrics.map((metric) => (
+      {visibleNumericMetrics.length > 0 ? (
+        <div className={`grid min-w-0 gap-3 md:gap-4 ${visibleNumericMetrics.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+          {visibleNumericMetrics.map((metric) => (
             <article key={metric.key} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-3 sm:p-4">
               <h2 className="mb-2 text-sm font-semibold text-slate-900 sm:mb-3 sm:text-base">
                 {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
               </h2>
-              <div className="h-44 min-w-0 sm:h-52 md:h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 8, right: 12, left: 6, bottom: 4 }}>
+              <MeasuredChartContainer className="h-44 min-w-0 sm:h-52 md:h-56">
+                {({ width, height }) => (
+                  <LineChart width={width} height={height} data={chartData} margin={{ top: 8, right: 12, left: 6, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={24} interval="preserveStartEnd" />
                     <YAxis
@@ -377,8 +418,8 @@ export function BodyPage() {
                     />
                     <Line type="monotone" dataKey={metric.key} stroke={metric.stroke} strokeWidth={2} dot={false} />
                   </LineChart>
-                </ResponsiveContainer>
-              </div>
+                )}
+              </MeasuredChartContainer>
             </article>
           ))}
         </div>
@@ -392,24 +433,26 @@ export function BodyPage() {
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
 
         <div className="space-y-3 md:hidden">
-          {records.map((record, index) => (
-            <div key={`${record.date}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
-              <p className="font-medium text-slate-900">{record.date}</p>
+          {visibleRecordEntries.map((entry) => (
+            <div key={`${entry.record.date}-${entry.index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+              <p className="font-medium text-slate-900">{entry.record.date}</p>
               <div className="mt-1 space-y-1 text-slate-700">
-                {enabledNumericMetrics.map((metric) => (
-                  <p key={metric.key}>
-                    {metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}:{' '}
-                    {formatBodyMetricValue(record[metric.key], preferences.body.display[metric.key])}
-                  </p>
-                ))}
-                {showNote ? <p>{t('body.note')}: {record.note || '-'}</p> : null}
+                {visibleNumericMetrics
+                  .filter((metric) => !showOnlyChanges || entry.diff.changedMetrics[metric.key])
+                  .map((metric) => (
+                    <p key={metric.key}>
+                      {metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}:{' '}
+                      {formatBodyMetricValue(entry.record[metric.key], preferences.body.display[metric.key])}
+                    </p>
+                  ))}
+                {showNoteColumn && (!showOnlyChanges || entry.diff.noteChanged) ? <p>{t('body.note')}: {entry.record.note || '-'}</p> : null}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
                   onClick={() => {
-                    setEditingIndex(index)
-                    setForm(toFormState(record))
+                    setEditingIndex(entry.index)
+                    setForm(toFormState(entry.record))
                   }}
                   type="button"
                 >
@@ -417,7 +460,7 @@ export function BodyPage() {
                 </button>
                 <button
                   className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
-                  onClick={() => void handleDelete(index)}
+                  onClick={() => void handleDelete(entry.index)}
                   type="button"
                 >
                   {t('common.delete')}
@@ -432,32 +475,34 @@ export function BodyPage() {
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">
                 <th className="py-2">{t('body.date')}</th>
-                {enabledNumericMetrics.map((metric) => (
+                {visibleNumericMetrics.map((metric) => (
                   <th key={metric.key} className="py-2">
                     {metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}
                   </th>
                 ))}
-                {showNote ? <th className="py-2">{t('body.note')}</th> : null}
+                {showNoteColumn ? <th className="py-2">{t('body.note')}</th> : null}
                 <th className="py-2">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {records.map((record, index) => (
-                <tr key={`${record.date}-${index}`} className="border-b border-slate-100">
-                  <td className="py-2">{record.date}</td>
-                  {enabledNumericMetrics.map((metric) => (
+              {visibleRecordEntries.map((entry) => (
+                <tr key={`${entry.record.date}-${entry.index}`} className="border-b border-slate-100">
+                  <td className="py-2">{entry.record.date}</td>
+                  {visibleNumericMetrics.map((metric) => (
                     <td key={metric.key} className="py-2">
-                      {formatBodyMetricValue(record[metric.key], preferences.body.display[metric.key])}
+                      {!showOnlyChanges || entry.diff.changedMetrics[metric.key]
+                        ? formatBodyMetricValue(entry.record[metric.key], preferences.body.display[metric.key])
+                        : '-'}
                     </td>
                   ))}
-                  {showNote ? <td className="py-2">{record.note || '-'}</td> : null}
+                  {showNoteColumn ? <td className="py-2">{!showOnlyChanges || entry.diff.noteChanged ? (entry.record.note || '-') : '-'}</td> : null}
                   <td className="py-2">
                     <div className="flex gap-2">
                       <button
                         className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
                         onClick={() => {
-                          setEditingIndex(index)
-                          setForm(toFormState(record))
+                          setEditingIndex(entry.index)
+                          setForm(toFormState(entry.record))
                         }}
                         type="button"
                       >
@@ -465,7 +510,7 @@ export function BodyPage() {
                       </button>
                       <button
                         className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
-                        onClick={() => void handleDelete(index)}
+                        onClick={() => void handleDelete(entry.index)}
                         type="button"
                       >
                         {t('common.delete')}
@@ -482,3 +527,4 @@ export function BodyPage() {
     </section>
   )
 }
+

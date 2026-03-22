@@ -4,6 +4,8 @@ import { Link, useParams } from 'react-router-dom'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
+import { diffDailyAgainstTemplate } from '../features/daily/daily.diff'
+import { parseDailyMarkdown } from '../features/daily/daily.parser'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
 import { serializeDailyMarkdown } from '../features/daily/daily.serializer'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
@@ -11,6 +13,8 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
+import { readTextFile } from '../lib/fs/fileApi'
+import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { DailyNote } from '../types/tracker'
 
@@ -21,10 +25,11 @@ export function DailyNotePage() {
   const { date } = useParams()
   const activeDate = useMemo(() => date ?? todayDateString(), [date])
   const { dataRoot, loading: rootLoading } = useDataRoot()
-  const { preferences, loading: preferencesLoading } = usePreferences()
+  const { preferences, loading: preferencesLoading, updatePreferences } = usePreferences()
 
   const [mode, setMode] = useState<Mode>('structured')
   const [note, setNote] = useState<DailyNote | null>(null)
+  const [templateNote, setTemplateNote] = useState<DailyNote | null>(null)
   const [rawDraft, setRawDraft] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -37,6 +42,11 @@ export function DailyNotePage() {
     () => (note ? serializeDailyMarkdown(note) : ''),
     [note],
   )
+  const templateDiff = useMemo(
+    () => (note && templateNote ? diffDailyAgainstTemplate(note, templateNote) : null),
+    [note, templateNote],
+  )
+  const showOnlyChanges = preferences.ui.showOnlyChanges.daily
   const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
   const rawDirty = rawDraft !== savedRawRef.current
 
@@ -78,6 +88,30 @@ export function DailyNotePage() {
       cancelled = true
     }
   }, [activeDate, dataRoot, markSaved, t])
+
+  useEffect(() => {
+    if (!dataRoot) {
+      return
+    }
+
+    let cancelled = false
+    void readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'))
+      .then((templateRaw) => {
+        if (cancelled) {
+          return
+        }
+        setTemplateNote(parseDailyMarkdown(templateRaw.replaceAll('{{date}}', activeDate), activeDate))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTemplateNote(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeDate, dataRoot])
 
   const performSave = useCallback(
     async () => {
@@ -203,6 +237,14 @@ export function DailyNotePage() {
   }
 
   const coreSummary = summarizeChecklist(note.dailyCore)
+  const visibleDailyCore = showOnlyChanges && templateDiff
+    ? note.dailyCore.filter((item) => templateDiff.dailyCore.changedIds.has(item.id))
+    : note.dailyCore
+  const visibleOptional = showOnlyChanges && templateDiff
+    ? note.optional.filter((item) => templateDiff.optional.changedIds.has(item.id))
+    : note.optional
+  const showOneLineCard = !showOnlyChanges || !templateDiff || templateDiff.oneLineChanged
+  const showNoChangesHint = showOnlyChanges && templateDiff != null && !templateDiff.hasAnyChange
 
   return (
     <section className="space-y-4">
@@ -231,11 +273,47 @@ export function DailyNotePage() {
         <span className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
           {saving ? t('common.saving') : t('common.autoSaveOn')}
         </span>
+        <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={showOnlyChanges}
+            onChange={(event) => {
+              void updatePreferences({
+                ...preferences,
+                ui: {
+                  ...preferences.ui,
+                  showOnlyChanges: {
+                    ...preferences.ui.showOnlyChanges,
+                    daily: event.target.checked,
+                  },
+                },
+              })
+            }}
+          />
+          {t('sync.showOnlyChanges')}
+        </label>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/daily">
           {t('dailyNote.backToList')}
         </Link>
       </div>
+      {showOnlyChanges && !templateDiff ? (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {t('common.templateDiffUnavailable')}
+        </p>
+      ) : null}
+      {showNoChangesHint ? (
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {t('common.noTemplateChanges')}
+        </p>
+      ) : null}
+      {showOnlyChanges && templateDiff && (templateDiff.dailyCore.missingTemplateCount > 0 || templateDiff.optional.missingTemplateCount > 0) ? (
+        <p className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
+          {t('common.templateItemsMissing', {
+            count: templateDiff.dailyCore.missingTemplateCount + templateDiff.optional.missingTemplateCount,
+          })}
+        </p>
+      ) : null}
 
       {mode === 'structured' ? (
         <div className="space-y-6">
@@ -248,12 +326,13 @@ export function DailyNotePage() {
             </div>
             <ProgressBar value={coreSummary.percent} />
             <div className="mt-4 space-y-2">
-              {note.dailyCore.map((item, index) => (
+              {visibleDailyCore.map((item) => (
                 <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
                   <input
                     type="checkbox"
                     checked={item.checked}
                     onChange={(event) => {
+                      const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
                       updateChecklist('dailyCore', index, { checked: event.target.checked })
                     }}
                   />
@@ -261,6 +340,7 @@ export function DailyNotePage() {
                     className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
                     value={item.text}
                     onChange={(event) => {
+                      const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
                       updateChecklist('dailyCore', index, { text: event.target.value })
                     }}
                   />
@@ -273,12 +353,13 @@ export function DailyNotePage() {
             <article className="rounded-lg border border-slate-200 p-4">
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.optional')}</h2>
               <div className="space-y-2">
-                {note.optional.map((item, index) => (
+                {visibleOptional.map((item) => (
                   <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={(event) => {
+                        const index = note.optional.findIndex((candidate) => candidate.id === item.id)
                         updateChecklist('optional', index, { checked: event.target.checked })
                       }}
                     />
@@ -286,6 +367,7 @@ export function DailyNotePage() {
                       className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
                       value={item.text}
                       onChange={(event) => {
+                        const index = note.optional.findIndex((candidate) => candidate.id === item.id)
                         updateChecklist('optional', index, { text: event.target.value })
                       }}
                     />
@@ -295,17 +377,19 @@ export function DailyNotePage() {
             </article>
           ) : null}
 
-          <article className="rounded-lg border border-slate-200 p-4">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.oneLine')}</h2>
-            <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              value={note.oneLine}
-              onChange={(event) => {
-                setNote((prev) => (prev ? { ...prev, oneLine: event.target.value } : prev))
-              }}
-              placeholder={t('dailyNote.oneLinePlaceholder')}
-            />
-          </article>
+          {showOneLineCard ? (
+            <article className="rounded-lg border border-slate-200 p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.oneLine')}</h2>
+              <input
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={note.oneLine}
+                onChange={(event) => {
+                  setNote((prev) => (prev ? { ...prev, oneLine: event.target.value } : prev))
+                }}
+                placeholder={t('dailyNote.oneLinePlaceholder')}
+              />
+            </article>
+          ) : null}
         </div>
       ) : (
         <MarkdownEditor value={rawDraft} onChange={setRawDraft} />

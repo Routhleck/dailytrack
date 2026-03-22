@@ -21,7 +21,7 @@ export function Sidebar() {
   ]
 
   return (
-    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50 px-4 py-6">
+    <aside className="flex h-[100dvh] w-56 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50 px-4 py-6">
       <div className="mb-6 flex items-center gap-2">
         <img src={appLogo} alt="DailyTrack logo" className="h-7 w-7 rounded-md" />
         <p className="text-lg font-semibold text-slate-900">DailyTrack</p>
