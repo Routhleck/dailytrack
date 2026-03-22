@@ -76,6 +76,15 @@ On Windows, default base root falls back to `%USERPROFILE%\\dailytrack-data`.
 - Do not mix multiple release versions in a single section.
 - Keep entries user-facing and grouped under `Added`, `Changed`, `Fixed` when applicable.
 
+## Roadmap and Milestone Rules
+- `README.md` `Future Roadmap` should stay version-based (for example `v0.5.0`, `v0.6.0`, ...).
+- Keep milestone scope practical for solo iteration:
+  - one theme per milestone
+  - 3-5 concrete outcomes max
+- When milestone work starts, track progress in `docs/DEVLOG/YYYY-MM.md`.
+- When milestone work ships, reflect user-visible outcomes in the matching `CHANGELOG.md` release section.
+- If priorities change, update roadmap wording instead of silently diverging implementation from docs.
+
 ## Definition of Done (DoD)
 A task is done only if:
 - Feature behavior matches documented schema/contracts.
