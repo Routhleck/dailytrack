@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sync page now shows sync health, error category, last sync timestamp, and next auto-pull countdown for clearer reliability visibility.
 - Applying remote content now asks for confirmation (single and batch flows) to reduce accidental local overwrite risk.
 - Realtime sync status now includes retry telemetry (last attempt/success/failure, consecutive failures, total successes/failures).
+- Conflict batch actions now execute through a single backend batch command for better large-list performance and consistency.
 
 ## [0.4.3] - 2026-03-22
 
