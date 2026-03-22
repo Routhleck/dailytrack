@@ -149,6 +149,12 @@ pub struct RealtimeSyncStatus {
   pub running: bool,
   pub last_push_at: Option<u64>,
   pub last_pull_at: Option<u64>,
+  pub last_attempt_at: Option<u64>,
+  pub last_success_at: Option<u64>,
+  pub last_failure_at: Option<u64>,
+  pub consecutive_failures: u64,
+  pub total_successes: u64,
+  pub total_failures: u64,
   pub last_error: Option<String>,
   pub pending_changes: u64,
   pub conflicts_count: u64,
@@ -204,6 +210,18 @@ struct RealtimeState {
   conflicts: Vec<RealtimeConflict>,
   last_push_at: Option<u64>,
   last_pull_at: Option<u64>,
+  #[serde(default)]
+  last_attempt_at: Option<u64>,
+  #[serde(default)]
+  last_success_at: Option<u64>,
+  #[serde(default)]
+  last_failure_at: Option<u64>,
+  #[serde(default)]
+  consecutive_failures: u64,
+  #[serde(default)]
+  total_successes: u64,
+  #[serde(default)]
+  total_failures: u64,
   last_error: Option<String>,
 }
 
@@ -344,6 +362,12 @@ fn default_realtime_state(data_root: String) -> RealtimeState {
     conflicts: Vec::new(),
     last_push_at: None,
     last_pull_at: None,
+    last_attempt_at: None,
+    last_success_at: None,
+    last_failure_at: None,
+    consecutive_failures: 0,
+    total_successes: 0,
+    total_failures: 0,
     last_error: None,
   }
 }
@@ -588,6 +612,12 @@ fn summarize_realtime_status(
     running: false,
     last_push_at: state.last_push_at,
     last_pull_at: state.last_pull_at,
+    last_attempt_at: state.last_attempt_at,
+    last_success_at: state.last_success_at,
+    last_failure_at: state.last_failure_at,
+    consecutive_failures: state.consecutive_failures,
+    total_successes: state.total_successes,
+    total_failures: state.total_failures,
     last_error: state.last_error.clone(),
     pending_changes,
     conflicts_count: unresolved.len() as u64,
@@ -628,8 +658,13 @@ fn save_state_error(
   app: &AppHandle,
   data_root: &Path,
   mut state: RealtimeState,
+  attempted_at: u64,
   error: String,
 ) -> Result<(), String> {
+  state.last_attempt_at = Some(attempted_at);
+  state.last_failure_at = Some(attempted_at);
+  state.total_failures = state.total_failures.saturating_add(1);
+  state.consecutive_failures = state.consecutive_failures.saturating_add(1);
   state.last_error = Some(error);
   save_realtime_state(app, data_root, &state)
 }
@@ -767,6 +802,10 @@ fn realtime_sync_once(
   if pulled > 0 {
     state.last_pull_at = Some(now_ms);
   }
+  state.last_attempt_at = Some(now_ms);
+  state.last_success_at = Some(now_ms);
+  state.total_successes = state.total_successes.saturating_add(1);
+  state.consecutive_failures = 0;
   state.last_error = None;
   save_realtime_state(app, data_root, &state)?;
 
@@ -1644,11 +1683,12 @@ pub fn webdav_realtime_sync_now(
   let root = ensure_dir_canonical(data_root.as_str())?;
   let state = load_realtime_state(&app, root.as_path())?;
   let parsed_direction = parse_realtime_sync_direction(direction)?;
+  let attempted_at = now_unix_millis();
 
   match realtime_sync_once(&app, root.as_path(), parsed_direction) {
     Ok(result) => Ok(result),
     Err(error) => {
-      let _ = save_state_error(&app, root.as_path(), state, error.clone());
+      let _ = save_state_error(&app, root.as_path(), state, attempted_at, error.clone());
       Err(error)
     }
   }

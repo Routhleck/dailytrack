@@ -91,6 +91,12 @@ export type RealtimeSyncStatus = {
   running: boolean
   lastPushAt?: number | null
   lastPullAt?: number | null
+  lastAttemptAt?: number | null
+  lastSuccessAt?: number | null
+  lastFailureAt?: number | null
+  consecutiveFailures: number
+  totalSuccesses: number
+  totalFailures: number
   lastError?: string | null
   pendingChanges: number
   conflictsCount: number

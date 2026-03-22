@@ -30,6 +30,7 @@ type ConflictPreview = {
 
 type SyncHealth = 'healthy' | 'degraded' | 'syncing'
 type SyncErrorCategory = 'none' | 'auth' | 'network' | 'config' | 'conflict' | 'local' | 'remote' | 'unknown'
+type ResolveStrategy = 'keep_local' | 'apply_remote' | 'mark_resolved'
 
 const PREVIEW_MAX_LINES = 40
 const PREVIEW_MAX_CHARS = 3000
@@ -247,10 +248,7 @@ export function SyncPage() {
     }
   }
 
-  async function runResolve(
-    conflictId: string,
-    strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
-  ) {
+  async function runResolve(conflictId: string, strategy: ResolveStrategy) {
     if (!baseDataRoot) {
       return
     }
@@ -258,46 +256,30 @@ export function SyncPage() {
     await webdavRealtimeConflictResolve(baseDataRoot, conflictId, strategy)
   }
 
-  async function handleResolve(
-    conflictId: string,
-    strategy: 'keep_local' | 'apply_remote' | 'mark_resolved',
+  async function resolveConflictIds(
+    conflictIds: string[],
+    strategy: ResolveStrategy,
+    mode: 'selection' | 'preset',
   ) {
     if (!baseDataRoot) {
       return
     }
 
-    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteSingle'))) {
+    if (conflictIds.length === 0) {
       return
     }
 
-    setResolvingId(conflictId)
-    try {
-      await runResolve(conflictId, strategy)
-      setMessage(t('sync.resolveDone'))
-      await load()
-      emitDataChanged({ scope: 'all' })
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
-    } finally {
-      setResolvingId(null)
+    if (strategy === 'apply_remote') {
+      const confirmKey = mode === 'preset' ? 'sync.confirmApplyRemotePreset' : 'sync.confirmApplyRemoteBatch'
+      if (!window.confirm(t(confirmKey))) {
+        return
+      }
     }
-  }
-
-  async function handleResolveSelected(strategy: 'keep_local' | 'apply_remote' | 'mark_resolved') {
-    if (!baseDataRoot) {
-      return
-    }
-
-    const selectedIds = conflicts.filter((item) => selectedConflictIds[item.id]).map((item) => item.id)
-    if (selectedIds.length === 0) {
-      return
-    }
-
-    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteBatch'))) {
-      return
-    }
-    if (strategy === 'mark_resolved' && !window.confirm(t('sync.confirmMarkResolvedBatch'))) {
-      return
+    if (strategy === 'mark_resolved') {
+      const confirmKey = mode === 'preset' ? 'sync.confirmMarkResolvedPreset' : 'sync.confirmMarkResolvedBatch'
+      if (!window.confirm(t(confirmKey))) {
+        return
+      }
     }
 
     setBatchResolving(true)
@@ -306,7 +288,7 @@ export function SyncPage() {
     let failed = 0
 
     try {
-      for (const conflictId of selectedIds) {
+      for (const conflictId of conflictIds) {
         try {
           await runResolve(conflictId, strategy)
           success += 1
@@ -318,15 +300,60 @@ export function SyncPage() {
       await load()
       emitDataChanged({ scope: 'all' })
       if (failed > 0) {
-        setMessage(t('sync.batchResolvePartial', { success, failed }))
+        setMessage(
+          t(mode === 'preset' ? 'sync.presetResolvePartial' : 'sync.batchResolvePartial', {
+            success,
+            failed,
+          }),
+        )
       } else {
-        setMessage(t('sync.batchResolveDone', { success }))
+        setMessage(
+          t(mode === 'preset' ? 'sync.presetResolveDone' : 'sync.batchResolveDone', {
+            success,
+          }),
+        )
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
     } finally {
       setBatchResolving(false)
     }
+  }
+
+  async function handleResolve(
+    conflictId: string,
+    strategy: ResolveStrategy,
+  ) {
+    if (!baseDataRoot) {
+      return
+    }
+
+    if (strategy === 'apply_remote' && !window.confirm(t('sync.confirmApplyRemoteSingle'))) {
+      return
+    }
+
+    setResolvingId(conflictId)
+
+    try {
+      await runResolve(conflictId, strategy)
+      await load()
+      emitDataChanged({ scope: 'all' })
+      setMessage(t('sync.resolveDone'))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
+    } finally {
+      setResolvingId(null)
+    }
+  }
+
+  async function handleResolveSelected(strategy: ResolveStrategy) {
+    const selectedIds = conflicts.filter((item) => selectedConflictIds[item.id]).map((item) => item.id)
+    await resolveConflictIds(selectedIds, strategy, 'selection')
+  }
+
+  async function handleApplyPresetToAll(strategy: ResolveStrategy) {
+    const allIds = conflicts.map((item) => item.id)
+    await resolveConflictIds(allIds, strategy, 'preset')
   }
 
   async function loadConflictPreview(item: RealtimeConflict) {
@@ -570,6 +597,12 @@ export function SyncPage() {
           <p>{t('sync.conflicts')}: {status?.conflictsCount ?? '-'}</p>
           <p>{t('sync.lastPush')}: {formatTime(status?.lastPushAt)}</p>
           <p>{t('sync.lastPull')}: {formatTime(status?.lastPullAt)}</p>
+          <p>{t('sync.lastAttempt')}: {formatTime(status?.lastAttemptAt)}</p>
+          <p>{t('sync.lastSuccess')}: {formatTime(status?.lastSuccessAt)}</p>
+          <p>{t('sync.lastFailure')}: {formatTime(status?.lastFailureAt)}</p>
+          <p>{t('sync.consecutiveFailures')}: {status?.consecutiveFailures ?? 0}</p>
+          <p>{t('sync.totalSuccesses')}: {status?.totalSuccesses ?? 0}</p>
+          <p>{t('sync.totalFailures')}: {status?.totalFailures ?? 0}</p>
           <p>{t('sync.lastSync')}: {formatTime(lastSyncAt || null)}</p>
           <p>
             {t('sync.nextAutoPull')}:{' '}
@@ -592,6 +625,37 @@ export function SyncPage() {
         {loading ? <p className="mt-2 text-sm text-slate-600">{t('common.loading')}</p> : null}
         {!loading && conflicts.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">{t('sync.noConflicts')}</p>
+        ) : null}
+        {conflicts.length > 0 ? (
+          <div className="mt-3 rounded-md border border-indigo-200 bg-indigo-50/40 p-2">
+            <p className="text-xs font-semibold text-indigo-800">{t('sync.presetActions')}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-indigo-300 px-2 py-1 text-xs text-indigo-700 disabled:opacity-60"
+                disabled={batchResolving}
+                onClick={() => void handleApplyPresetToAll('keep_local')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.presetKeepLocalAll')}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-indigo-300 bg-indigo-100 px-2 py-1 text-xs text-indigo-800 disabled:opacity-60"
+                disabled={batchResolving}
+                onClick={() => void handleApplyPresetToAll('apply_remote')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.presetApplyRemoteAll')}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-indigo-300 px-2 py-1 text-xs text-indigo-700 disabled:opacity-60"
+                disabled={batchResolving}
+                onClick={() => void handleApplyPresetToAll('mark_resolved')}
+              >
+                {batchResolving ? t('sync.batchResolving') : t('sync.presetMarkResolvedAll')}
+              </button>
+            </div>
+          </div>
         ) : null}
         {conflicts.length > 0 ? (
           <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
