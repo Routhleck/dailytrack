@@ -10,21 +10,12 @@ export function WebdavSyncBridge() {
   const { baseDataRoot } = useDataRoot()
   const [reloadToken, setReloadToken] = useState(0)
   const busyRef = useRef(false)
-  const pendingAutoPullRef = useRef(false)
-  const suppressEventsBeforeMsRef = useRef(0)
 
   useEffect(() => {
     const unsubscribe = onDataChanged((detail) => {
       if (detail.scope === 'settings') {
         setReloadToken((value) => value + 1)
-        return
       }
-
-      if (Date.now() < suppressEventsBeforeMsRef.current) {
-        return
-      }
-
-      pendingAutoPullRef.current = true
     })
 
     return unsubscribe
@@ -53,7 +44,6 @@ export function WebdavSyncBridge() {
         }
 
         if (result.pushed > 0 || result.pulled > 0 || result.conflicts > 0) {
-          suppressEventsBeforeMsRef.current = Date.now() + 1500
           emitDataChanged({ scope: 'all' })
         }
       } catch (error) {
@@ -79,13 +69,8 @@ export function WebdavSyncBridge() {
         }
 
         if (config.autoPullEnabled) {
-          pendingAutoPullRef.current = true
+          void sync('pull')
           autoPullIntervalId = window.setInterval(() => {
-            if (!pendingAutoPullRef.current) {
-              return
-            }
-
-            pendingAutoPullRef.current = false
             void sync('pull')
           }, AUTO_PULL_INTERVAL_MS)
         }
@@ -93,7 +78,7 @@ export function WebdavSyncBridge() {
         const onVisibility = () => {
           if (document.visibilityState === 'visible') {
             if (config.autoPullEnabled) {
-              pendingAutoPullRef.current = true
+              void sync('pull')
             }
             if (config.autoPushIntervalMin > 0) {
               void sync('both')
