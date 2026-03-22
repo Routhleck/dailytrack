@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Added template-based `Only show changes` mode for Daily, Weekly, and Body structured pages.
+- Added mobile sync status banner with offline/pending/conflict/next-auto-pull visibility and quick link to Sync page.
+- Added dedicated diff utilities and tests for daily/weekly template comparisons and body non-empty change detection.
+
 ### Changed
-- Reserve this section for changes not tagged yet.
-- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+- Preferences schema upgraded to v3 with per-page change-filter defaults and mobile sync banner visibility toggle.
+- Mobile shell now uses fixed-height + independent main scrolling for safer narrow-screen behavior.
+- Body chart rendering now uses measured container sizing to improve small-window/mobile chart visibility.
 
 ## [0.6.0] - 2026-03-22
 

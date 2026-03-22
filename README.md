@@ -51,6 +51,8 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Real-time feel: autosave + local file change refresh.
 - Adaptive shell: desktop sidebar + mobile bottom navigation.
 - Mobile quick menu for secondary routes (`Dashboard`, `Profiles`, `Settings`, etc.) on narrow screens.
+- Mobile sync status banner shows offline/pending/conflict countdown at a glance.
+- Template-based `Only show changes` filters keep Daily/Weekly/Body focused on deltas.
 
 ## Screenshots
 
@@ -69,19 +71,22 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - recent files list
 - Daily note:
   - structured checklist editing
+  - template-based "only show changes" mode
   - one-line editing
   - raw markdown mode
   - debounced autosave (no manual save button)
 - Weekly note:
   - section checklist editing
+  - template-based "only show changes" mode
   - reflection field editing
   - raw markdown mode
   - debounced autosave
 - Body progress:
   - local `body.csv` table + record form
+  - optional "only show changes" mode for non-empty metrics/records
   - metric toggles by preferences
   - per-metric unit/decimal display config
-  - trend charts
+  - trend charts (improved narrow-window rendering)
 - Profiles:
   - create/switch/delete profiles
   - template presets loaded from repo config (`config/template-presets.json`)
@@ -92,6 +97,8 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Preferences:
   - per-profile tracking toggles (daily/weekly/body)
   - sync mode (`watch` / `poll`)
+  - per-page default "only show changes" toggles
+  - mobile sync status banner toggle
 - Settings:
   - data root migration (copy + switch)
   - export/import

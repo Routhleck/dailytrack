@@ -17,6 +17,7 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
   - loads/saves `preferences.json` per active profile
   - controls section/field visibility in structured pages
   - controls live sync mode (`watch` / `poll`)
+  - controls UI defaults (per-page `only show changes`, mobile sync banner visibility)
 
 ## Live Sync
 - Watch-first path:
@@ -37,10 +38,11 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 8. Re-read and parse to refresh UI consistency.
 
 ## Responsive Shell
-- Desktop: sticky left sidebar navigation.
+- Desktop: fixed-height shell with left sidebar + independent main-content scroll.
 - Narrow/mobile-like windows:
   - bottom primary nav (Today/Week/Body/Sync)
   - top quick menu for secondary routes (Dashboard/Lists/Reports/Profiles/Preferences/Settings)
+  - compact sync status banner (offline/pending/conflicts/next pull)
 
 ## Runtime Boundaries
 - Frontend: React + TypeScript + Tailwind.
@@ -53,11 +55,14 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 
 ## Feature Modules
 - `features/daily`: daily note read/create/parse/edit/save.
+- `features/daily/daily.diff`: template-relative checklist/one-line change detection.
 - `features/weekly`: weekly note read/create/parse/edit/save.
+- `features/weekly/weekly.diff`: template-relative section/reflection change detection.
 - `features/body`: CSV read/edit/save and trend source data.
+- `features/body/body.diff`: non-empty metric/note change detection for focus views.
 - `features/preferences`: per-profile preferences read/save and context.
 - `features/settings`: base root + profile state management.
-- `features/webdav`: WebDAV config, snapshot sync controls, realtime sync bridge.
+- `features/webdav`: WebDAV config, snapshot sync controls, realtime sync bridge, lightweight status hook.
 - `features/dashboard`: summary and recent-file aggregation.
 - `pages/SyncPage.tsx`: realtime sync status/actions/conflict resolution UI.
 

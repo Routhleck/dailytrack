@@ -52,6 +52,20 @@ export type BodyRecord = {
 };
 
 export type TrackerPreferences = {
+  schemaVersion: number; // current: 3
+  sync: {
+    mode: "watch" | "poll";
+  };
+  ui: {
+    showOnlyChanges: {
+      daily: boolean;
+      weekly: boolean;
+      body: boolean;
+    };
+    mobile: {
+      showSyncBanner: boolean;
+    };
+  };
   daily: {
     showOptional: boolean;
   };

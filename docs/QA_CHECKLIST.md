@@ -31,6 +31,9 @@
 - [ ] Raw mode edit/save works.
 - [ ] Daily/Weekly pages autosave without manual save button.
 - [ ] Save writes to local file and reloads state.
+- [ ] Daily `Only show changes` mode filters items by template delta and persists toggle in preferences.
+- [ ] Weekly `Only show changes` mode filters section/reflection fields by template delta and persists toggle.
+- [ ] Body `Only show changes` mode hides unchanged empty metrics/records and persists toggle.
 - [ ] Dashboard summary matches detail pages.
 - [ ] UI language toggle (`EN` / `中文`) switches core page copy and persists after restart.
 - [ ] Profiles page supports template language switch for preset preview/fill.
@@ -65,6 +68,8 @@
 ## Sync Mode
 - [ ] `Preferences -> Live Sync -> Watch` pushes external file edits into UI without waiting for poll interval.
 - [ ] `Preferences -> Live Sync -> Poll` disables watcher path and still refreshes via polling.
+- [ ] Mobile sync status banner reflects offline/pending/conflict states and links to Sync page.
+- [ ] Mobile sync banner visibility toggle in Preferences persists across restart.
 
 ## WebDAV Sync
 - [ ] Save WebDAV config succeeds and persists after app restart.
