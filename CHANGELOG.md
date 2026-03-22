@@ -10,6 +10,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reserve this section for changes not tagged yet.
 - Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
 
+## [0.4.3] - 2026-03-22
+
+### Added
+- WebDAV settings now support a configurable auto-pull interval in seconds.
+
+### Changed
+- WebDAV auto-pull now polls on a fixed interval (no local-change trigger required).
+- Android release workflows now enforce branded launcher icon resources after `android init`.
+- Android release workflows now sign release APKs from repository keystore secrets and prioritize uploading signed APK assets.
+
+### Fixed
+- Prevented Android release distribution from defaulting users to unsigned APK artifacts that can fail to install.
+
 ## [0.4.2] - 2026-03-21
 
 ### Added
