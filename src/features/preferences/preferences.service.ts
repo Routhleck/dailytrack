@@ -11,12 +11,22 @@ import type { WeeklySectionKey } from '../../types/tracker'
 
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
-export const PREFERENCES_SCHEMA_VERSION = 2
+export const PREFERENCES_SCHEMA_VERSION = 3
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
   schemaVersion: PREFERENCES_SCHEMA_VERSION,
   sync: {
     mode: 'watch',
+  },
+  ui: {
+    showOnlyChanges: {
+      daily: false,
+      weekly: false,
+      body: false,
+    },
+    mobile: {
+      showSyncBanner: true,
+    },
   },
   daily: {
     showOptional: true,
@@ -60,14 +70,13 @@ function toSyncMode(value: unknown, fallback: SyncMode): SyncMode {
     : fallback
 }
 
-function toSchemaVersion(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : fallback
-}
-
 export function normalizePreferences(raw: unknown): TrackerPreferences {
   const object = asRecord(raw)
   const dailyRaw = asRecord(object.daily)
   const weeklyRaw = asRecord(object.weekly)
+  const uiRaw = asRecord(object.ui)
+  const showOnlyChangesRaw = asRecord(uiRaw.showOnlyChanges)
+  const mobileUiRaw = asRecord(uiRaw.mobile)
   const bodyRaw = asRecord(object.body)
   const bodyDisplayRaw = asRecord(bodyRaw.display)
   const weeklySectionsRaw = asRecord(weeklyRaw.sections)
@@ -87,9 +96,31 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
   }, {} as Record<BodyNumericMetricKey, TrackerPreferences['body']['display'][BodyNumericMetricKey]>)
 
   return {
-    schemaVersion: toSchemaVersion(object.schemaVersion, DEFAULT_PREFERENCES.schemaVersion),
+    schemaVersion: PREFERENCES_SCHEMA_VERSION,
     sync: {
       mode: toSyncMode(syncRaw.mode, DEFAULT_PREFERENCES.sync.mode),
+    },
+    ui: {
+      showOnlyChanges: {
+        daily: toBoolean(
+          showOnlyChangesRaw.daily,
+          DEFAULT_PREFERENCES.ui.showOnlyChanges.daily,
+        ),
+        weekly: toBoolean(
+          showOnlyChangesRaw.weekly,
+          DEFAULT_PREFERENCES.ui.showOnlyChanges.weekly,
+        ),
+        body: toBoolean(
+          showOnlyChangesRaw.body,
+          DEFAULT_PREFERENCES.ui.showOnlyChanges.body,
+        ),
+      },
+      mobile: {
+        showSyncBanner: toBoolean(
+          mobileUiRaw.showSyncBanner,
+          DEFAULT_PREFERENCES.ui.mobile.showSyncBanner,
+        ),
+      },
     },
     daily: {
       showOptional: toBoolean(dailyRaw.showOptional, DEFAULT_PREFERENCES.daily.showOptional),

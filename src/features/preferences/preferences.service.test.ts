@@ -12,16 +12,24 @@ describe('preferences normalization', () => {
 
     expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('watch')
+    expect(normalized.ui.showOnlyChanges.daily).toBe(false)
+    expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
+    expect(normalized.ui.showOnlyChanges.body).toBe(false)
+    expect(normalized.ui.mobile.showSyncBanner).toBe(true)
     expect(normalized.daily.showOptional).toBe(true)
     expect(normalized.weekly.sections.Body).toBe(true)
     expect(normalized.body.weight).toBe(true)
     expect(normalized.body.display.weight.unit).toBe('kg')
   })
 
-  test('keeps valid sync mode and strips invalid display config', () => {
+  test('keeps valid sync mode, upgrades schema, and strips invalid display config', () => {
     const normalized = normalizePreferences({
       schemaVersion: 1,
       sync: { mode: 'poll' },
+      ui: {
+        showOnlyChanges: { daily: true, weekly: false },
+        mobile: { showSyncBanner: false },
+      },
       body: {
         display: {
           weight: { unit: 123, decimals: 99 },
@@ -29,8 +37,12 @@ describe('preferences normalization', () => {
       },
     })
 
-    expect(normalized.schemaVersion).toBe(1)
+    expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('poll')
+    expect(normalized.ui.showOnlyChanges.daily).toBe(true)
+    expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
+    expect(normalized.ui.showOnlyChanges.body).toBe(false)
+    expect(normalized.ui.mobile.showSyncBanner).toBe(false)
     expect(normalized.body.display.weight.unit).toBe('kg')
     expect(normalized.body.display.weight.decimals).toBe(3)
   })

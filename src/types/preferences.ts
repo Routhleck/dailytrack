@@ -13,6 +13,16 @@ export type TrackerPreferences = {
   sync: {
     mode: SyncMode
   }
+  ui: {
+    showOnlyChanges: {
+      daily: boolean
+      weekly: boolean
+      body: boolean
+    }
+    mobile: {
+      showSyncBanner: boolean
+    }
+  }
   daily: {
     showOptional: boolean
   }
