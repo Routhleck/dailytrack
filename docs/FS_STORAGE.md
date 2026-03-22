@@ -25,7 +25,23 @@ dailytrack-data/
       templates/
         daily.md
         weekly.md
+        template-meta.json
       preferences.json
+```
+
+Repository template catalog (editable):
+
+```text
+config/
+  template-presets.json
+  templates/
+    <preset-id>/
+      en/
+        daily.md
+        weekly.md
+      zh/
+        daily.md
+        weekly.md
 ```
 
 ## Body CSV Schema
@@ -60,6 +76,10 @@ On startup:
 - Body writes on submit/delete.
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.
+- Profile template update flow supports:
+  - `merge` (default): preserve existing checklist items and append missing preset items
+  - `overwrite`: replace templates with selected preset variants
+- Applying preset updates writes `templates/template-meta.json` for source traceability.
 - Text file saves use atomic write (`temp file -> rename/replace`) for safer crash/interruption behavior.
 - External disk edits use watcher-first sync with polling fallback, and synchronize into UI only when local drafts are not dirty.
 

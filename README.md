@@ -84,8 +84,10 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - trend charts
 - Profiles:
   - create/switch/delete profiles
-  - built-in template presets
+  - template presets loaded from repo config (`config/template-presets.json`)
   - current template editing (structured by default, raw mode available)
+  - template update flow (`merge` recommended, `overwrite` optional) with dry-run summary
+  - template source metadata tracking per profile
   - one-click apply template to today/this week (overwrite)
 - Preferences:
   - per-profile tracking toggles (daily/weekly/body)
@@ -123,6 +125,7 @@ dailytrack-data/
       templates/
         daily.md
         weekly.md
+        template-meta.json
       preferences.json
 ```
 
@@ -131,6 +134,44 @@ Important rules:
 - Markdown and CSV are the source of truth.
 - The app reads, parses, and writes local files.
 - Structured mode may normalize formatting to the supported schema.
+
+## Template Catalog (Easy Repo Editing)
+
+Template goals/presets are no longer hardcoded in page code.
+Edit this file directly:
+
+- `config/template-presets.json`
+
+Catalog shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "presets": [
+    {
+      "id": "balanced",
+      "labels": { "en": "Balanced (Default)", "zh": "平衡日常（默认）" },
+      "descriptions": {
+        "en": "Balanced checklist for body, focus, and life rhythm.",
+        "zh": "在身体、专注和生活节奏间取得平衡。"
+      },
+      "variants": {
+        "en": { "dailyFile": "balanced/en/daily.md", "weeklyFile": "balanced/en/weekly.md" },
+        "zh": { "dailyFile": "balanced/zh/daily.md", "weeklyFile": "balanced/zh/weekly.md" }
+      }
+    }
+  ]
+}
+```
+
+Template markdown files live under:
+
+- `config/templates/<preset-id>/<en|zh>/daily.md`
+- `config/templates/<preset-id>/<en|zh>/weekly.md`
+
+Per-profile template apply metadata is written to:
+
+- `profiles/<profile>/templates/template-meta.json`
 
 ## File Formats
 

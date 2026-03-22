@@ -75,6 +75,14 @@ export type TrackerPreferences = {
     >;
   };
 };
+
+export type TemplateMeta = {
+  schemaVersion: number; // current: 1
+  presetId: string;
+  templateLanguage: "en" | "zh";
+  lastAppliedAt: string; // ISO timestamp
+  lastAppliedMode: "merge" | "overwrite";
+};
 ```
 
 ## Storage Contracts
@@ -87,6 +95,7 @@ Per profile:
 - `profiles/<profile>/body.csv`
 - `profiles/<profile>/templates/daily.md`
 - `profiles/<profile>/templates/weekly.md`
+- `profiles/<profile>/templates/template-meta.json`
 - `profiles/<profile>/preferences.json`
 
 ## Editing Modes

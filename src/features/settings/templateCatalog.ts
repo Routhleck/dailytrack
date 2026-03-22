@@ -21,6 +21,19 @@ type TemplateCatalog = {
 
 export const TEMPLATE_CATALOG_SCHEMA_VERSION = 1
 
+const templateMarkdownModules = import.meta.glob('../../../config/templates/**/*.md', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+}) as Record<string, string>
+
+const TEMPLATE_MARKDOWN_LOOKUP: Record<string, string> = Object.fromEntries(
+  Object.entries(templateMarkdownModules).map(([modulePath, content]) => {
+    const normalizedPath = modulePath.replace(/^.*\/config\/templates\//, '')
+    return [normalizedPath, content]
+  }),
+)
+
 const FALLBACK_BLANK_TEMPLATE: TemplateVariant = {
   dailyTemplate: `# {{date}}
 
@@ -87,10 +100,21 @@ function asString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null
 }
 
+function resolveTemplateFile(path: string): string | null {
+  const normalized = path.replace(/^\.?\/*/, '')
+  const content = TEMPLATE_MARKDOWN_LOOKUP[normalized]
+  return typeof content === 'string' && content.trim().length > 0 ? content : null
+}
+
 function asTemplateVariant(value: unknown): TemplateVariant | null {
   const record = asRecord(value)
-  const dailyTemplate = asString(record.dailyTemplate)
-  const weeklyTemplate = asString(record.weeklyTemplate)
+  const dailyFile = asString(record.dailyFile)
+  const weeklyFile = asString(record.weeklyFile)
+  if (!dailyFile || !weeklyFile) {
+    return null
+  }
+  const dailyTemplate = resolveTemplateFile(dailyFile)
+  const weeklyTemplate = resolveTemplateFile(weeklyFile)
   if (!dailyTemplate || !weeklyTemplate) {
     return null
   }

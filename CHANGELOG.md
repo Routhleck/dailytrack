@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Repository-editable template catalog moved to `config/template-presets.json` + `config/templates/**` markdown files.
+- Profile template update flow now supports dry-run preview and apply modes (`merge` recommended, `overwrite` optional).
+- Per-profile template metadata file added: `templates/template-meta.json` (preset/language/mode/timestamp).
+- New tests added for template catalog loading and template update merge/overwrite behavior.
+
 ### Changed
-- Reserve this section for changes not tagged yet.
-- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+- Onboarding and profile-creation flows now persist template source metadata when applying selected presets.
+- Profile template parsing/serialization utilities are shared through dedicated schema helpers.
 
 ## [0.5.0] - 2026-03-22
 

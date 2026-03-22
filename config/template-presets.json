@@ -13,12 +13,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 4-5 strength sessions\n- [ ] 2-3 cardio sessions\n- [ ] 3 core sessions\n- [ ] Record weight / waist / progress photo\n- [ ] Eat well >= 5 days\n\n## Research\n- [ ] 3 deep work sessions\n- [ ] Push one key project forward\n- [ ] Plan next week\n\n## Life\n- [ ] 1 outdoor activity\n- [ ] 1 small life-enhancing activity\n- [ ] 1 environment reset / cleanup\n\n## Output\n- [ ] Publish 1 piece of content\n- [ ] Save 3 ideas / materials\n\n## Social\n- [ ] Join 1 social activity / meetup\n- [ ] Reach out to 1 friend\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "balanced/en/daily.md",
+          "weeklyFile": "balanced/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 训练或活动身体\n- [ ] 饮食达标 / 蛋白质达标\n- [ ] 完成今天最重要的研究任务\n- [ ] 出门步行 / 晒太阳\n- [ ] 记录一个小收获\n\n## Optional\n- [ ] 阅读或学习一点内容\n- [ ] 整理桌面或房间\n- [ ] 进行一次社交互动\n- [ ] 记录一条生活片段 / 想法\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 4-5 次力量训练\n- [ ] 2-3 次有氧训练\n- [ ] 3 次核心训练\n- [ ] 记录体重 / 腰围 / 进展照片\n- [ ] 5 天以上饮食达标\n\n## Research\n- [ ] 3 次深度工作\n- [ ] 推进一个关键项目\n- [ ] 规划下周重点\n\n## Life\n- [ ] 1 次户外活动\n- [ ] 1 次提升生活体验的小活动\n- [ ] 1 次环境整理 / 清洁\n\n## Output\n- [ ] 发布 1 条内容\n- [ ] 沉淀 3 条素材或想法\n\n## Social\n- [ ] 参加 1 次社交活动\n- [ ] 主动联系 1 位朋友\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "balanced/zh/daily.md",
+          "weeklyFile": "balanced/zh/weekly.md"
         }
       }
     },
@@ -30,12 +30,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Most important task\n- [ ] Body movement\n- [ ] One meaningful connection\n\n## Optional\n- [ ] Read 20 min\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] Move 4 days\n\n## Research\n- [ ] One deep milestone\n\n## Life\n- [ ] One reset activity\n\n## Output\n- [ ] One publishable output\n\n## Social\n- [ ] Reach out once\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "minimal/en/daily.md",
+          "weeklyFile": "minimal/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 最重要任务\n- [ ] 身体活动\n- [ ] 一次有意义的连接\n\n## Optional\n- [ ] 阅读 20 分钟\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 4 天以上身体活动\n\n## Research\n- [ ] 完成 1 个深度里程碑\n\n## Life\n- [ ] 1 次重置型活动\n\n## Output\n- [ ] 产出 1 个可发布成果\n\n## Social\n- [ ] 主动联系 1 次\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "minimal/zh/daily.md",
+          "weeklyFile": "minimal/zh/weekly.md"
         }
       }
     },
@@ -47,12 +47,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Strength session or cardio\n- [ ] Protein target reached\n- [ ] Sleep target met\n- [ ] Log body metrics if needed\n\n## Optional\n- [ ] Mobility or stretching\n- [ ] Outdoor walk\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 5 training sessions\n- [ ] 2 cardio sessions\n- [ ] Recovery day quality check\n- [ ] Log weight / waist / photo\n\n## Research\n- [ ] Keep baseline work output\n\n## Life\n- [ ] One full reset routine\n\n## Output\n- [ ] Summarize weekly fitness insights\n\n## Social\n- [ ] One active social plan\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "fitness/en/daily.md",
+          "weeklyFile": "fitness/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 力量训练或有氧\n- [ ] 蛋白质目标达成\n- [ ] 睡眠目标达成\n- [ ] 按需记录身体指标\n\n## Optional\n- [ ] 拉伸或灵活性训练\n- [ ] 户外步行\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 5 次训练\n- [ ] 2 次有氧\n- [ ] 恢复日质量检查\n- [ ] 记录体重 / 腰围 / 照片\n\n## Research\n- [ ] 保持基础工作产出\n\n## Life\n- [ ] 1 次完整重置流程\n\n## Output\n- [ ] 总结本周训练洞察\n\n## Social\n- [ ] 1 次主动社交安排\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "fitness/zh/daily.md",
+          "weeklyFile": "fitness/zh/weekly.md"
         }
       }
     },
@@ -64,12 +64,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 2-3 focused deep work blocks\n- [ ] Complete one high-impact task\n- [ ] Protect distraction-free window\n- [ ] Shutdown review before end of day\n\n## Optional\n- [ ] Read one technical paper section\n- [ ] Capture one implementation insight\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] Move body >= 4 days\n\n## Research\n- [ ] 10 deep work blocks\n- [ ] Resolve one major unknown\n- [ ] Write weekly research summary\n\n## Life\n- [ ] One environment cleanup\n\n## Output\n- [ ] Publish one serious progress update\n\n## Social\n- [ ] One thoughtful check-in\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "deep-work/en/daily.md",
+          "weeklyFile": "deep-work/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 2-3 个深度专注时段\n- [ ] 完成 1 个高影响任务\n- [ ] 保证无干扰窗口\n- [ ] 收工前完成复盘\n\n## Optional\n- [ ] 阅读一段技术资料\n- [ ] 记录一个实现洞察\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 4 天以上身体活动\n\n## Research\n- [ ] 10 个深度工作时段\n- [ ] 解决 1 个关键未知问题\n- [ ] 输出本周研究总结\n\n## Life\n- [ ] 1 次环境整理\n\n## Output\n- [ ] 发布 1 条实质性进展\n\n## Social\n- [ ] 1 次高质量沟通\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "deep-work/zh/daily.md",
+          "weeklyFile": "deep-work/zh/weekly.md"
         }
       }
     },
@@ -81,12 +81,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Produce one core creative block\n- [ ] Finish one shippable chunk\n- [ ] Gather one inspiration input\n- [ ] Polish one existing piece\n\n## Optional\n- [ ] Capture 3 idea bullets\n- [ ] Review audience feedback\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] Keep energy routine stable\n\n## Research\n- [ ] Study one strong creator reference\n\n## Life\n- [ ] One recharge activity\n\n## Output\n- [ ] Publish 2 pieces\n- [ ] Build 1 reusable content asset\n\n## Social\n- [ ] One community interaction\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "creator/en/daily.md",
+          "weeklyFile": "creator/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 完成 1 个核心创作时段\n- [ ] 做完 1 个可发布片段\n- [ ] 获取 1 条灵感输入\n- [ ] 打磨 1 份已有内容\n\n## Optional\n- [ ] 记录 3 条想法\n- [ ] 回看用户反馈\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 保持稳定精力节律\n\n## Research\n- [ ] 研究 1 个优秀创作者样本\n\n## Life\n- [ ] 1 次主动充电活动\n\n## Output\n- [ ] 发布 2 条内容\n- [ ] 沉淀 1 个可复用素材资产\n\n## Social\n- [ ] 1 次社区互动\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "creator/zh/daily.md",
+          "weeklyFile": "creator/zh/weekly.md"
         }
       }
     },
@@ -98,12 +98,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Focused study session\n- [ ] Solve practice problems\n- [ ] Review and summarize notes\n- [ ] Ask one question or clarify one gap\n\n## Optional\n- [ ] Spaced repetition review\n- [ ] Teach-back in one paragraph\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] Keep sleep and movement baseline\n\n## Research\n- [ ] 5 focused study sessions\n- [ ] Finish one chapter/module\n- [ ] Weekly summary and question list\n\n## Life\n- [ ] One cleanup/reset for study environment\n\n## Output\n- [ ] Submit one assignment/project milestone\n\n## Social\n- [ ] Discuss one topic with peer\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "student/en/daily.md",
+          "weeklyFile": "student/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 1 次专注学习\n- [ ] 完成练习题\n- [ ] 复盘并整理笔记\n- [ ] 提出 1 个问题或补齐 1 个盲点\n\n## Optional\n- [ ] 间隔复习\n- [ ] 用一段话讲解当天内容\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 保持睡眠和活动基线\n\n## Research\n- [ ] 5 次专注学习\n- [ ] 完成 1 个章节/模块\n- [ ] 输出周总结与问题清单\n\n## Life\n- [ ] 1 次学习环境整理\n\n## Output\n- [ ] 提交 1 个作业或项目里程碑\n\n## Social\n- [ ] 与同伴讨论 1 个主题\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "student/zh/daily.md",
+          "weeklyFile": "student/zh/weekly.md"
         }
       }
     },
@@ -115,12 +115,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Sleep and wake rhythm kept\n- [ ] Gentle movement or walk\n- [ ] Nutritious meals and hydration\n- [ ] Reduce one stress source\n\n## Optional\n- [ ] 10-minute breathing or meditation\n- [ ] Journal one emotional check-in\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 7 days sleep baseline\n- [ ] 4 days gentle movement\n- [ ] Track recovery signals\n\n## Research\n- [ ] Keep only essential commitments\n\n## Life\n- [ ] One environment comfort upgrade\n\n## Output\n- [ ] One small but meaningful output\n\n## Social\n- [ ] One low-pressure social touchpoint\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "recovery/en/daily.md",
+          "weeklyFile": "recovery/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 保持睡眠作息节律\n- [ ] 温和活动或散步\n- [ ] 饮食与补水达标\n- [ ] 减少 1 个压力源\n\n## Optional\n- [ ] 10 分钟呼吸/冥想\n- [ ] 记录一次情绪状态\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 7 天睡眠基线\n- [ ] 4 天温和活动\n- [ ] 记录恢复信号\n\n## Research\n- [ ] 只保留必要任务承诺\n\n## Life\n- [ ] 1 次舒适度优化\n\n## Output\n- [ ] 1 个小而有意义的产出\n\n## Social\n- [ ] 1 次低压力社交连接\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "recovery/zh/daily.md",
+          "weeklyFile": "recovery/zh/weekly.md"
         }
       }
     },
@@ -132,12 +132,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] Reach out to one person\n- [ ] Start one small conversation\n- [ ] Follow up one pending message\n- [ ] Record one social learning\n\n## Optional\n- [ ] Plan one meetup/activity\n- [ ] Practice one communication skill\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] Keep baseline energy for social life\n\n## Research\n- [ ] Reflect on one communication pattern\n\n## Life\n- [ ] Join one community space\n\n## Output\n- [ ] Share one useful resource publicly\n\n## Social\n- [ ] 3 proactive reach-outs\n- [ ] 1 in-person meetup or long call\n- [ ] 1 gratitude message\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "social/en/daily.md",
+          "weeklyFile": "social/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] 主动联系 1 个人\n- [ ] 发起 1 次小交流\n- [ ] 跟进 1 条待回复消息\n- [ ] 记录 1 个社交观察\n\n## Optional\n- [ ] 计划 1 次见面或活动\n- [ ] 练习 1 个沟通技巧\n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] 保持社交所需精力基线\n\n## Research\n- [ ] 复盘 1 个沟通模式\n\n## Life\n- [ ] 参与 1 个社区空间\n\n## Output\n- [ ] 公开分享 1 条有用资源\n\n## Social\n- [ ] 3 次主动联系\n- [ ] 1 次线下见面或长通话\n- [ ] 1 条感谢信息\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "social/zh/daily.md",
+          "weeklyFile": "social/zh/weekly.md"
         }
       }
     },
@@ -153,12 +153,12 @@
       },
       "variants": {
         "en": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] \n\n## Optional\n- [ ] \n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] \n\n## Research\n- [ ] \n\n## Life\n- [ ] \n\n## Output\n- [ ] \n\n## Social\n- [ ] \n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "blank/en/daily.md",
+          "weeklyFile": "blank/en/weekly.md"
         },
         "zh": {
-          "dailyTemplate": "# {{date}}\n\n## Daily Core\n- [ ] \n\n## Optional\n- [ ] \n\n## One Line\n-\n",
-          "weeklyTemplate": "# {{week}}\n\n## Body\n- [ ] \n\n## Research\n- [ ] \n\n## Life\n- [ ] \n\n## Output\n- [ ] \n\n## Social\n- [ ] \n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n"
+          "dailyFile": "blank/zh/daily.md",
+          "weeklyFile": "blank/zh/weekly.md"
         }
       }
     }

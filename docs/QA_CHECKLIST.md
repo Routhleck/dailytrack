@@ -34,6 +34,11 @@
 - [ ] Dashboard summary matches detail pages.
 - [ ] UI language toggle (`EN` / `中文`) switches core page copy and persists after restart.
 - [ ] Profiles page supports template language switch for preset preview/fill.
+- [ ] Template catalog changes in `config/template-presets.json` + `config/templates/**` are reflected in onboarding/profiles preset choices.
+- [ ] Profiles page template update preview shows daily/weekly/reflection dry-run summary.
+- [ ] Profiles page `Merge` update preserves custom checklist items while appending missing preset items.
+- [ ] Profiles page `Overwrite` update replaces templates after explicit confirmation.
+- [ ] Applying template update writes `templates/template-meta.json` with preset/language/mode/timestamp.
 - [ ] After first-launch template setup completes, 5-step sidebar tutorial auto-opens once.
 - [ ] Skipping auto tutorial closes it and prevents repeated automatic prompts.
 - [ ] `Settings -> Start Tutorial` can replay the tutorial on demand.
