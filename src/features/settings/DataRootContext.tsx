@@ -31,10 +31,15 @@ import {
 import { emitDataChanged } from '../../lib/liveSync'
 import { joinPath } from '../../lib/fs/pathApi'
 import { markTutorialPending, resetTutorialState } from '../tutorial/tutorial.store'
+import { saveTemplateMeta, type TemplateApplyMode } from './templateMeta.service'
+import type { TemplateLanguage } from './templateCatalog'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
   weeklyTemplate?: string
+  templatePresetId?: string
+  templateLanguage?: TemplateLanguage
+  templateApplyMode?: TemplateApplyMode
 }
 
 type MigrateDataRootSummary = {
@@ -56,7 +61,11 @@ type DataRootContextValue = {
   updateDataRoot: (nextPath: string) => Promise<void>
   migrateDataRoot: (destinationPath: string, overwrite?: boolean) => Promise<MigrateDataRootSummary>
   resetTrackerData: () => Promise<void>
-  completeInitialTemplateSetup: (dailyTemplate: string, weeklyTemplate: string) => Promise<void>
+  completeInitialTemplateSetup: (
+    dailyTemplate: string,
+    weeklyTemplate: string,
+    templateMeta?: Pick<ProfileCreateOptions, 'templatePresetId' | 'templateLanguage' | 'templateApplyMode'>,
+  ) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
   deleteProfile: (profileName: string) => Promise<void>
@@ -182,7 +191,11 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         await bootstrap(baseDataRoot)
         emitDataChanged({ scope: 'all' })
       },
-      completeInitialTemplateSetup: async (dailyTemplate: string, weeklyTemplate: string) => {
+      completeInitialTemplateSetup: async (
+        dailyTemplate: string,
+        weeklyTemplate: string,
+        templateMeta,
+      ) => {
         if (!dataRoot || !baseDataRoot) {
           throw new Error('Data root is not initialized')
         }
@@ -197,6 +210,14 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
           joinPath(dataRoot, 'templates', 'weekly.md'),
           normalizeTemplateContent(weeklyTemplate),
         )
+        if (templateMeta?.templatePresetId && templateMeta?.templateLanguage) {
+          await saveTemplateMeta(dataRoot, {
+            presetId: templateMeta.templatePresetId,
+            templateLanguage: templateMeta.templateLanguage,
+            lastAppliedMode: templateMeta.templateApplyMode ?? 'overwrite',
+            lastAppliedAt: new Date().toISOString(),
+          })
+        }
 
         clearPendingInitialTemplateRoot()
         markTutorialPending()
@@ -215,12 +236,20 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
           throw new Error('Data root is not initialized')
         }
 
-        await createProfileApi(
+        const profileRoot = await createProfileApi(
           baseDataRoot,
           profileName,
           options?.dailyTemplate,
           options?.weeklyTemplate,
         )
+        if (options?.templatePresetId && options?.templateLanguage) {
+          await saveTemplateMeta(profileRoot, {
+            presetId: options.templatePresetId,
+            templateLanguage: options.templateLanguage,
+            lastAppliedMode: options.templateApplyMode ?? 'overwrite',
+            lastAppliedAt: new Date().toISOString(),
+          })
+        }
         await bootstrap(baseDataRoot, profileName)
         emitDataChanged({ scope: 'profile', profile: profileName })
       },

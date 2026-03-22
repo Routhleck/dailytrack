@@ -298,6 +298,29 @@ export const enMessages = {
   'profiles.currentTemplatesSaved': 'Current profile templates saved.',
   'profiles.currentTemplateLoadFailed': 'Failed to load current profile templates.',
   'profiles.currentTemplateSaveFailed': 'Failed to save templates.',
+  'profiles.templateSource': 'Template source',
+  'profiles.templateSourceUnknown': 'Unknown (manual/custom)',
+  'profiles.templateLastAppliedMode': 'Last applied mode',
+  'profiles.templateLastAppliedAt': 'Last applied at',
+  'profiles.templateUpdate': 'Update Current Templates',
+  'profiles.templateUpdateMode': 'Update mode',
+  'profiles.templateUpdateModeMerge': 'Merge (recommended)',
+  'profiles.templateUpdateModeOverwrite': 'Overwrite',
+  'profiles.templateUpdatePreview': 'Preview Update',
+  'profiles.templateUpdateApply': 'Apply Update',
+  'profiles.templateUpdatePreviewReady':
+    'Preview ready: +{dailyAdded} daily items, +{weeklyAdded} weekly items.',
+  'profiles.templateUpdatePreviewFailed': 'Failed to preview template update.',
+  'profiles.templateUpdateApplyFailed': 'Failed to apply template update.',
+  'profiles.templateUpdateApplied': 'Template update applied ({mode}).',
+  'profiles.templateUpdateOverwriteConfirm':
+    'Overwrite mode may remove local custom checklist items (daily: {dailyRemoved}, weekly: {weeklyRemoved}). Continue?',
+  'profiles.templateUpdateSummaryDaily':
+    'Daily checklist: before {before}, after {after}, +{added}, -{removed}',
+  'profiles.templateUpdateSummaryWeekly':
+    'Weekly checklist: before {before}, after {after}, +{added}, -{removed}',
+  'profiles.templateUpdateSummaryReflection':
+    'Reflection filled: before {before}, after {after}, filled from preset {filled}',
   'profiles.structuredTemplateParseFailed': 'Failed to parse template in structured mode. Switch to raw mode to fix markdown format.',
   'profiles.dailyTemplateStructuredHint': 'Edit daily template items in a structured way. Changes sync back to markdown template.',
   'profiles.weeklyTemplateStructuredHint': 'Edit weekly template sections and reflection fields structurally.',
@@ -815,6 +838,28 @@ export const zhMessages: Record<MessageKey, string> = {
   'profiles.currentTemplatesSaved': '当前档案模板已保存。',
   'profiles.currentTemplateLoadFailed': '加载当前档案模板失败。',
   'profiles.currentTemplateSaveFailed': '保存模板失败。',
+  'profiles.templateSource': '模板来源',
+  'profiles.templateSourceUnknown': '未知（手动/自定义）',
+  'profiles.templateLastAppliedMode': '最近应用模式',
+  'profiles.templateLastAppliedAt': '最近应用时间',
+  'profiles.templateUpdate': '更新当前模板',
+  'profiles.templateUpdateMode': '更新模式',
+  'profiles.templateUpdateModeMerge': '增量合并（推荐）',
+  'profiles.templateUpdateModeOverwrite': '全量覆盖',
+  'profiles.templateUpdatePreview': '预览更新',
+  'profiles.templateUpdateApply': '应用更新',
+  'profiles.templateUpdatePreviewReady': '预览完成：daily 新增 {dailyAdded} 项，weekly 新增 {weeklyAdded} 项。',
+  'profiles.templateUpdatePreviewFailed': '模板更新预览失败。',
+  'profiles.templateUpdateApplyFailed': '应用模板更新失败。',
+  'profiles.templateUpdateApplied': '模板更新已应用（{mode}）。',
+  'profiles.templateUpdateOverwriteConfirm':
+    '全量覆盖可能删除本地自定义清单项（daily: {dailyRemoved}，weekly: {weeklyRemoved}），确定继续？',
+  'profiles.templateUpdateSummaryDaily':
+    'Daily 清单：更新前 {before}，更新后 {after}，新增 {added}，删除 {removed}',
+  'profiles.templateUpdateSummaryWeekly':
+    'Weekly 清单：更新前 {before}，更新后 {after}，新增 {added}，删除 {removed}',
+  'profiles.templateUpdateSummaryReflection':
+    '反思字段已填写：更新前 {before}，更新后 {after}，其中来自预设补齐 {filled}',
   'profiles.structuredTemplateParseFailed': '结构化解析模板失败，请切换到原始 Markdown 修正格式。',
   'profiles.dailyTemplateStructuredHint': '以结构化方式编辑每日模板条目，修改会同步回 Markdown 模板。',
   'profiles.weeklyTemplateStructuredHint': '以结构化方式编辑每周模板分区与反思字段。',

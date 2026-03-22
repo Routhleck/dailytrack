@@ -37,6 +37,11 @@ export function InitialTemplateSetupModal() {
       await completeInitialTemplateSetup(
         selectedVariant.dailyTemplate,
         selectedVariant.weeklyTemplate,
+        {
+          templatePresetId: selectedPreset.id,
+          templateLanguage,
+          templateApplyMode: 'overwrite',
+        },
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('onboarding.applyFailed'))

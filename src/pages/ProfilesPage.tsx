@@ -9,11 +9,22 @@ import {
   resolvePreferredTemplateLanguage,
   type TemplateLanguage,
 } from '../features/settings/templatePresets'
-import { parseDailyMarkdown } from '../features/daily/daily.parser'
-import { serializeDailyMarkdown } from '../features/daily/daily.serializer'
-import { WEEKLY_SECTION_ORDER, parseWeeklyMarkdown } from '../features/weekly/weekly.parser'
-import { serializeWeeklyMarkdown } from '../features/weekly/weekly.serializer'
+import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { computeTemplateUpdate, type TemplateUpdatePreview } from '../features/settings/templateUpdate.service'
+import {
+  getTemplateMeta,
+  saveTemplateMeta,
+  type TemplateApplyMode,
+  type TemplateMeta,
+} from '../features/settings/templateMeta.service'
+import {
+  normalizeTemplateOutput,
+  parseDailyTemplateMarkdown,
+  parseWeeklyTemplateMarkdown,
+  serializeDailyTemplateMarkdown,
+  serializeWeeklyTemplateMarkdown,
+} from '../features/settings/templateSchema'
 import { todayDateString } from '../lib/date/date'
 import { currentWeekId } from '../lib/date/week'
 import { readTextFile, writeTextFile } from '../lib/fs/fileApi'
@@ -23,35 +34,6 @@ import type { DailyNote, WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
 function safeName(name: string): string {
   return name.trim().replace(/\s+/g, '-')
-}
-
-const TEMPLATE_DATE_PLACEHOLDER = '{{date}}'
-const TEMPLATE_WEEK_PLACEHOLDER = '{{week}}'
-const TEMPLATE_PARSE_DATE = '2000-01-01'
-const TEMPLATE_PARSE_WEEK = '2000-W01'
-
-function parseDailyTemplateMarkdown(markdown: string): DailyNote {
-  return parseDailyMarkdown(
-    markdown.replaceAll(TEMPLATE_DATE_PLACEHOLDER, TEMPLATE_PARSE_DATE),
-    TEMPLATE_PARSE_DATE,
-  )
-}
-
-function parseWeeklyTemplateMarkdown(markdown: string): WeeklyNote {
-  return parseWeeklyMarkdown(
-    markdown.replaceAll(TEMPLATE_WEEK_PLACEHOLDER, TEMPLATE_PARSE_WEEK),
-    TEMPLATE_PARSE_WEEK,
-  )
-}
-
-function serializeDailyTemplateMarkdown(note: DailyNote): string {
-  const next = { ...note, title: TEMPLATE_DATE_PLACEHOLDER }
-  return serializeDailyMarkdown(next)
-}
-
-function serializeWeeklyTemplateMarkdown(note: WeeklyNote): string {
-  const next = { ...note, title: TEMPLATE_WEEK_PLACEHOLDER }
-  return serializeWeeklyMarkdown(next)
 }
 
 export function ProfilesPage() {
@@ -101,6 +83,15 @@ export function ProfilesPage() {
   const [currentWeeklyStructured, setCurrentWeeklyStructured] = useState<WeeklyNote | null>(null)
   const [templateMessage, setTemplateMessage] = useState('')
   const [templateBusy, setTemplateBusy] = useState(false)
+  const [currentTemplateMeta, setCurrentTemplateMeta] = useState<TemplateMeta | null>(null)
+  const [updatePresetId, setUpdatePresetId] = useState('balanced')
+  const [updateTemplateLanguage, setUpdateTemplateLanguage] = useState<TemplateLanguage>(
+    resolvePreferredTemplateLanguage(),
+  )
+  const [updateMode, setUpdateMode] = useState<TemplateApplyMode>('merge')
+  const [updatePreview, setUpdatePreview] = useState<TemplateUpdatePreview | null>(null)
+  const [updateBusy, setUpdateBusy] = useState(false)
+  const updatePreset = useMemo(() => getTemplatePresetById(updatePresetId), [updatePresetId])
 
   useEffect(() => {
     const selectedVariant = getTemplateVariant(selectedPreset, templateLanguage)
@@ -121,8 +112,9 @@ export function ProfilesPage() {
     void Promise.all([
       readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md')),
       readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md')),
+      getTemplateMeta(dataRoot),
     ])
-      .then(([daily, weekly]) => {
+      .then(([daily, weekly, meta]) => {
         if (cancelled) {
           return
         }
@@ -130,6 +122,12 @@ export function ProfilesPage() {
         setCurrentWeeklyTemplate(weekly)
         setCurrentDailyStructured(parseDailyTemplateMarkdown(daily))
         setCurrentWeeklyStructured(parseWeeklyTemplateMarkdown(weekly))
+        setCurrentTemplateMeta(meta)
+        setUpdatePreview(null)
+        if (meta) {
+          setUpdatePresetId(getTemplatePresetById(meta.presetId).id)
+          setUpdateTemplateLanguage(meta.templateLanguage)
+        }
       })
       .catch(() => {
         if (cancelled) {
@@ -159,6 +157,9 @@ export function ProfilesPage() {
       await createProfile(profileName, {
         dailyTemplate: newDailyTemplate,
         weeklyTemplate: newWeeklyTemplate,
+        templatePresetId: selectedPreset.id,
+        templateLanguage,
+        templateApplyMode: 'overwrite',
       })
       setCreateName('')
       setCreateMessage(t('profiles.profileCreated', { name: profileName }))
@@ -344,6 +345,7 @@ export function ProfilesPage() {
     try {
       await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'), currentDailyTemplate)
       await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md'), currentWeeklyTemplate)
+      setUpdatePreview(null)
       setTemplateMessage(t('profiles.currentTemplatesSaved'))
     } catch (error) {
       setTemplateMessage(error instanceof Error ? error.message : t('profiles.currentTemplateSaveFailed'))
@@ -510,10 +512,6 @@ export function ProfilesPage() {
     })
   }
 
-  function normalizeTemplateOutput(content: string): string {
-    return content.trimEnd() + '\n'
-  }
-
   async function handleApplyDailyTemplateToToday() {
     if (!dataRoot) {
       setTemplateMessage(t('profiles.activeProfileNotReady'))
@@ -559,6 +557,99 @@ export function ProfilesPage() {
       setTemplateMessage(error instanceof Error ? error.message : t('profiles.applyTemplateFailed'))
     } finally {
       setTemplateBusy(false)
+    }
+  }
+
+  async function handlePreviewTemplateUpdate() {
+    setTemplateMessage('')
+    try {
+      const selectedVariant = getTemplateVariant(updatePreset, updateTemplateLanguage)
+      const next = computeTemplateUpdate(
+        {
+          dailyTemplate: currentDailyTemplate,
+          weeklyTemplate: currentWeeklyTemplate,
+        },
+        {
+          dailyTemplate: selectedVariant.dailyTemplate,
+          weeklyTemplate: selectedVariant.weeklyTemplate,
+        },
+        updateMode,
+      )
+      setUpdatePreview(next.preview)
+      setTemplateMessage(
+        t('profiles.templateUpdatePreviewReady', {
+          dailyAdded: next.preview.daily.added,
+          weeklyAdded: next.preview.weekly.added,
+        }),
+      )
+    } catch (error) {
+      setUpdatePreview(null)
+      setTemplateMessage(error instanceof Error ? error.message : t('profiles.templateUpdatePreviewFailed'))
+    }
+  }
+
+  async function handleApplyTemplateUpdate() {
+    if (!dataRoot) {
+      setTemplateMessage(t('profiles.activeProfileNotReady'))
+      return
+    }
+    setTemplateBusy(true)
+    setUpdateBusy(true)
+    setTemplateMessage('')
+    try {
+      const selectedVariant = getTemplateVariant(updatePreset, updateTemplateLanguage)
+      const next = computeTemplateUpdate(
+        {
+          dailyTemplate: currentDailyTemplate,
+          weeklyTemplate: currentWeeklyTemplate,
+        },
+        {
+          dailyTemplate: selectedVariant.dailyTemplate,
+          weeklyTemplate: selectedVariant.weeklyTemplate,
+        },
+        updateMode,
+      )
+
+      if (
+        updateMode === 'overwrite' &&
+        !window.confirm(
+          t('profiles.templateUpdateOverwriteConfirm', {
+            dailyRemoved: next.preview.daily.removed,
+            weeklyRemoved: next.preview.weekly.removed,
+          }),
+        )
+      ) {
+        setTemplateBusy(false)
+        setUpdateBusy(false)
+        return
+      }
+
+      await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'), next.dailyTemplate)
+      await writeTextFile(dataRoot, joinPath(dataRoot, 'templates', 'weekly.md'), next.weeklyTemplate)
+      const meta = await saveTemplateMeta(dataRoot, {
+        presetId: updatePreset.id,
+        templateLanguage: updateTemplateLanguage,
+        lastAppliedMode: updateMode,
+        lastAppliedAt: new Date().toISOString(),
+      })
+
+      setCurrentTemplateMeta(meta)
+      setCurrentDailyTemplate(next.dailyTemplate)
+      setCurrentWeeklyTemplate(next.weeklyTemplate)
+      setCurrentDailyStructured(parseDailyTemplateMarkdown(next.dailyTemplate))
+      setCurrentWeeklyStructured(parseWeeklyTemplateMarkdown(next.weeklyTemplate))
+      setUpdatePreview(next.preview)
+      emitDataChanged({ scope: 'settings' })
+      setTemplateMessage(
+        t('profiles.templateUpdateApplied', {
+          mode: updateMode === 'merge' ? t('profiles.templateUpdateModeMerge') : t('profiles.templateUpdateModeOverwrite'),
+        }),
+      )
+    } catch (error) {
+      setTemplateMessage(error instanceof Error ? error.message : t('profiles.templateUpdateApplyFailed'))
+    } finally {
+      setTemplateBusy(false)
+      setUpdateBusy(false)
     }
   }
 
@@ -854,6 +945,137 @@ export function ProfilesPage() {
 
       <form onSubmit={handleSaveCurrentTemplates} className="space-y-3 rounded-lg border border-slate-200 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('profiles.currentTemplates')}</h2>
+        <article className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <p>
+            {t('profiles.templateSource')}:&nbsp;
+            <span className="font-medium text-slate-800">
+              {currentTemplateMeta
+                ? `${currentTemplateMeta.presetId} (${currentTemplateMeta.templateLanguage})`
+                : t('profiles.templateSourceUnknown')}
+            </span>
+          </p>
+          <p>
+            {t('profiles.templateLastAppliedMode')}:&nbsp;
+            <span className="font-medium text-slate-800">
+              {currentTemplateMeta
+                ? currentTemplateMeta.lastAppliedMode === 'merge'
+                  ? t('profiles.templateUpdateModeMerge')
+                  : t('profiles.templateUpdateModeOverwrite')
+                : '-'}
+            </span>
+          </p>
+          <p>
+            {t('profiles.templateLastAppliedAt')}:&nbsp;
+            <span className="font-medium text-slate-800">
+              {currentTemplateMeta?.lastAppliedAt
+                ? new Date(currentTemplateMeta.lastAppliedAt).toLocaleString()
+                : '-'}
+            </span>
+          </p>
+        </article>
+
+        <article className="space-y-3 rounded-md border border-slate-200 p-3">
+          <h3 className="text-sm font-semibold text-slate-900">{t('profiles.templateUpdate')}</h3>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-700" htmlFor="update-profile-preset">
+                {t('profiles.templatePreset')}
+              </label>
+              <select
+                id="update-profile-preset"
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={updatePresetId}
+                onChange={(event) => setUpdatePresetId(event.target.value)}
+                disabled={templateBusy || updateBusy || !dataRoot}
+              >
+                {TEMPLATE_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.labels[updateTemplateLanguage]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700" htmlFor="update-template-language">
+                {t('profiles.templateLanguage')}
+              </label>
+              <select
+                id="update-template-language"
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={updateTemplateLanguage}
+                onChange={(event) => setUpdateTemplateLanguage(event.target.value as TemplateLanguage)}
+                disabled={templateBusy || updateBusy || !dataRoot}
+              >
+                <option value="en">{t('template.languageEnglish')}</option>
+                <option value="zh">{t('template.languageChinese')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700" htmlFor="update-template-mode">
+                {t('profiles.templateUpdateMode')}
+              </label>
+              <select
+                id="update-template-mode"
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={updateMode}
+                onChange={(event) => setUpdateMode(event.target.value as TemplateApplyMode)}
+                disabled={templateBusy || updateBusy || !dataRoot}
+              >
+                <option value="merge">{t('profiles.templateUpdateModeMerge')}</option>
+                <option value="overwrite">{t('profiles.templateUpdateModeOverwrite')}</option>
+              </select>
+            </div>
+          </div>
+          {updatePreset.descriptions?.[updateTemplateLanguage] ? (
+            <p className="text-xs text-slate-500">{updatePreset.descriptions[updateTemplateLanguage]}</p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={templateBusy || updateBusy || !dataRoot}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              onClick={() => void handlePreviewTemplateUpdate()}
+            >
+              {t('profiles.templateUpdatePreview')}
+            </button>
+            <button
+              type="button"
+              disabled={templateBusy || updateBusy || !dataRoot}
+              className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700 disabled:opacity-60"
+              onClick={() => void handleApplyTemplateUpdate()}
+            >
+              {updateBusy ? t('profiles.saving') : t('profiles.templateUpdateApply')}
+            </button>
+          </div>
+          {updatePreview ? (
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+              <p>
+                {t('profiles.templateUpdateSummaryDaily', {
+                  before: updatePreview.daily.before,
+                  after: updatePreview.daily.after,
+                  added: updatePreview.daily.added,
+                  removed: updatePreview.daily.removed,
+                })}
+              </p>
+              <p>
+                {t('profiles.templateUpdateSummaryWeekly', {
+                  before: updatePreview.weekly.before,
+                  after: updatePreview.weekly.after,
+                  added: updatePreview.weekly.added,
+                  removed: updatePreview.weekly.removed,
+                })}
+              </p>
+              <p>
+                {t('profiles.templateUpdateSummaryReflection', {
+                  before: updatePreview.reflection.beforeFilled,
+                  after: updatePreview.reflection.afterFilled,
+                  filled: updatePreview.reflection.filledFromPreset,
+                })}
+              </p>
+            </div>
+          ) : null}
+        </article>
+
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
