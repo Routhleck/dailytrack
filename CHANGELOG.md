@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sync conflict handling now supports batch actions (`keep_local`, `apply_remote`, `mark_resolved`) for selected conflicts.
 - Sync page now supports one-click conflict strategy presets for all unresolved conflicts.
 - Sync page now shows retry backoff hints and a quick retry action when sync health is degraded.
+- Sync conflict actions now include dry-run summaries (expected overwrite/delete counts) before execution.
 
 ### Changed
 - Sync page now shows sync health, error category, last sync timestamp, and next auto-pull countdown for clearer reliability visibility.
