@@ -37,6 +37,10 @@
           "dailyFile": "minimal/zh/daily.md",
           "weeklyFile": "minimal/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Lean structure for low-friction daily use.",
+        "zh": "低摩擦使用的精简结构。"
       }
     },
     {
@@ -54,6 +58,10 @@
           "dailyFile": "fitness/zh/daily.md",
           "weeklyFile": "fitness/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Training and recovery focused daily/weekly goals.",
+        "zh": "面向训练与恢复的每日/每周目标。"
       }
     },
     {
@@ -71,6 +79,10 @@
           "dailyFile": "deep-work/zh/daily.md",
           "weeklyFile": "deep-work/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Prioritize focused work blocks and key output.",
+        "zh": "强调深度专注时段与关键产出。"
       }
     },
     {
@@ -88,6 +100,10 @@
           "dailyFile": "creator/zh/daily.md",
           "weeklyFile": "creator/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Content creation rhythm with idea capture and polish.",
+        "zh": "围绕创作节奏，兼顾灵感捕捉与打磨。"
       }
     },
     {
@@ -105,6 +121,10 @@
           "dailyFile": "student/zh/daily.md",
           "weeklyFile": "student/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Study-oriented template for learning and review loops.",
+        "zh": "面向学习与复盘闭环的模板。"
       }
     },
     {
@@ -122,6 +142,10 @@
           "dailyFile": "recovery/zh/daily.md",
           "weeklyFile": "recovery/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Gentle reset template for stress reduction and stability.",
+        "zh": "用于减压与恢复稳定状态的温和模板。"
       }
     },
     {
@@ -139,6 +163,10 @@
           "dailyFile": "social/zh/daily.md",
           "weeklyFile": "social/zh/weekly.md"
         }
+      },
+      "descriptions": {
+        "en": "Relationship-building template for proactive social growth.",
+        "zh": "面向主动社交与关系建设的模板。"
       }
     },
     {

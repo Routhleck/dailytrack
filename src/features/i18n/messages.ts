@@ -51,7 +51,7 @@ export const enMessages = {
   'onboarding.continue': 'Continue',
   'onboarding.applying': 'Applying...',
   'onboarding.applyFailed': 'Failed to apply template setup.',
-  'onboarding.languageEnglish': 'English',
+  'onboarding.languageEnglish': '英文',
   'onboarding.languageChinese': '中文',
 
   'tutorial.progress': 'Step {current} of {total}',
@@ -525,7 +525,7 @@ export const enMessages = {
   'section.Output': 'Output',
   'section.Social': 'Social',
 
-  'template.languageEnglish': 'English',
+  'template.languageEnglish': '英文',
   'template.languageChinese': '中文',
 
   'updater.available': 'Update {version} is available.',

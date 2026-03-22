@@ -37,7 +37,7 @@ function safeName(name: string): string {
 }
 
 export function ProfilesPage() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const {
     baseDataRoot,
     dataRoot,
@@ -52,7 +52,7 @@ export function ProfilesPage() {
   const [createName, setCreateName] = useState('')
   const [presetId, setPresetId] = useState('balanced')
   const [templateLanguage, setTemplateLanguage] = useState<TemplateLanguage>(
-    resolvePreferredTemplateLanguage(),
+    language === 'zh' ? 'zh' : resolvePreferredTemplateLanguage(),
   )
   const selectedPreset = useMemo(
     () => getTemplatePresetById(presetId),
@@ -86,12 +86,16 @@ export function ProfilesPage() {
   const [currentTemplateMeta, setCurrentTemplateMeta] = useState<TemplateMeta | null>(null)
   const [updatePresetId, setUpdatePresetId] = useState('balanced')
   const [updateTemplateLanguage, setUpdateTemplateLanguage] = useState<TemplateLanguage>(
-    resolvePreferredTemplateLanguage(),
+    language === 'zh' ? 'zh' : resolvePreferredTemplateLanguage(),
   )
   const [updateMode, setUpdateMode] = useState<TemplateApplyMode>('merge')
   const [updatePreview, setUpdatePreview] = useState<TemplateUpdatePreview | null>(null)
   const [updateBusy, setUpdateBusy] = useState(false)
   const updatePreset = useMemo(() => getTemplatePresetById(updatePresetId), [updatePresetId])
+  const currentTemplateSourcePreset = useMemo(
+    () => (currentTemplateMeta ? getTemplatePresetById(currentTemplateMeta.presetId) : null),
+    [currentTemplateMeta],
+  )
 
   useEffect(() => {
     const selectedVariant = getTemplateVariant(selectedPreset, templateLanguage)
@@ -949,8 +953,8 @@ export function ProfilesPage() {
           <p>
             {t('profiles.templateSource')}:&nbsp;
             <span className="font-medium text-slate-800">
-              {currentTemplateMeta
-                ? `${currentTemplateMeta.presetId} (${currentTemplateMeta.templateLanguage})`
+              {currentTemplateMeta && currentTemplateSourcePreset
+                ? `${currentTemplateSourcePreset.labels[currentTemplateMeta.templateLanguage]} (${currentTemplateMeta.presetId})`
                 : t('profiles.templateSourceUnknown')}
             </span>
           </p>
