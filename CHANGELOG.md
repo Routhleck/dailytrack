@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Reserve this section for changes not tagged yet.
+- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+
+## [0.7.0] - 2026-03-22
+
 ### Added
 - Added template-based `Only show changes` mode for Daily, Weekly, and Body structured pages.
 - Added mobile sync status banner with offline/pending/conflict/next-auto-pull visibility and quick link to Sync page.
