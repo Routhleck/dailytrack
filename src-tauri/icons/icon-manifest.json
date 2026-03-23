@@ -2,5 +2,5 @@
   "default": "dailytrack-app-icon.png",
   "android_bg": "dailytrack-android-bg.png",
   "android_fg": "dailytrack-android-fg.png",
-  "android_fg_scale": 92
+  "android_fg_scale": 86
 }
