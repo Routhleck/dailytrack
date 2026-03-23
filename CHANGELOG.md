@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reserve this section for changes not tagged yet.
 - Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
 
+## [0.7.2] - 2026-03-23
+
+### Changed
+- Reduced shell-level re-render pressure by scoping mobile sync polling UI into a mobile-only banner component instead of the global app shell.
+- Tuned WebDAV bridge scheduling on resume/visibility changes to avoid sync burst spikes after app foreground restore.
+
 ### Fixed
 - Refined desktop/app icon assets to use transparent outer corners and normalized visual padding for better macOS launcher consistency.
 - Reworked Android adaptive icon sources (dedicated foreground/background and larger foreground scale) to avoid the "small icon inside rounded rectangle" look.
