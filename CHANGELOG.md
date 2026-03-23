@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reserve this section for changes not tagged yet.
 - Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
 
+### Fixed
+- Refined desktop/app icon assets to use transparent outer corners and normalized visual padding for better macOS launcher consistency.
+- Reworked Android adaptive icon sources (dedicated foreground/background and larger foreground scale) to avoid the "small icon inside rounded rectangle" look.
+
 ## [0.7.1] - 2026-03-22
 
 ### Fixed
