@@ -5,11 +5,15 @@ import { emitDataChanged, onDataChanged } from '../../lib/liveSync'
 import { useDataRoot } from '../settings/DataRootContext'
 
 const DEFAULT_AUTO_PULL_INTERVAL_MS = 30_000
+const INITIAL_SYNC_DELAY_MS = 1_200
+const VISIBILITY_SYNC_DELAY_MS = 900
+const MIN_SYNC_GAP_MS = 2_500
 
 export function WebdavSyncBridge() {
   const { baseDataRoot } = useDataRoot()
   const [reloadToken, setReloadToken] = useState(0)
   const busyRef = useRef(false)
+  const lastSyncRequestedAtRef = useRef(0)
 
   useEffect(() => {
     const unsubscribe = onDataChanged((detail) => {
@@ -30,12 +34,18 @@ export function WebdavSyncBridge() {
     let disposed = false
     let autoSyncIntervalId: number | null = null
     let autoPullIntervalId: number | null = null
+    const timerIds = new Set<number>()
 
     async function sync(direction: 'push' | 'pull' | 'both') {
+      const now = Date.now()
+      if (now - lastSyncRequestedAtRef.current < MIN_SYNC_GAP_MS) {
+        return
+      }
       if (busyRef.current) {
         return
       }
 
+      lastSyncRequestedAtRef.current = now
       busyRef.current = true
       try {
         const result = await webdavRealtimeSyncNow(root, direction)
@@ -53,49 +63,68 @@ export function WebdavSyncBridge() {
       }
     }
 
+    function scheduleSync(direction: 'push' | 'pull' | 'both', delayMs = 0) {
+      const timeoutId = window.setTimeout(() => {
+        timerIds.delete(timeoutId)
+        if (disposed) {
+          return
+        }
+        if (document.visibilityState !== 'visible' && direction !== 'push') {
+          return
+        }
+        void sync(direction)
+      }, Math.max(0, delayMs))
+      timerIds.add(timeoutId)
+    }
+
     async function setup() {
       try {
         const config = await getWebdavConfig()
         if (disposed || !config.enabled) {
           return
         }
+        const hasAutoPush = config.autoPushIntervalMin > 0
+        const hasAutoPull = config.autoPullEnabled
+        const autoPullDirection: 'pull' | 'both' = hasAutoPush ? 'pull' : 'both'
 
-        if (config.autoPushIntervalMin > 0) {
-          void sync('both')
+        if (hasAutoPush || hasAutoPull) {
+          scheduleSync(hasAutoPush ? 'both' : autoPullDirection, INITIAL_SYNC_DELAY_MS)
+        }
 
+        if (hasAutoPush) {
           autoSyncIntervalId = window.setInterval(() => {
-            void sync('both')
+            if (document.visibilityState !== 'visible') {
+              return
+            }
+            scheduleSync('both')
           }, config.autoPushIntervalMin * 60 * 1000)
         }
 
-        if (config.autoPullEnabled) {
+        if (hasAutoPull) {
           const pullIntervalMs = Math.max(
             5_000,
             Number.isFinite(config.autoPullIntervalSec)
               ? Math.round(config.autoPullIntervalSec * 1000)
               : DEFAULT_AUTO_PULL_INTERVAL_MS,
           )
-          const autoPullDirection: 'pull' | 'both' = config.autoPushIntervalMin > 0 ? 'pull' : 'both'
-
-          void sync(autoPullDirection)
           autoPullIntervalId = window.setInterval(() => {
-            void sync(autoPullDirection)
+            if (document.visibilityState !== 'visible') {
+              return
+            }
+            scheduleSync(autoPullDirection)
           }, pullIntervalMs)
         }
 
         const onVisibility = () => {
           if (document.visibilityState === 'visible') {
-            if (config.autoPullEnabled) {
-              void sync(config.autoPushIntervalMin > 0 ? 'pull' : 'both')
-            }
-            if (config.autoPushIntervalMin > 0) {
-              void sync('both')
+            if (hasAutoPush || hasAutoPull) {
+              scheduleSync(hasAutoPush ? 'both' : autoPullDirection, VISIBILITY_SYNC_DELAY_MS)
             }
             return
           }
 
-          if (config.autoPushIntervalMin > 0) {
-            void sync('push')
+          if (hasAutoPush) {
+            scheduleSync('push')
           }
         }
 
@@ -125,6 +154,10 @@ export function WebdavSyncBridge() {
       if (autoPullIntervalId != null) {
         window.clearInterval(autoPullIntervalId)
       }
+      for (const timerId of timerIds) {
+        window.clearTimeout(timerId)
+      }
+      timerIds.clear()
     }
   }, [baseDataRoot, reloadToken])
 
