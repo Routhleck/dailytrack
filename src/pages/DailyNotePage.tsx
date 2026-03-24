@@ -20,6 +20,7 @@ import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { DailyNote } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
+type DailySection = 'dailyCore' | 'optional'
 
 export function DailyNotePage() {
   const { t } = useI18n()
@@ -200,7 +201,7 @@ export function DailyNotePage() {
   }, [activeDate, dataRoot, markSaved, mode, note, preferences.sync.mode, rawDirty, saving, structuredDirty, t])
 
   function updateChecklist(
-    section: 'dailyCore' | 'optional',
+    section: DailySection,
     itemIndex: number,
     patch: Partial<{ checked: boolean; text: string }>,
   ) {
@@ -218,6 +219,14 @@ export function DailyNotePage() {
       next[section][itemIndex] = { ...target, ...patch }
       return next
     })
+  }
+
+  function toggleChecklistItem(section: DailySection, itemId: string, checked: boolean) {
+    const index = note?.[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    updateChecklist(section, index, { checked })
   }
 
   if (rootLoading || preferencesLoading || loading) {
@@ -238,6 +247,7 @@ export function DailyNotePage() {
   }
 
   const coreSummary = summarizeChecklist(note.dailyCore)
+  const coreRemainingCount = Math.max(0, coreSummary.total - coreSummary.checked)
   const visibleDailyCore = showOnlyChanges && templateDiff
     ? note.dailyCore.filter((item) => templateDiff.dailyCore.changedIds.has(item.id))
     : note.dailyCore
@@ -326,6 +336,7 @@ export function DailyNotePage() {
               </span>
             </div>
             <ProgressBar value={coreSummary.percent} />
+            <p className="mt-2 text-xs text-slate-600">{t('dailyNote.remainingCore', { count: coreRemainingCount })}</p>
             <div className="mt-4 space-y-2">
               {visibleDailyCore.map((item) => (
                 <div
@@ -333,14 +344,18 @@ export function DailyNotePage() {
                   className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
                     item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
                   }`}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement
+                    if (target.closest('button,input,textarea,a,label')) {
+                      return
+                    }
+                    toggleChecklistItem('dailyCore', item.id, !item.checked)
+                  }}
                 >
                   <TaskCheckbox
                     checked={item.checked}
                     ariaLabel={item.text || 'daily-core-item'}
-                    onToggle={(next) => {
-                      const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
-                      updateChecklist('dailyCore', index, { checked: next })
-                    }}
+                    onToggle={(next) => toggleChecklistItem('dailyCore', item.id, next)}
                   />
                   <input
                     className={`w-full border-none bg-transparent text-sm outline-none ${
@@ -362,20 +377,24 @@ export function DailyNotePage() {
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.optional')}</h2>
               <div className="space-y-2">
                 {visibleOptional.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
-                      item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
-                    }`}
-                  >
-                    <TaskCheckbox
-                      checked={item.checked}
-                      ariaLabel={item.text || 'optional-item'}
-                      onToggle={(next) => {
-                        const index = note.optional.findIndex((candidate) => candidate.id === item.id)
-                        updateChecklist('optional', index, { checked: next })
-                      }}
-                    />
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                    item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
+                  }`}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement
+                    if (target.closest('button,input,textarea,a,label')) {
+                      return
+                    }
+                    toggleChecklistItem('optional', item.id, !item.checked)
+                  }}
+                >
+                  <TaskCheckbox
+                    checked={item.checked}
+                    ariaLabel={item.text || 'optional-item'}
+                    onToggle={(next) => toggleChecklistItem('optional', item.id, next)}
+                  />
                     <input
                       className={`w-full border-none bg-transparent text-sm outline-none ${
                         item.checked ? 'text-slate-500 line-through' : 'text-slate-800'

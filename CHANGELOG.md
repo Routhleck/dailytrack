@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sync page actions now emit toast feedback for refresh/sync/export/resolve flows.
 - Body page actions now emit toast feedback for save/update-from-disk/date-required flows.
 - Body history now shows first-use empty-state guidance when there are no visible records.
+- Daily structured checklist now supports row-click toggle (not only checkbox click) for faster completion.
+- Daily Core card now shows an explicit remaining-item hint (`N remaining`).
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.
