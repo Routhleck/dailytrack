@@ -7,9 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
-- Body page now suspends background polling while users are actively typing, reducing foreground-resume input lag on Android.
-- Body page now applies a short poll grace window after app visibility resume to avoid immediate heavy state refresh competing with text input.
-- Body page derived record lists/metric visibility are memoized to reduce redundant recomputation during form edits.
+- Reserve this section for changes not tagged yet.
+- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+
+## [0.7.3] - 2026-03-24
+
+### Fixed
+- Further adjusted Android adaptive icon foreground framing to prevent launcher text clipping on some devices.
+- Hardened Android new-day dashboard load by adding built-in daily/weekly template fallback and partial-load tolerance for transient local read failures.
+- Reduced body-form input lag after app resume on Android by pausing polling while typing, adding a short resume poll grace window, and lowering per-keystroke recomputation.
 
 ## [0.7.2] - 2026-03-23
 
