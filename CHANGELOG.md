@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Updated mobile tutorial flow to use mobile-specific tour anchors (`Dashboard / Record / History / More`) with responsive tooltip sizing.
 - Updated roadmap/docs wording to align with the new mobile navigation model and defer screenshot refresh to pre-`v1.0.0` polish.
+- Dashboard summary cards now emphasize completion percentage and remaining-item hints for Today/This Week.
+- Dashboard empty states now include direct CTA links for first body record, first daily note, and first weekly note.
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.

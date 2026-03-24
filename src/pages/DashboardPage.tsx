@@ -140,6 +140,8 @@ export function DashboardPage() {
   }
 
   const body = state.body
+  const todayRemaining = Math.max(0, state.todayCore.total - state.todayCore.checked)
+  const weekRemaining = Math.max(0, state.weekSummary.total - state.weekSummary.checked)
 
   return (
     <section className="dt-page">
@@ -156,10 +158,16 @@ export function DashboardPage() {
               {t('common.open')}
             </Link>
           </div>
-          <p className="mb-2 text-xs text-slate-600">
-            {t('dashboard.dailyCoreProgress')} {state.todayCore.checked}/{state.todayCore.total}
-          </p>
+          <div className="mb-3 flex items-end justify-between">
+            <p className="text-xs text-slate-600">
+              {t('dashboard.dailyCoreProgress')} {state.todayCore.checked}/{state.todayCore.total}
+            </p>
+            <p className="text-xl font-semibold text-slate-900">{state.todayCore.percent}%</p>
+          </div>
           <ProgressBar value={state.todayCore.percent} />
+          <p className="mt-2 text-xs text-slate-600">
+            {t('dashboard.remainingItems', { count: todayRemaining })}
+          </p>
           <p className="mt-3 break-words text-sm text-slate-700">
             {t('dashboard.oneLine')}: {state.todayOneLine || '-'}
           </p>
@@ -172,10 +180,16 @@ export function DashboardPage() {
               {t('common.open')}
             </Link>
           </div>
-          <p className="mb-2 text-xs text-slate-600">
-            {t('dashboard.weeklyChecklist')} {state.weekSummary.checked}/{state.weekSummary.total}
-          </p>
+          <div className="mb-3 flex items-end justify-between">
+            <p className="text-xs text-slate-600">
+              {t('dashboard.weeklyChecklist')} {state.weekSummary.checked}/{state.weekSummary.total}
+            </p>
+            <p className="text-xl font-semibold text-slate-900">{state.weekSummary.percent}%</p>
+          </div>
           <ProgressBar value={state.weekSummary.percent} />
+          <p className="mt-2 text-xs text-slate-600">
+            {t('dashboard.remainingItems', { count: weekRemaining })}
+          </p>
         </article>
 
         <article className="dt-panel p-3 sm:p-4">
@@ -204,7 +218,12 @@ export function DashboardPage() {
               {preferences.body.note ? <p>{t('dashboard.note')}: {body.note || '-'}</p> : null}
             </div>
           ) : (
-            <p className="text-sm text-slate-600">{t('dashboard.noBodyRecords')}</p>
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600">{t('dashboard.noBodyRecords')}</p>
+              <Link className="dt-link text-sm" to="/body">
+                {t('dashboard.addFirstBodyRecord')}
+              </Link>
+            </div>
           )}
         </article>
       </div>
@@ -212,28 +231,46 @@ export function DashboardPage() {
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.recentDaily')}</h2>
-          <ul className="space-y-1 text-sm">
-            {state.recentDaily.map((date) => (
-              <li key={date}>
-                <Link className="dt-link" to={`/daily/${date}`}>
-                  {date}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {state.recentDaily.length > 0 ? (
+            <ul className="space-y-1 text-sm">
+              {state.recentDaily.map((date) => (
+                <li key={date}>
+                  <Link className="dt-link" to={`/daily/${date}`}>
+                    {date}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600">{t('dashboard.noRecentDaily')}</p>
+              <Link className="dt-link text-sm" to="/today">
+                {t('dashboard.startToday')}
+              </Link>
+            </div>
+          )}
         </article>
 
         <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.recentWeekly')}</h2>
-          <ul className="space-y-1 text-sm">
-            {state.recentWeekly.map((week) => (
-              <li key={week}>
-                <Link className="dt-link" to={`/weekly/${week}`}>
-                  {week}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {state.recentWeekly.length > 0 ? (
+            <ul className="space-y-1 text-sm">
+              {state.recentWeekly.map((week) => (
+                <li key={week}>
+                  <Link className="dt-link" to={`/weekly/${week}`}>
+                    {week}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600">{t('dashboard.noRecentWeekly')}</p>
+              <Link className="dt-link text-sm" to="/week">
+                {t('dashboard.startThisWeek')}
+              </Link>
+            </div>
+          )}
         </article>
       </div>
     </section>
