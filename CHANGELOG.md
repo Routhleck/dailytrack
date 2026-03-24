@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Updated roadmap/docs wording to align with the new mobile navigation model and defer screenshot refresh to pre-`v1.0.0` polish.
 - Dashboard summary cards now emphasize completion percentage and remaining-item hints for Today/This Week.
 - Dashboard empty states now include direct CTA links for first body record, first daily note, and first weekly note.
+- Sync page now uses a summary-first information hierarchy (status, mode, action needed, quick actions) and moves technical details into collapsible advanced diagnostics.
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.

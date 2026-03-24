@@ -631,6 +631,33 @@ export function SyncPage() {
     () => summarizeDryRun(conflictById, conflicts.map((item) => item.id), 'apply_remote'),
     [conflicts, conflictById],
   )
+  const webdavEnabled = Boolean(webdavConfig?.enabled)
+  const autoPullEnabled = webdavEnabled && Boolean(webdavConfig?.autoPullEnabled)
+  const syncModeLabel = !webdavEnabled
+    ? t('sync.modeDisabled')
+    : autoPullEnabled
+      ? t('sync.modeAutoPullOn')
+      : t('sync.modeManual')
+  const actionHint = useMemo(() => {
+    if (!webdavEnabled) {
+      return t('sync.actionEnableWebdav')
+    }
+    if ((status?.conflictsCount ?? 0) > 0) {
+      return t('sync.actionResolveConflicts', { count: status?.conflictsCount ?? 0 })
+    }
+    if ((status?.pendingChanges ?? 0) > 0) {
+      return t('sync.actionSyncPending', { count: status?.pendingChanges ?? 0 })
+    }
+    if (syncHealth === 'degraded') {
+      return t('sync.actionCheckDiagnostics')
+    }
+    return t('sync.actionHealthy')
+  }, [status?.conflictsCount, status?.pendingChanges, syncHealth, t, webdavEnabled])
+  const healthBadgeClass = syncHealth === 'healthy'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : syncHealth === 'degraded'
+      ? 'border-amber-200 bg-amber-50 text-amber-700'
+      : 'border-sky-200 bg-sky-50 text-sky-700'
 
   return (
     <section className="dt-page">
@@ -641,7 +668,10 @@ export function SyncPage() {
 
       <article className="dt-panel-soft p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">{t('sync.statusTitle')}</h2>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">{t('sync.summaryTitle')}</h2>
+            <p className="text-xs text-slate-600">{t('sync.summaryDescription')}</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -662,6 +692,37 @@ export function SyncPage() {
           </div>
         </div>
 
+        <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.syncStatus')}</p>
+            <p className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${healthBadgeClass}`}>
+              {healthLabel(syncHealth)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.lastSync')}</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{formatTime(lastSyncAt || null)}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.mode')}</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{syncModeLabel}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.pendingChanges')}</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{status?.pendingChanges ?? '-'}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.conflicts')}</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{status?.conflictsCount ?? '-'}</p>
+          </div>
+        </div>
+
+        <div className="mb-3 rounded-lg border border-slate-200/80 bg-white/70 p-2.5">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">{t('sync.actionNeeded')}</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{actionHint}</p>
+        </div>
+
+        <p className="mb-2 text-xs font-semibold text-slate-700">{t('sync.quickActions')}</p>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -699,41 +760,47 @@ export function SyncPage() {
           ) : null}
         </div>
 
-        <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-          <p>{t('sync.health')}: {healthLabel(syncHealth)}</p>
-          <p>{t('sync.errorCategory')}: {categoryLabel(errorCategory)}</p>
-          <p>{t('sync.pendingChanges')}: {status?.pendingChanges ?? '-'}</p>
-          <p>{t('sync.conflicts')}: {status?.conflictsCount ?? '-'}</p>
-          <p>{t('sync.lastPush')}: {formatTime(status?.lastPushAt)}</p>
-          <p>{t('sync.lastPull')}: {formatTime(status?.lastPullAt)}</p>
-          <p>{t('sync.lastAttempt')}: {formatTime(status?.lastAttemptAt)}</p>
-          <p>{t('sync.lastSuccess')}: {formatTime(status?.lastSuccessAt)}</p>
-          <p>{t('sync.lastFailure')}: {formatTime(status?.lastFailureAt)}</p>
-          <p>{t('sync.consecutiveFailures')}: {status?.consecutiveFailures ?? 0}</p>
-          <p>{t('sync.totalSuccesses')}: {status?.totalSuccesses ?? 0}</p>
-          <p>{t('sync.totalFailures')}: {status?.totalFailures ?? 0}</p>
-          <p>
-            {t('sync.retryBackoff')}:{' '}
-            {retryBackoffSec > 0 ? t('sync.autoPullEvery', { seconds: retryBackoffSec }) : '-'}
-          </p>
-          <p>
-            {t('sync.nextRetry')}:{' '}
-            {nextRetryInSec == null
-              ? '-'
-              : nextRetryInSec <= 0
-                ? t('sync.nextAutoPullNow')
-                : t('sync.autoPullEvery', { seconds: nextRetryInSec })}
-          </p>
-          <p>{t('sync.lastSync')}: {formatTime(lastSyncAt || null)}</p>
-          <p>
-            {t('sync.nextAutoPull')}:{' '}
-            {!webdavConfig?.enabled || !webdavConfig.autoPullEnabled
-              ? t('sync.autoPullDisabled')
-              : nextAutoPullInSec == null || nextAutoPullInSec <= 0
-                ? t('sync.nextAutoPullNow')
-                : t('sync.autoPullEvery', { seconds: nextAutoPullInSec })}
-          </p>
-        </div>
+        <details className="mt-4 rounded-lg border border-slate-200 bg-white/70 p-3" open={syncHealth === 'degraded'}>
+          <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+            {t('sync.openAdvancedDiagnostics')}
+          </summary>
+          <p className="mt-1 text-xs text-slate-600">{t('sync.advancedDiagnosticsNote')}</p>
+          <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+            <p>{t('sync.health')}: {healthLabel(syncHealth)}</p>
+            <p>{t('sync.errorCategory')}: {categoryLabel(errorCategory)}</p>
+            <p>{t('sync.pendingChanges')}: {status?.pendingChanges ?? '-'}</p>
+            <p>{t('sync.conflicts')}: {status?.conflictsCount ?? '-'}</p>
+            <p>{t('sync.lastPush')}: {formatTime(status?.lastPushAt)}</p>
+            <p>{t('sync.lastPull')}: {formatTime(status?.lastPullAt)}</p>
+            <p>{t('sync.lastAttempt')}: {formatTime(status?.lastAttemptAt)}</p>
+            <p>{t('sync.lastSuccess')}: {formatTime(status?.lastSuccessAt)}</p>
+            <p>{t('sync.lastFailure')}: {formatTime(status?.lastFailureAt)}</p>
+            <p>{t('sync.consecutiveFailures')}: {status?.consecutiveFailures ?? 0}</p>
+            <p>{t('sync.totalSuccesses')}: {status?.totalSuccesses ?? 0}</p>
+            <p>{t('sync.totalFailures')}: {status?.totalFailures ?? 0}</p>
+            <p>
+              {t('sync.retryBackoff')}:{' '}
+              {retryBackoffSec > 0 ? t('sync.autoPullEvery', { seconds: retryBackoffSec }) : '-'}
+            </p>
+            <p>
+              {t('sync.nextRetry')}:{' '}
+              {nextRetryInSec == null
+                ? '-'
+                : nextRetryInSec <= 0
+                  ? t('sync.nextAutoPullNow')
+                  : t('sync.autoPullEvery', { seconds: nextRetryInSec })}
+            </p>
+            <p>{t('sync.lastSync')}: {formatTime(lastSyncAt || null)}</p>
+            <p>
+              {t('sync.nextAutoPull')}:{' '}
+              {!webdavConfig?.enabled || !webdavConfig.autoPullEnabled
+                ? t('sync.autoPullDisabled')
+                : nextAutoPullInSec == null || nextAutoPullInSec <= 0
+                  ? t('sync.nextAutoPullNow')
+                  : t('sync.autoPullEvery', { seconds: nextAutoPullInSec })}
+            </p>
+          </div>
+        </details>
         {status?.lastError ? <p className="mt-2 text-sm text-rose-700">{status.lastError}</p> : null}
         {syncHealth === 'degraded' && retryBackoffSec > 0 ? (
           <p className="mt-1 text-xs text-amber-800">
