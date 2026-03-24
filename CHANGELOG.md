@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Daily structured checklist now supports row-click toggle (not only checkbox click) for faster completion.
 - Daily Core card now shows an explicit remaining-item hint (`N remaining`).
 - Daily/Weekly mode switch now shows clearer guidance text (`structured = recommended`, `raw markdown = advanced`).
+- Settings page explicit operations now emit toast feedback (WebDAV test/push/pull/delete + export/import/migrate/reset).
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.

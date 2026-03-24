@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../features/feedback/ToastContext'
 import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
@@ -76,6 +77,7 @@ function webdavConfigSignature(config: WebdavConfig): string {
 
 export function SettingsPage() {
   const { t } = useI18n()
+  const { pushError, pushSuccess } = useToast()
   const {
     supported: updaterSupported,
     configured: updaterConfigured,
@@ -324,11 +326,14 @@ export function SettingsPage() {
         return
       }
       const result = await testWebdavConnection()
-      setWebdavMessage(result.message || t('settings.webdavTestPassed'))
+      const text = result.message || t('settings.webdavTestPassed')
+      setWebdavMessage(text)
+      pushSuccess(text)
       await refreshWebdavSnapshots(true)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.webdavTestFailed')
       setWebdavMessage(text)
+      pushError(text)
     } finally {
       setWebdavTesting(false)
     }
@@ -349,16 +354,18 @@ export function SettingsPage() {
       }
       const result = await pushWebdavSnapshot(baseDataRoot, webdavSnapshotNote.trim() || undefined)
       setWebdavSnapshotNote('')
-      setWebdavMessage(
+      const text =
         `${t('settings.webdavPushSucceeded', { id: result.snapshot.id })}` +
           (result.prunedSnapshotIds.length > 0
             ? ` ${t('settings.webdavPruned', { count: result.prunedSnapshotIds.length })}`
-            : ''),
-      )
+            : '')
+      setWebdavMessage(text)
+      pushSuccess(text)
       await refreshWebdavSnapshots(true)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.webdavPushFailed')
       setWebdavMessage(text)
+      pushError(text)
     } finally {
       setWebdavPushing(false)
     }
@@ -385,13 +392,15 @@ export function SettingsPage() {
       const result = await pullWebdavSnapshot(baseDataRoot, snapshotId, true, webdavBackupBeforePull)
       await refresh()
       emitDataChanged({ scope: 'all' })
-      setWebdavMessage(
+      const text =
         `${t('settings.webdavPullSucceeded', { id: result.snapshot.id })} ${formatCopySummary(result.summary, t)}` +
-          (result.backupPath ? ` ${t('settings.webdavBackupPath', { path: result.backupPath })}` : ''),
-      )
+          (result.backupPath ? ` ${t('settings.webdavBackupPath', { path: result.backupPath })}` : '')
+      setWebdavMessage(text)
+      pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.webdavPullFailed')
       setWebdavMessage(text)
+      pushError(text)
     } finally {
       setWebdavPulling(false)
     }
@@ -416,14 +425,19 @@ export function SettingsPage() {
       }
       const result = await deleteWebdavSnapshot(selectedSnapshotId)
       if (result.deleted) {
-        setWebdavMessage(t('settings.webdavDeleteSucceeded'))
+        const text = t('settings.webdavDeleteSucceeded')
+        setWebdavMessage(text)
+        pushSuccess(text)
       } else {
-        setWebdavMessage(t('settings.webdavDeleteNoop'))
+        const text = t('settings.webdavDeleteNoop')
+        setWebdavMessage(text)
+        pushSuccess(text)
       }
       await refreshWebdavSnapshots(true)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.webdavDeleteFailed')
       setWebdavMessage(text)
+      pushError(text)
     } finally {
       setWebdavDeleting(false)
     }
@@ -433,13 +447,17 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!dataRoot) {
-      setExportMessage(t('settings.dataRootNotReady'))
+      const text = t('settings.dataRootNotReady')
+      setExportMessage(text)
+      pushError(text)
       return
     }
 
     const destination = exportDir.trim()
     if (!destination) {
-      setExportMessage(t('settings.exportDestinationRequired'))
+      const text = t('settings.exportDestinationRequired')
+      setExportMessage(text)
+      pushError(text)
       return
     }
 
@@ -448,12 +466,13 @@ export function SettingsPage() {
 
     try {
       const result = await exportDataBundle(dataRoot, destination)
-      setExportMessage(
-        `${t('settings.exportCompleted', { path: result.bundlePath })} ${formatCopySummary(result.summary, t)}`,
-      )
+      const text = `${t('settings.exportCompleted', { path: result.bundlePath })} ${formatCopySummary(result.summary, t)}`
+      setExportMessage(text)
+      pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.exportFailed')
       setExportMessage(text)
+      pushError(text)
     } finally {
       setExportBusy(false)
     }
@@ -463,17 +482,22 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!baseDataRoot) {
-      setMigrateMessage(t('settings.dataRootNotReady'))
+      const text = t('settings.dataRootNotReady')
+      setMigrateMessage(text)
+      pushError(text)
       return
     }
 
     const destination = migrateTarget.trim()
     if (!destination) {
-      setMigrateMessage(t('settings.migrateDestinationRequired'))
+      const text = t('settings.migrateDestinationRequired')
+      setMigrateMessage(text)
+      pushError(text)
       return
     }
     if (migrateValidationMessage) {
       setMigrateMessage(migrateValidationMessage)
+      pushError(migrateValidationMessage)
       return
     }
 
@@ -482,10 +506,13 @@ export function SettingsPage() {
 
     try {
       const summary = await migrateDataRoot(destination, overwriteMigrate)
-      setMigrateMessage(`${t('settings.migrateCompleted')} ${formatCopySummary(summary, t)}`)
+      const text = `${t('settings.migrateCompleted')} ${formatCopySummary(summary, t)}`
+      setMigrateMessage(text)
+      pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.migrateFailed')
       setMigrateMessage(text)
+      pushError(text)
     } finally {
       setMigrateBusy(false)
     }
@@ -495,13 +522,17 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!dataRoot) {
-      setImportMessage(t('settings.dataRootNotReady'))
+      const text = t('settings.dataRootNotReady')
+      setImportMessage(text)
+      pushError(text)
       return
     }
 
     const source = importSource.trim()
     if (!source) {
-      setImportMessage(t('settings.importSourceRequired'))
+      const text = t('settings.importSourceRequired')
+      setImportMessage(text)
+      pushError(text)
       return
     }
 
@@ -512,10 +543,13 @@ export function SettingsPage() {
       const result = await importDataBundle(source, dataRoot, overwriteImport)
       await refresh()
       emitDataChanged({ scope: 'all' })
-      setImportMessage(`${t('settings.importCompleted')} ${formatCopySummary(result.summary, t)}`)
+      const text = `${t('settings.importCompleted')} ${formatCopySummary(result.summary, t)}`
+      setImportMessage(text)
+      pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.importFailed')
       setImportMessage(text)
+      pushError(text)
     } finally {
       setImportBusy(false)
     }
@@ -525,11 +559,15 @@ export function SettingsPage() {
     event.preventDefault()
 
     if (!baseDataRoot) {
-      setResetMessage(t('settings.dataRootNotReady'))
+      const text = t('settings.dataRootNotReady')
+      setResetMessage(text)
+      pushError(text)
       return
     }
     if (resetConfirmText.trim() !== 'RESET') {
-      setResetMessage(t('settings.resetConfirmMismatch'))
+      const text = t('settings.resetConfirmMismatch')
+      setResetMessage(text)
+      pushError(text)
       return
     }
 
@@ -539,10 +577,13 @@ export function SettingsPage() {
     try {
       await resetTrackerData()
       setResetConfirmText('')
-      setResetMessage(t('settings.resetCompleted'))
+      const text = t('settings.resetCompleted')
+      setResetMessage(text)
+      pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.resetFailed')
       setResetMessage(text)
+      pushError(text)
     } finally {
       setResetBusy(false)
     }
