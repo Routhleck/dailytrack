@@ -92,7 +92,7 @@ export function PreferencesPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="dt-page">
       <PageHeader
         title={t('preferences.title')}
         description={t('preferences.description')}
@@ -101,7 +101,7 @@ export function PreferencesPage() {
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       {message ? <p className="text-sm text-slate-600">{message}</p> : null}
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.daily')}</h2>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
@@ -121,7 +121,7 @@ export function PreferencesPage() {
         </label>
       </article>
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.weeklySections')}</h2>
         <div className="space-y-2">
           {WEEKLY_ORDER.map((section) => (
@@ -148,7 +148,7 @@ export function PreferencesPage() {
         </div>
       </article>
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.sync')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.syncHint')}</p>
         <div className="flex items-center gap-4 text-sm text-slate-700">
@@ -208,7 +208,7 @@ export function PreferencesPage() {
         </label>
       </article>
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.viewFilters')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.viewFiltersHint')}</p>
         <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -270,7 +270,7 @@ export function PreferencesPage() {
         </label>
       </article>
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.bodyMetrics')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.bodyDisplayHint')}</p>
         {BODY_METRIC_ORDER.map((metric) => (
@@ -286,7 +286,7 @@ export function PreferencesPage() {
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <span>{t('preferences.unit')}</span>
               <input
-                className="w-20 rounded-md border border-slate-300 px-2 py-1 text-xs"
+                className="dt-input w-20 px-2 py-1 text-xs"
                 value={draft.body.display[metric.key].unit}
                 placeholder={t('preferences.unitPlaceholder')}
                 onChange={(event) => updateBodyMetricUnit(metric.key, event.target.value)}
@@ -295,7 +295,7 @@ export function PreferencesPage() {
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <span>{t('preferences.decimals')}</span>
               <select
-                className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                className="dt-input w-20 px-2 py-1 text-xs"
                 value={String(draft.body.display[metric.key].decimals)}
                 onChange={(event) => updateBodyMetricDecimals(metric.key, Number(event.target.value))}
               >

@@ -633,19 +633,19 @@ export function SyncPage() {
   )
 
   return (
-    <section className="space-y-4">
+    <section className="dt-page">
       <PageHeader
         title={t('sync.title')}
         description={t('sync.description')}
       />
 
-      <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <article className="dt-panel-soft p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900">{t('sync.statusTitle')}</h2>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              className="dt-btn dt-btn-secondary px-3 py-1.5 text-xs"
               disabled={loading || refreshing || syncing || !baseDataRoot}
               onClick={() => void handleRefresh()}
             >
@@ -653,7 +653,7 @@ export function SyncPage() {
             </button>
             <button
               type="button"
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              className="dt-btn dt-btn-secondary px-3 py-1.5 text-xs"
               disabled={loading || exportingDiagnostics || !baseDataRoot}
               onClick={() => void handleExportDiagnostics()}
             >
@@ -665,7 +665,7 @@ export function SyncPage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-md bg-teal-700 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+            className="dt-btn dt-btn-primary px-3 py-1.5 text-sm"
             disabled={syncing || !baseDataRoot}
             onClick={() => void handleSync('both')}
           >
@@ -673,7 +673,7 @@ export function SyncPage() {
           </button>
           <button
             type="button"
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:opacity-60"
+            className="dt-btn dt-btn-secondary px-3 py-1.5 text-sm"
             disabled={syncing || !baseDataRoot}
             onClick={() => void handleSync('push')}
           >
@@ -681,7 +681,7 @@ export function SyncPage() {
           </button>
           <button
             type="button"
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:opacity-60"
+            className="dt-btn dt-btn-secondary px-3 py-1.5 text-sm"
             disabled={syncing || !baseDataRoot}
             onClick={() => void handleSync('pull')}
           >
@@ -690,7 +690,7 @@ export function SyncPage() {
           {syncHealth === 'degraded' ? (
             <button
               type="button"
-              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm text-amber-800 disabled:opacity-60"
+              className="dt-btn rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm text-amber-800"
               disabled={syncing || !baseDataRoot}
               onClick={() => void handleSync('both')}
             >
@@ -743,7 +743,7 @@ export function SyncPage() {
         {message ? <p className="mt-2 text-sm text-slate-700">{message}</p> : null}
       </article>
 
-      <article className="rounded-lg border border-slate-200 bg-white p-4">
+      <article className="dt-panel p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-slate-900">{t('sync.conflictList')}</h2>
           <p className="text-xs text-slate-600">{t('sync.selectedCount', { count: selectedCount })}</p>

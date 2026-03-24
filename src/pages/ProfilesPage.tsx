@@ -658,13 +658,13 @@ export function ProfilesPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="dt-page">
       <PageHeader
         title={t('profiles.title')}
         description={t('profiles.description')}
       />
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+      <div className="dt-panel-soft p-4 text-sm text-slate-700">
         <p>
           {t('profiles.baseRoot')}: <span className="font-medium">{baseDataRoot || '-'}</span>
         </p>
@@ -673,7 +673,7 @@ export function ProfilesPage() {
         </p>
       </div>
 
-      <article className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('profiles.profileList')}</h2>
 
         <ul className="space-y-2">
@@ -688,7 +688,7 @@ export function ProfilesPage() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800"
+                  className="dt-btn dt-btn-secondary px-3 py-1 text-xs"
                   onClick={() => void switchProfile(profile)}
                   disabled={loading || profile === activeProfile}
                 >
@@ -696,7 +696,7 @@ export function ProfilesPage() {
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-rose-100 px-3 py-1 text-xs text-rose-700 disabled:opacity-60"
+                  className="dt-btn dt-btn-danger px-3 py-1 text-xs"
                   onClick={() => void deleteProfile(profile)}
                   disabled={loading || profiles.length <= 1 || profile === activeProfile}
                 >
@@ -711,7 +711,7 @@ export function ProfilesPage() {
         </p>
       </article>
 
-      <form onSubmit={handleCreateProfile} className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleCreateProfile} className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('profiles.createProfile')}</h2>
 
         <label className="block text-sm font-medium text-slate-700" htmlFor="profile-name">
@@ -719,7 +719,7 @@ export function ProfilesPage() {
         </label>
         <input
           id="profile-name"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           placeholder={t('profiles.profileNamePlaceholder')}
           value={createName}
           onChange={(event) => setCreateName(event.target.value)}
@@ -731,7 +731,7 @@ export function ProfilesPage() {
         </label>
         <select
           id="profile-preset"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           value={presetId}
           onChange={(event) => setPresetId(event.target.value)}
           disabled={createBusy}
@@ -751,7 +751,7 @@ export function ProfilesPage() {
         </label>
         <select
           id="template-language"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           value={templateLanguage}
           onChange={(event) => setTemplateLanguage(event.target.value as TemplateLanguage)}
           disabled={createBusy}
@@ -763,8 +763,8 @@ export function ProfilesPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              createTemplateEditMode === 'structured' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            className={`dt-btn ${
+              createTemplateEditMode === 'structured' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
             }`}
             onClick={() => handleCreateTemplateModeChange('structured')}
             disabled={createBusy}
@@ -773,8 +773,8 @@ export function ProfilesPage() {
           </button>
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              createTemplateEditMode === 'raw' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            className={`dt-btn ${
+              createTemplateEditMode === 'raw' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
             }`}
             onClick={() => handleCreateTemplateModeChange('raw')}
             disabled={createBusy}
@@ -814,7 +814,7 @@ export function ProfilesPage() {
                 {newDailyStructured?.dailyCore.map((item, index) => (
                   <div key={item.id} className="flex gap-2">
                     <input
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="dt-input"
                       value={item.text}
                       onChange={(event) => updateNewDailyItem('dailyCore', index, event.target.value)}
                       disabled={createBusy}
@@ -844,7 +844,7 @@ export function ProfilesPage() {
                 {newDailyStructured?.optional.map((item, index) => (
                   <div key={item.id} className="flex gap-2">
                     <input
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="dt-input"
                       value={item.text}
                       onChange={(event) => updateNewDailyItem('optional', index, event.target.value)}
                       disabled={createBusy}
@@ -880,7 +880,7 @@ export function ProfilesPage() {
                   {newWeeklyStructured?.sections[section].map((item, index) => (
                     <div key={item.id} className="flex gap-2">
                       <input
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        className="dt-input"
                         value={item.text}
                         onChange={(event) => updateNewWeeklyItem(section, index, event.target.value)}
                         disabled={createBusy}
@@ -911,7 +911,7 @@ export function ProfilesPage() {
                 {[0, 1, 2].map((index) => (
                   <input
                     key={`new-good-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={newWeeklyStructured?.reflection.goodThings[index] ?? ''}
                     onChange={(event) => updateNewReflectionItem('goodThings', index, event.target.value)}
                     disabled={createBusy}
@@ -924,7 +924,7 @@ export function ProfilesPage() {
                 {[0, 1, 2].map((index) => (
                   <input
                     key={`new-next-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={newWeeklyStructured?.reflection.nextWeekTop3[index] ?? ''}
                     onChange={(event) => updateNewReflectionItem('nextWeekTop3', index, event.target.value)}
                     disabled={createBusy}
@@ -940,14 +940,14 @@ export function ProfilesPage() {
         <button
           type="submit"
           disabled={createBusy}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="dt-btn dt-btn-primary"
         >
           {createBusy ? t('profiles.creating') : t('profiles.createProfileButton')}
         </button>
         {createMessage ? <p className="text-sm text-slate-600">{createMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleSaveCurrentTemplates} className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleSaveCurrentTemplates} className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('profiles.currentTemplates')}</h2>
         <article className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
           <p>
@@ -987,7 +987,7 @@ export function ProfilesPage() {
               </label>
               <select
                 id="update-profile-preset"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 dt-input"
                 value={updatePresetId}
                 onChange={(event) => setUpdatePresetId(event.target.value)}
                 disabled={templateBusy || updateBusy || !dataRoot}
@@ -1005,7 +1005,7 @@ export function ProfilesPage() {
               </label>
               <select
                 id="update-template-language"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 dt-input"
                 value={updateTemplateLanguage}
                 onChange={(event) => setUpdateTemplateLanguage(event.target.value as TemplateLanguage)}
                 disabled={templateBusy || updateBusy || !dataRoot}
@@ -1020,7 +1020,7 @@ export function ProfilesPage() {
               </label>
               <select
                 id="update-template-mode"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 dt-input"
                 value={updateMode}
                 onChange={(event) => setUpdateMode(event.target.value as TemplateApplyMode)}
                 disabled={templateBusy || updateBusy || !dataRoot}
@@ -1037,7 +1037,7 @@ export function ProfilesPage() {
             <button
               type="button"
               disabled={templateBusy || updateBusy || !dataRoot}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-60"
+              className="dt-btn dt-btn-secondary px-3 py-1.5 text-xs"
               onClick={() => void handlePreviewTemplateUpdate()}
             >
               {t('profiles.templateUpdatePreview')}
@@ -1045,7 +1045,7 @@ export function ProfilesPage() {
             <button
               type="button"
               disabled={templateBusy || updateBusy || !dataRoot}
-              className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700 disabled:opacity-60"
+              className="dt-btn rounded-xl border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700"
               onClick={() => void handleApplyTemplateUpdate()}
             >
               {updateBusy ? t('profiles.saving') : t('profiles.templateUpdateApply')}
@@ -1083,8 +1083,8 @@ export function ProfilesPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              templateEditMode === 'structured' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            className={`dt-btn ${
+              templateEditMode === 'structured' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
             }`}
             onClick={() => handleTemplateModeChange('structured')}
           >
@@ -1092,8 +1092,8 @@ export function ProfilesPage() {
           </button>
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              templateEditMode === 'raw' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+            className={`dt-btn ${
+              templateEditMode === 'raw' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
             }`}
             onClick={() => handleTemplateModeChange('raw')}
           >
@@ -1132,7 +1132,7 @@ export function ProfilesPage() {
                 {currentDailyStructured?.dailyCore.map((item, index) => (
                   <div key={item.id} className="flex gap-2">
                     <input
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="dt-input"
                       value={item.text}
                       onChange={(event) => updateDailyItem('dailyCore', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
@@ -1162,7 +1162,7 @@ export function ProfilesPage() {
                 {currentDailyStructured?.optional.map((item, index) => (
                   <div key={item.id} className="flex gap-2">
                     <input
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="dt-input"
                       value={item.text}
                       onChange={(event) => updateDailyItem('optional', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
@@ -1198,7 +1198,7 @@ export function ProfilesPage() {
                   {currentWeeklyStructured?.sections[section].map((item, index) => (
                     <div key={item.id} className="flex gap-2">
                       <input
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        className="dt-input"
                         value={item.text}
                         onChange={(event) => updateWeeklyItem(section, index, event.target.value)}
                         disabled={templateBusy || !dataRoot}
@@ -1229,7 +1229,7 @@ export function ProfilesPage() {
                 {[0, 1, 2].map((index) => (
                   <input
                     key={`good-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={currentWeeklyStructured?.reflection.goodThings[index] ?? ''}
                     onChange={(event) => updateReflectionItem('goodThings', index, event.target.value)}
                     disabled={templateBusy || !dataRoot}
@@ -1242,7 +1242,7 @@ export function ProfilesPage() {
                 {[0, 1, 2].map((index) => (
                   <input
                     key={`next-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={currentWeeklyStructured?.reflection.nextWeekTop3[index] ?? ''}
                     onChange={(event) => updateReflectionItem('nextWeekTop3', index, event.target.value)}
                     disabled={templateBusy || !dataRoot}
@@ -1256,7 +1256,7 @@ export function ProfilesPage() {
         <button
           type="submit"
           disabled={templateBusy || !dataRoot}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="dt-btn dt-btn-primary"
         >
           {templateBusy ? t('profiles.saving') : t('profiles.saveCurrentTemplates')}
         </button>
@@ -1264,7 +1264,7 @@ export function ProfilesPage() {
           <button
             type="button"
             disabled={templateBusy || !dataRoot}
-            className="rounded-md border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 disabled:opacity-60"
+            className="dt-btn rounded-xl border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700"
             onClick={() => void handleApplyDailyTemplateToToday()}
           >
             {t('profiles.applyDailyTemplateToToday')}
@@ -1272,7 +1272,7 @@ export function ProfilesPage() {
           <button
             type="button"
             disabled={templateBusy || !dataRoot}
-            className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-60"
+            className="dt-btn rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700"
             onClick={() => void handleApplyWeeklyTemplateToCurrentWeek()}
           >
             {t('profiles.applyWeeklyTemplateToCurrentWeek')}

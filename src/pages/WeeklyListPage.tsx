@@ -58,12 +58,12 @@ export function WeeklyListPage() {
   const filtered = weeks.filter((week) => week.includes(query.trim().toUpperCase()))
 
   return (
-    <section className="space-y-4">
+    <section className="dt-page">
       <PageHeader title={t('weeklyList.title')} description={t('weeklyList.description')} />
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="dt-panel-soft p-4">
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t('weeklyList.filterPlaceholder')}
@@ -74,8 +74,8 @@ export function WeeklyListPage() {
 
       <ul className="space-y-2">
         {filtered.map((week) => (
-          <li key={week} className="rounded-md border border-slate-200 px-3 py-2">
-            <Link className="text-teal-700 hover:underline" to={`/weekly/${week}`}>
+          <li key={week} className="dt-panel px-3 py-2">
+            <Link className="dt-link" to={`/weekly/${week}`}>
               {week}
             </Link>
           </li>

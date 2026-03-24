@@ -51,8 +51,8 @@ export function InitialTemplateSetupModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
-      <div className="w-full max-w-4xl rounded-xl bg-white p-5 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <div className="dt-panel w-full max-w-4xl p-5">
         {step === 'language' ? (
           <>
             <h2 className="text-xl font-semibold text-slate-900">{t('onboarding.languageTitle')}</h2>
@@ -67,7 +67,7 @@ export function InitialTemplateSetupModal() {
               </label>
               <select
                 id="initial-ui-language"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 dt-input"
                 value={language}
                 onChange={(event) => {
                   const nextLanguage = event.target.value as 'en' | 'zh'
@@ -84,7 +84,7 @@ export function InitialTemplateSetupModal() {
               <button
                 type="button"
                 onClick={() => setStep('template')}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                className="dt-btn dt-btn-primary"
               >
                 {t('onboarding.continue')}
               </button>
@@ -107,7 +107,7 @@ export function InitialTemplateSetupModal() {
                 </label>
                 <select
                   id="initial-preset"
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 dt-input"
                   value={presetId}
                   onChange={(event) => setPresetId(event.target.value)}
                   disabled={busy}
@@ -126,7 +126,7 @@ export function InitialTemplateSetupModal() {
                 </label>
                 <select
                   id="initial-language"
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 dt-input"
                   value={templateLanguage}
                   onChange={(event) => setTemplateLanguage(event.target.value as TemplateLanguage)}
                   disabled={busy}
@@ -141,7 +141,7 @@ export function InitialTemplateSetupModal() {
               <div>
                 <p className="mb-1 text-sm font-medium text-slate-700">{t('onboarding.dailyPreview')}</p>
                 <textarea
-                  className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+                  className="dt-input h-56 font-mono text-xs"
                   value={selectedVariant.dailyTemplate}
                   readOnly
                   spellCheck={false}
@@ -150,7 +150,7 @@ export function InitialTemplateSetupModal() {
               <div>
                 <p className="mb-1 text-sm font-medium text-slate-700">{t('onboarding.weeklyPreview')}</p>
                 <textarea
-                  className="h-56 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+                  className="dt-input h-56 font-mono text-xs"
                   value={selectedVariant.weeklyTemplate}
                   readOnly
                   spellCheck={false}
@@ -163,7 +163,7 @@ export function InitialTemplateSetupModal() {
                 type="button"
                 onClick={() => void handleApply()}
                 disabled={busy}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                className="dt-btn dt-btn-primary"
               >
                 {busy ? t('onboarding.applying') : t('onboarding.applyAndContinue')}
               </button>

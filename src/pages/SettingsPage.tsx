@@ -100,6 +100,7 @@ export function SettingsPage() {
     resetTrackerData,
     refresh,
     loading,
+    error: dataRootError,
   } = useDataRoot()
 
   const defaultExportDir = useMemo(() => {
@@ -548,13 +549,19 @@ export function SettingsPage() {
   }
 
   return (
-    <section className="space-y-4 md:space-y-6">
+    <section className="dt-page">
       <PageHeader
         title={t('settings.title')}
         description={t('settings.description')}
       />
 
-      <div className="w-full max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 sm:p-4">
+      <div className="dt-panel-soft w-full max-w-3xl p-3 text-sm text-slate-700 sm:p-4">
+        <p className="text-sm font-semibold text-slate-900">{t('settings.diagnosticsTitle')}</p>
+        <p className="mt-1 text-xs text-slate-500">{t('settings.diagnosticsDescription')}</p>
+        <p className="mt-3">
+          {t('settings.initState')}: <span className="font-medium">{loading ? t('common.loading') : (dataRootError ? t('shell.initError') : t('common.yes'))}</span>
+        </p>
+        {dataRootError ? <p className="mt-1 break-all text-rose-700">{dataRootError}</p> : null}
         <p>
           {t('settings.activeProfile')}: <span className="font-medium break-all">{activeProfile || '-'}</span>
         </p>
@@ -570,7 +577,7 @@ export function SettingsPage() {
           <p className="mt-1 text-sm text-slate-600">{t('settings.tutorialDescription')}</p>
           <button
             type="button"
-            className="mt-3 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-white"
+            className="dt-btn dt-btn-secondary mt-3"
             onClick={() => emitTutorialOpen('settings')}
           >
             {t('settings.startTutorial')}
@@ -578,7 +585,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <section className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+      <section className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.updater')}</h2>
         <p className="text-sm text-slate-600">{t('settings.updaterDescription')}</p>
         <p className="text-sm text-slate-700">
@@ -643,7 +650,7 @@ export function SettingsPage() {
         {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
       </section>
 
-      <section className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+      <section className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.webdavTitle')}</h2>
         <p className="text-sm text-slate-600">{t('settings.webdavDescription')}</p>
 
@@ -676,7 +683,7 @@ export function SettingsPage() {
             type="number"
             min={5}
             max={3600}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+            className="mt-1 dt-input"
             value={webdavConfig.autoPullIntervalSec}
             onChange={(event) => setWebdavNumericField('autoPullIntervalSec', event.target.value)}
             disabled={webdavLoading || webdavSaving || !webdavConfig.autoPullEnabled}
@@ -688,7 +695,7 @@ export function SettingsPage() {
         </label>
         <input
           id="webdav-url"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          className="dt-input"
           value={webdavConfig.remoteBaseUrl}
           onChange={(event) => setWebdavTextField('remoteBaseUrl', event.target.value)}
           placeholder="https://cloud.example.com/remote.php/dav/files/<user>/dailytrack"
@@ -702,7 +709,7 @@ export function SettingsPage() {
             </label>
             <input
               id="webdav-username"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              className="dt-input"
               value={webdavConfig.username}
               onChange={(event) => setWebdavTextField('username', event.target.value)}
               disabled={webdavLoading || webdavSaving}
@@ -715,7 +722,7 @@ export function SettingsPage() {
             <input
               id="webdav-password"
               type="password"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              className="dt-input"
               value={webdavConfig.password}
               onChange={(event) => setWebdavTextField('password', event.target.value)}
               disabled={webdavLoading || webdavSaving}
@@ -732,7 +739,7 @@ export function SettingsPage() {
               id="webdav-interval"
               type="number"
               min={0}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              className="dt-input"
               value={webdavConfig.autoPushIntervalMin}
               onChange={(event) => setWebdavNumericField('autoPushIntervalMin', event.target.value)}
               disabled={webdavLoading || webdavSaving}
@@ -746,7 +753,7 @@ export function SettingsPage() {
               id="webdav-timeout"
               type="number"
               min={10}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              className="dt-input"
               value={webdavConfig.requestTimeoutSec}
               onChange={(event) => setWebdavNumericField('requestTimeoutSec', event.target.value)}
               disabled={webdavLoading || webdavSaving}
@@ -760,7 +767,7 @@ export function SettingsPage() {
               id="webdav-max-snapshots"
               type="number"
               min={1}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+              className="dt-input"
               value={webdavConfig.maxSnapshots}
               onChange={(event) => setWebdavNumericField('maxSnapshots', event.target.value)}
               disabled={webdavLoading || webdavSaving}
@@ -809,7 +816,7 @@ export function SettingsPage() {
           </label>
           <input
             id="webdav-note"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+            className="dt-input"
             value={webdavSnapshotNote}
             onChange={(event) => setWebdavSnapshotNote(event.target.value)}
             placeholder={t('settings.webdavPushNotePlaceholder')}
@@ -852,7 +859,7 @@ export function SettingsPage() {
           ) : (
             <>
               <select
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+                className="dt-input"
                 value={selectedSnapshotId}
                 onChange={(event) => setSelectedSnapshotId(event.target.value)}
                 disabled={webdavPulling || webdavDeleting}
@@ -888,7 +895,7 @@ export function SettingsPage() {
         {webdavMessage ? <p className="break-all text-sm text-slate-600">{webdavMessage}</p> : null}
       </section>
 
-      <form onSubmit={handleMigrate} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+      <form onSubmit={handleMigrate} className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.migrateDescription')}
@@ -898,7 +905,7 @@ export function SettingsPage() {
         </label>
         <input
           id="migrate-target"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          className="dt-input"
           value={migrateTarget}
           onChange={(event) => setMigrateTarget(event.target.value)}
           placeholder="/Users/you/dailytrack-data"
@@ -924,7 +931,7 @@ export function SettingsPage() {
         {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleExport} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+      <form onSubmit={handleExport} className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.exportData')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.exportDescription')}
@@ -934,7 +941,7 @@ export function SettingsPage() {
         </label>
         <input
           id="export-dir"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          className="dt-input"
           value={exportDir}
           onChange={(event) => setExportDir(event.target.value)}
           placeholder="/Users/you/Desktop"
@@ -950,7 +957,7 @@ export function SettingsPage() {
         {exportMessage ? <p className="break-all text-sm text-slate-600">{exportMessage}</p> : null}
       </form>
 
-      <form onSubmit={handleImport} className="w-full max-w-3xl space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+      <form onSubmit={handleImport} className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.importData')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.importDescription')}
@@ -960,7 +967,7 @@ export function SettingsPage() {
         </label>
         <input
           id="import-source"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          className="dt-input"
           value={importSource}
           onChange={(event) => setImportSource(event.target.value)}
           placeholder="/Users/you/Desktop/dailytrack-export-123456789"

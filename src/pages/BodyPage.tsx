@@ -352,12 +352,12 @@ export function BodyPage() {
   }
 
   return (
-    <section className="min-w-0 space-y-4 md:space-y-6">
+    <section className="dt-page">
       <PageHeader
         title={t('body.title')}
         description={t('body.description')}
       />
-      <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+      <label className="dt-badge gap-2">
         <input
           type="checkbox"
           checked={showOnlyChanges}
@@ -384,10 +384,10 @@ export function BodyPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4"
+        className="dt-panel-soft grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4"
       >
         <input
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           type="date"
           value={form.date}
           onFocus={() => {
@@ -408,7 +408,7 @@ export function BodyPage() {
         {enabledNumericMetrics.map((metric) => (
           <input
             key={metric.key}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="dt-input"
             type="number"
             step={decimalInputStep(preferences.body.display[metric.key].decimals)}
             placeholder={metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}
@@ -431,7 +431,7 @@ export function BodyPage() {
 
         {showNote ? (
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2 lg:col-span-2"
+            className="dt-input sm:col-span-2 lg:col-span-2"
             placeholder={t('body.note')}
             value={form.note}
             onFocus={() => {
@@ -450,13 +450,13 @@ export function BodyPage() {
         ) : null}
 
         <div className="col-span-full flex flex-wrap items-center gap-2">
-          <button className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white sm:w-auto" type="submit">
+          <button className="dt-btn dt-btn-primary w-full sm:w-auto" type="submit">
             {editingIndex == null ? t('body.addRecord') : t('body.updateRecord')}
           </button>
           {editingIndex != null ? (
             <button
               type="button"
-              className="w-full rounded-md bg-slate-300 px-4 py-2 text-sm text-slate-800 sm:w-auto"
+              className="dt-btn dt-btn-secondary w-full sm:w-auto"
               onClick={() => {
                 markFormInteraction()
                 setEditingIndex(null)
@@ -473,7 +473,7 @@ export function BodyPage() {
       {visibleNumericMetrics.length > 0 ? (
         <div className={`grid min-w-0 gap-3 md:gap-4 ${visibleNumericMetrics.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
           {visibleNumericMetrics.map((metric) => (
-            <article key={metric.key} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-3 sm:p-4">
+            <article key={metric.key} className="dt-panel min-w-0 overflow-hidden p-3 sm:p-4">
               <h2 className="mb-2 text-sm font-semibold text-slate-900 sm:mb-3 sm:text-base">
                 {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
               </h2>
@@ -513,17 +513,17 @@ export function BodyPage() {
           ))}
         </div>
       ) : !showNote ? (
-        <article className="rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
+        <article className="dt-panel p-4 text-sm text-slate-600">
           {t('body.allDisabled')}
         </article>
       ) : null}
 
-      <article className="rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
 
         <div className="space-y-3 md:hidden">
           {visibleRecordEntries.map((entry) => (
-            <div key={`${entry.record.date}-${entry.index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+            <div key={`${entry.record.date}-${entry.index}`} className="dt-panel-soft p-3 text-sm">
               <p className="font-medium text-slate-900">{entry.record.date}</p>
               <div className="mt-1 space-y-1 text-slate-700">
                 {visibleNumericMetrics
@@ -538,7 +538,7 @@ export function BodyPage() {
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
-                  className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
+                  className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
                   onClick={() => {
                     markFormInteraction()
                     setEditingIndex(entry.index)
@@ -549,7 +549,7 @@ export function BodyPage() {
                   {t('common.edit')}
                 </button>
                 <button
-                  className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
+                  className="dt-btn dt-btn-danger px-2 py-1 text-xs"
                   onClick={() => void handleDelete(entry.index)}
                   type="button"
                 >
@@ -589,18 +589,18 @@ export function BodyPage() {
                   <td className="py-2">
                     <div className="flex gap-2">
                       <button
-                        className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
-                      onClick={() => {
-                        markFormInteraction()
-                        setEditingIndex(entry.index)
-                        setForm(toFormState(entry.record))
-                      }}
+                        className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+                        onClick={() => {
+                          markFormInteraction()
+                          setEditingIndex(entry.index)
+                          setForm(toFormState(entry.record))
+                        }}
                         type="button"
                       >
                         {t('common.edit')}
                       </button>
                       <button
-                        className="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700"
+                        className="dt-btn dt-btn-danger px-2 py-1 text-xs"
                         onClick={() => void handleDelete(entry.index)}
                         type="button"
                       >

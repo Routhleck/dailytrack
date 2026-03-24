@@ -247,7 +247,7 @@ export function DailyNotePage() {
   const showNoChangesHint = showOnlyChanges && templateDiff != null && !templateDiff.hasAnyChange
 
   return (
-    <section className="space-y-4">
+    <section className="dt-page">
       <PageHeader
         title={t('dailyNote.pageTitle', { date: note.date })}
         description={t('dailyNote.pageDescription')}
@@ -255,25 +255,25 @@ export function DailyNotePage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            mode === 'structured' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+          className={`dt-btn ${
+            mode === 'structured' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
           }`}
           onClick={() => setMode('structured')}
         >
           {t('common.structured')}
         </button>
         <button
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            mode === 'raw' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+          className={`dt-btn ${
+            mode === 'raw' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
           }`}
           onClick={() => setMode('raw')}
         >
           {t('common.rawMarkdown')}
         </button>
-        <span className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
+        <span className="dt-badge">
           {saving ? t('common.saving') : t('common.autoSaveOn')}
         </span>
-        <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+        <label className="dt-badge gap-2">
           <input
             type="checkbox"
             checked={showOnlyChanges}
@@ -293,7 +293,7 @@ export function DailyNotePage() {
           {t('sync.showOnlyChanges')}
         </label>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
-        <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/daily">
+        <Link className="ml-auto text-sm dt-link" to="/daily">
           {t('dailyNote.backToList')}
         </Link>
       </div>
@@ -317,7 +317,7 @@ export function DailyNotePage() {
 
       {mode === 'structured' ? (
         <div className="space-y-6">
-          <article className="rounded-lg border border-slate-200 p-4">
+          <article className="dt-panel p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">{t('dailyNote.dailyCore')}</h2>
               <span className="text-xs text-slate-600">
@@ -350,7 +350,7 @@ export function DailyNotePage() {
           </article>
 
           {preferences.daily.showOptional ? (
-            <article className="rounded-lg border border-slate-200 p-4">
+            <article className="dt-panel p-4">
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.optional')}</h2>
               <div className="space-y-2">
                 {visibleOptional.map((item) => (
@@ -378,10 +378,10 @@ export function DailyNotePage() {
           ) : null}
 
           {showOneLineCard ? (
-            <article className="rounded-lg border border-slate-200 p-4">
+            <article className="dt-panel p-4">
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.oneLine')}</h2>
               <input
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="dt-input"
                 value={note.oneLine}
                 onChange={(event) => {
                   setNote((prev) => (prev ? { ...prev, oneLine: event.target.value } : prev))

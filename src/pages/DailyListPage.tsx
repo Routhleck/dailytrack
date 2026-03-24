@@ -58,12 +58,12 @@ export function DailyListPage() {
   const filtered = dates.filter((date) => date.includes(query.trim()))
 
   return (
-    <section className="space-y-4">
+    <section className="dt-page">
       <PageHeader title={t('dailyList.title')} description={t('dailyList.description')} />
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="dt-panel-soft p-4">
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="dt-input"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t('dailyList.filterPlaceholder')}
@@ -74,8 +74,8 @@ export function DailyListPage() {
 
       <ul className="space-y-2">
         {filtered.map((date) => (
-          <li key={date} className="rounded-md border border-slate-200 px-3 py-2">
-            <Link className="text-teal-700 hover:underline" to={`/daily/${date}`}>
+          <li key={date} className="dt-panel px-3 py-2">
+            <Link className="dt-link" to={`/daily/${date}`}>
               {date}
             </Link>
           </li>

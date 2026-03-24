@@ -136,10 +136,10 @@ export function ReportsPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="dt-page">
       <PageHeader title={t('reports.title')} description={t('reports.description')} />
 
-      <form onSubmit={handleSaveConfig} className="max-w-4xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleSaveConfig} className="dt-panel max-w-4xl space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('reports.providerConfig')}</h2>
         <p className="text-xs text-slate-500">{t('reports.providerHint')}</p>
 
@@ -147,7 +147,7 @@ export function ReportsPage() {
           <label className="space-y-1 text-sm text-slate-700">
             <span>{t('reports.providerName')}</span>
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={config.providerName}
               onChange={(event) => setConfig((prev) => ({ ...prev, providerName: event.target.value }))}
             />
@@ -155,7 +155,7 @@ export function ReportsPage() {
           <label className="space-y-1 text-sm text-slate-700">
             <span>{t('reports.baseUrl')}</span>
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={config.baseUrl}
               onChange={(event) => setConfig((prev) => ({ ...prev, baseUrl: event.target.value }))}
               placeholder="https://api.openai.com/v1"
@@ -165,7 +165,7 @@ export function ReportsPage() {
             <span>{t('reports.apiKey')}</span>
             <input
               type="password"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={config.apiKey}
               onChange={(event) => setConfig((prev) => ({ ...prev, apiKey: event.target.value }))}
               placeholder="sk-..."
@@ -174,7 +174,7 @@ export function ReportsPage() {
           <label className="space-y-1 text-sm text-slate-700">
             <span>{t('reports.model')}</span>
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={config.model}
               onChange={(event) => setConfig((prev) => ({ ...prev, model: event.target.value }))}
               placeholder="gpt-4o-mini"
@@ -187,7 +187,7 @@ export function ReportsPage() {
               min={0}
               max={2}
               step={0.1}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={String(config.temperature)}
               onChange={(event) =>
                 setConfig((prev) => ({
@@ -202,19 +202,19 @@ export function ReportsPage() {
         <button
           type="submit"
           disabled={savingConfig}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="dt-btn dt-btn-secondary"
         >
           {savingConfig ? t('reports.savingProvider') : t('reports.saveProvider')}
         </button>
       </form>
 
-      <form onSubmit={handleGenerate} className="max-w-4xl space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={handleGenerate} className="dt-panel max-w-4xl space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('reports.generate')}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1 text-sm text-slate-700">
             <span>{t('reports.period')}</span>
             <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={period}
               onChange={(event) => setPeriod(event.target.value as ReportPeriod)}
               disabled={generating}
@@ -226,7 +226,7 @@ export function ReportsPage() {
           <label className="space-y-1 text-sm text-slate-700">
             <span>{period === 'weekly' ? t('reports.targetWeek') : t('reports.targetMonth')}</span>
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="dt-input"
               value={targetId}
               onChange={(event) => setTargetId(event.target.value)}
               placeholder={period === 'weekly' ? '2026-W12' : '2026-03'}
@@ -238,13 +238,13 @@ export function ReportsPage() {
         <button
           type="submit"
           disabled={generating}
-          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="dt-btn dt-btn-primary"
         >
           {generating ? t('reports.generating') : t('reports.generateAndSave')}
         </button>
       </form>
 
-      <article className="max-w-4xl rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel max-w-4xl p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('reports.existingReports')}</h2>
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <div>
@@ -254,7 +254,7 @@ export function ReportsPage() {
                 <li key={name}>
                   <button
                     type="button"
-                    className="text-left text-teal-700 hover:underline"
+                    className="dt-link text-left"
                     onClick={() => void openExistingReport('weekly', name)}
                   >
                     {name}
@@ -271,7 +271,7 @@ export function ReportsPage() {
                 <li key={name}>
                   <button
                     type="button"
-                    className="text-left text-teal-700 hover:underline"
+                    className="dt-link text-left"
                     onClick={() => void openExistingReport('monthly', name)}
                   >
                     {name}
@@ -284,10 +284,10 @@ export function ReportsPage() {
         </div>
       </article>
 
-      <article className="max-w-4xl rounded-lg border border-slate-200 p-4">
+      <article className="dt-panel max-w-4xl p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('reports.preview')}</h2>
         <textarea
-          className="h-80 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+          className="dt-input h-80 font-mono text-xs"
           value={preview}
           onChange={(event) => setPreview(event.target.value)}
         />

@@ -142,17 +142,17 @@ export function DashboardPage() {
   const body = state.body
 
   return (
-    <section className="space-y-3 md:space-y-4">
+    <section className="dt-page">
       <PageHeader
         title={t('dashboard.title')}
         description={t('dashboard.description')}
       />
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 md:gap-4">
-        <article className="rounded-lg border border-slate-200 p-3 sm:p-4">
+        <article className="dt-panel p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.today')}</h2>
-            <Link className="text-xs text-teal-700 hover:underline sm:text-sm" to="/today">
+            <Link className="dt-link text-xs sm:text-sm" to="/today">
               {t('common.open')}
             </Link>
           </div>
@@ -165,10 +165,10 @@ export function DashboardPage() {
           </p>
         </article>
 
-        <article className="rounded-lg border border-slate-200 p-3 sm:p-4">
+        <article className="dt-panel p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.thisWeek')}</h2>
-            <Link className="text-xs text-teal-700 hover:underline sm:text-sm" to="/week">
+            <Link className="dt-link text-xs sm:text-sm" to="/week">
               {t('common.open')}
             </Link>
           </div>
@@ -178,10 +178,10 @@ export function DashboardPage() {
           <ProgressBar value={state.weekSummary.percent} />
         </article>
 
-        <article className="rounded-lg border border-slate-200 p-3 sm:p-4">
+        <article className="dt-panel p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.body')}</h2>
-            <Link className="text-xs text-teal-700 hover:underline sm:text-sm" to="/body">
+            <Link className="dt-link text-xs sm:text-sm" to="/body">
               {t('common.open')}
             </Link>
           </div>
@@ -210,12 +210,12 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        <article className="rounded-lg border border-slate-200 p-3 sm:p-4">
+        <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.recentDaily')}</h2>
           <ul className="space-y-1 text-sm">
             {state.recentDaily.map((date) => (
               <li key={date}>
-                <Link className="text-teal-700 hover:underline" to={`/daily/${date}`}>
+                <Link className="dt-link" to={`/daily/${date}`}>
                   {date}
                 </Link>
               </li>
@@ -223,12 +223,12 @@ export function DashboardPage() {
           </ul>
         </article>
 
-        <article className="rounded-lg border border-slate-200 p-3 sm:p-4">
+        <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.recentWeekly')}</h2>
           <ul className="space-y-1 text-sm">
             {state.recentWeekly.map((week) => (
               <li key={week}>
-                <Link className="text-teal-700 hover:underline" to={`/weekly/${week}`}>
+                <Link className="dt-link" to={`/weekly/${week}`}>
                   {week}
                 </Link>
               </li>

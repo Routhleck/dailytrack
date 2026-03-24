@@ -386,6 +386,10 @@ export const enMessages = {
   'settings.title': 'Settings',
   'settings.description':
     'Migrate data root safely and move active profile data between computers via export/import.',
+  'settings.diagnosticsTitle': 'Diagnostics',
+  'settings.diagnosticsDescription':
+    'Technical runtime state is collected here to keep the main workspace clean and focused.',
+  'settings.initState': 'Initialization status',
   'settings.activeProfile': 'Active profile',
   'settings.activeProfileRoot': 'Active profile root',
   'settings.migrateOnlyHint':
@@ -943,6 +947,9 @@ export const zhMessages: Record<MessageKey, string> = {
 
   'settings.title': '系统设置',
   'settings.description': '通过安全迁移和导出/导入在电脑间移动当前档案数据。',
+  'settings.diagnosticsTitle': '诊断信息',
+  'settings.diagnosticsDescription': '技术运行状态统一收纳在此，主工作区保持简洁聚焦。',
+  'settings.initState': '初始化状态',
   'settings.activeProfile': '当前档案',
   'settings.activeProfileRoot': '当前档案路径',
   'settings.migrateOnlyHint': '界面已禁用直接切换根目录。请使用迁移，在一步中安全复制并切换。',

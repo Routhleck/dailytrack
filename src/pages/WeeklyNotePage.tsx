@@ -282,7 +282,7 @@ export function WeeklyNotePage() {
     : 0
 
   return (
-    <section className="space-y-4">
+    <section className="dt-page">
       <PageHeader
         title={t('weeklyNote.pageTitle', { week: note.weekId })}
         description={t('weeklyNote.pageDescription')}
@@ -290,25 +290,25 @@ export function WeeklyNotePage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            mode === 'structured' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+          className={`dt-btn ${
+            mode === 'structured' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
           }`}
           onClick={() => setMode('structured')}
         >
           {t('common.structured')}
         </button>
         <button
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            mode === 'raw' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+          className={`dt-btn ${
+            mode === 'raw' ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
           }`}
           onClick={() => setMode('raw')}
         >
           {t('common.rawMarkdown')}
         </button>
-        <span className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
+        <span className="dt-badge">
           {saving ? t('common.saving') : t('common.autoSaveOn')}
         </span>
-        <label className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+        <label className="dt-badge gap-2">
           <input
             type="checkbox"
             checked={showOnlyChanges}
@@ -328,7 +328,7 @@ export function WeeklyNotePage() {
           {t('sync.showOnlyChanges')}
         </label>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
-        <Link className="ml-auto text-sm text-teal-700 hover:underline" to="/weekly">
+        <Link className="ml-auto text-sm dt-link" to="/weekly">
           {t('weeklyNote.backToList')}
         </Link>
       </div>
@@ -357,7 +357,7 @@ export function WeeklyNotePage() {
             const summary = summarizeChecklist(items)
 
             return (
-              <article key={section} className="rounded-lg border border-slate-200 p-4">
+              <article key={section} className="dt-panel p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-base font-semibold text-slate-900">{t(`section.${section}` as 'section.Body')}</h2>
                   <span className="text-xs text-slate-600">
@@ -394,7 +394,7 @@ export function WeeklyNotePage() {
             )
           })}
 
-          <article className="rounded-lg border border-slate-200 p-4 lg:col-span-2">
+          <article className="dt-panel p-4 lg:col-span-2">
             <h2 className="mb-3 text-base font-semibold text-slate-900">{t('weeklyNote.reflection')}</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -405,15 +405,15 @@ export function WeeklyNotePage() {
                     return null
                   }
                   return (
-                  <input
+                    <input
                     key={`good-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={value}
                     onChange={(event) => {
                       updateReflection('goodThings', index, event.target.value)
                     }}
                     placeholder={`${index + 1}.`}
-                  />
+                    />
                   )
                 })}
               </div>
@@ -427,15 +427,15 @@ export function WeeklyNotePage() {
                     return null
                   }
                   return (
-                  <input
+                    <input
                     key={`next-${index}`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="dt-input"
                     value={value}
                     onChange={(event) => {
                       updateReflection('nextWeekTop3', index, event.target.value)
                     }}
                     placeholder={`${index + 1}.`}
-                  />
+                    />
                   )
                 })}
               </div>
