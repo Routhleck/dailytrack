@@ -5,39 +5,52 @@ import { createHashRouter } from 'react-router-dom'
 import { useI18n } from '../features/i18n/I18nContext'
 import { AppShell } from './AppShell'
 
-const DashboardPage = lazy(async () => ({
-  default: (await import('../pages/DashboardPage')).DashboardPage,
-}))
-const DailyNotePage = lazy(async () => ({
-  default: (await import('../pages/DailyNotePage')).DailyNotePage,
-}))
-const WeeklyNotePage = lazy(async () => ({
-  default: (await import('../pages/WeeklyNotePage')).WeeklyNotePage,
-}))
-const DailyListPage = lazy(async () => ({
-  default: (await import('../pages/DailyListPage')).DailyListPage,
-}))
-const WeeklyListPage = lazy(async () => ({
-  default: (await import('../pages/WeeklyListPage')).WeeklyListPage,
-}))
-const BodyPage = lazy(async () => ({
-  default: (await import('../pages/BodyPage')).BodyPage,
-}))
-const ReportsPage = lazy(async () => ({
-  default: (await import('../pages/ReportsPage')).ReportsPage,
-}))
-const SettingsPage = lazy(async () => ({
-  default: (await import('../pages/SettingsPage')).SettingsPage,
-}))
-const SyncPage = lazy(async () => ({
-  default: (await import('../pages/SyncPage')).SyncPage,
-}))
-const ProfilesPage = lazy(async () => ({
-  default: (await import('../pages/ProfilesPage')).ProfilesPage,
-}))
-const PreferencesPage = lazy(async () => ({
-  default: (await import('../pages/PreferencesPage')).PreferencesPage,
-}))
+const loadDashboardPage = () => import('../pages/DashboardPage')
+const loadDailyNotePage = () => import('../pages/DailyNotePage')
+const loadWeeklyNotePage = () => import('../pages/WeeklyNotePage')
+const loadDailyListPage = () => import('../pages/DailyListPage')
+const loadWeeklyListPage = () => import('../pages/WeeklyListPage')
+const loadBodyPage = () => import('../pages/BodyPage')
+const loadReportsPage = () => import('../pages/ReportsPage')
+const loadSettingsPage = () => import('../pages/SettingsPage')
+const loadSyncPage = () => import('../pages/SyncPage')
+const loadProfilesPage = () => import('../pages/ProfilesPage')
+const loadPreferencesPage = () => import('../pages/PreferencesPage')
+
+const DashboardPage = lazy(async () => ({ default: (await loadDashboardPage()).DashboardPage }))
+const DailyNotePage = lazy(async () => ({ default: (await loadDailyNotePage()).DailyNotePage }))
+const WeeklyNotePage = lazy(async () => ({ default: (await loadWeeklyNotePage()).WeeklyNotePage }))
+const DailyListPage = lazy(async () => ({ default: (await loadDailyListPage()).DailyListPage }))
+const WeeklyListPage = lazy(async () => ({ default: (await loadWeeklyListPage()).WeeklyListPage }))
+const BodyPage = lazy(async () => ({ default: (await loadBodyPage()).BodyPage }))
+const ReportsPage = lazy(async () => ({ default: (await loadReportsPage()).ReportsPage }))
+const SettingsPage = lazy(async () => ({ default: (await loadSettingsPage()).SettingsPage }))
+const SyncPage = lazy(async () => ({ default: (await loadSyncPage()).SyncPage }))
+const ProfilesPage = lazy(async () => ({ default: (await loadProfilesPage()).ProfilesPage }))
+const PreferencesPage = lazy(async () => ({ default: (await loadPreferencesPage()).PreferencesPage }))
+
+const routePageLoaders = [
+  loadDashboardPage,
+  loadDailyNotePage,
+  loadWeeklyNotePage,
+  loadDailyListPage,
+  loadWeeklyListPage,
+  loadBodyPage,
+  loadReportsPage,
+  loadSettingsPage,
+  loadSyncPage,
+  loadProfilesPage,
+  loadPreferencesPage,
+]
+
+let routePreloadPromise: Promise<void> | null = null
+
+export function preloadRoutePages() {
+  if (!routePreloadPromise) {
+    routePreloadPromise = Promise.all(routePageLoaders.map((load) => load())).then(() => undefined)
+  }
+  return routePreloadPromise
+}
 
 function RouteFallback() {
   const { t } = useI18n()

@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
 
-import { router } from './app/router'
+import { preloadRoutePages, router } from './app/router'
 import { I18nProvider } from './features/i18n/I18nContext'
 import { PreferencesProvider } from './features/preferences/PreferencesContext'
 import { FilesystemWatchBridge } from './features/settings/FilesystemWatchBridge'
@@ -9,6 +10,16 @@ import { UpdaterProvider } from './features/updater/UpdaterContext'
 import { WebdavSyncBridge } from './features/webdav/WebdavSyncBridge'
 
 function App() {
+  useEffect(() => {
+    const preloadTimer = window.setTimeout(() => {
+      void preloadRoutePages()
+    }, 350)
+
+    return () => {
+      window.clearTimeout(preloadTimer)
+    }
+  }, [])
+
   return (
     <I18nProvider>
       <UpdaterProvider>
