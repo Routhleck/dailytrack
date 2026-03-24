@@ -89,6 +89,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - metric toggles by preferences
   - per-metric unit/decimal display config
   - optional per-metric goal lines on trend charts
+  - post-submit change summary (`vs previous`) with temporary visual highlight
   - trend charts (improved narrow-window rendering)
 - Profiles:
   - create/switch/delete profiles

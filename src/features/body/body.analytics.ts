@@ -50,6 +50,13 @@ export function filterBodyRecordsByRange(
   })
 }
 
+export function filterBodyRecordsByRangeTyped<T extends BodyRecord>(
+  records: T[],
+  range: BodyChartRange,
+): T[] {
+  return filterBodyRecordsByRange(records, range) as T[]
+}
+
 export function metricDeltaFromLatest(
   recordsDesc: BodyRecord[],
   metric: BodyNumericMetricKey,

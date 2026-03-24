@@ -12,7 +12,7 @@ import {
 import { MeasuredChartContainer } from '../components/MeasuredChartContainer'
 import { PageHeader } from '../components/PageHeader'
 import {
-  filterBodyRecordsByRange,
+  filterBodyRecordsByRangeTyped,
   metricDeltaFromLatest,
   type BodyChartRange,
 } from '../features/body/body.analytics'
@@ -76,6 +76,7 @@ type FormState = {
 
 const FORM_INTERACTION_GRACE_MS = 1800
 const RESUME_POLL_GRACE_MS = 2200
+const HIGHLIGHT_DURATION_MS = 2400
 const BODY_CHART_RANGE_OPTIONS: {
   key: BodyChartRange
   labelKey: 'body.range7d' | 'body.range30d' | 'body.range90d' | 'body.rangeAll'
@@ -94,6 +95,36 @@ function parseNullableNumber(value: string): number | null {
 
   const parsed = Number(trimmed)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function bodyRecordSignature(record: BodyRecord): string {
+  return [
+    record.date,
+    record.weight ?? '',
+    record.waist ?? '',
+    record.bodyFat ?? '',
+    record.muscleMass ?? '',
+    record.chest ?? '',
+    record.hip ?? '',
+    record.note,
+  ].join('|')
+}
+
+function sameBodyRecord(left: BodyRecord, right: BodyRecord): boolean {
+  return (
+    left.date === right.date
+    && left.weight === right.weight
+    && left.waist === right.waist
+    && left.bodyFat === right.bodyFat
+    && left.muscleMass === right.muscleMass
+    && left.chest === right.chest
+    && left.hip === right.hip
+    && left.note === right.note
+  )
+}
+
+function findSavedRecord(records: BodyRecord[], target: BodyRecord): BodyRecord | null {
+  return records.find((item) => sameBodyRecord(item, target)) ?? null
 }
 
 function toFormState(record?: BodyRecord): FormState {
@@ -158,6 +189,7 @@ export function BodyPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [message, setMessage] = useState('')
   const [chartRange, setChartRange] = useState<BodyChartRange>('30d')
+  const [highlightedSignature, setHighlightedSignature] = useState<string | null>(null)
 
   const recordsRef = useRef<BodyRecord[]>([])
   const editingIndexRef = useRef<number | null>(null)
@@ -192,6 +224,20 @@ export function BodyPage() {
   }, [editingIndex])
 
   useEffect(() => {
+    if (!highlightedSignature) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setHighlightedSignature(null)
+    }, HIGHLIGHT_DURATION_MS)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [highlightedSignature])
+
+  useEffect(() => {
     resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
 
     const onVisibilityChange = () => {
@@ -221,9 +267,9 @@ export function BodyPage() {
       .catch(() => setMessage(t('body.loadFailed')))
   }, [dataRoot, t])
 
-  async function persist(nextRecords: BodyRecord[]) {
+  async function persist(nextRecords: BodyRecord[]): Promise<BodyRecord[] | null> {
     if (!dataRoot) {
-      return
+      return null
     }
 
     try {
@@ -232,9 +278,11 @@ export function BodyPage() {
       setMessage('')
       pushSuccess(t('body.saved'))
       emitDataChanged({ scope: 'body' })
+      return saved
     } catch {
       setMessage(t('body.saveFailed'))
       pushError(t('body.saveFailed'))
+      return null
     }
   }
 
@@ -314,7 +362,47 @@ export function BodyPage() {
       nextRecords[editingIndex] = nextRecord
     }
 
-    await persist(nextRecords)
+    const savedRecords = await persist(nextRecords)
+    if (savedRecords) {
+      const savedRecord = findSavedRecord(savedRecords, nextRecord)
+      if (savedRecord) {
+        const signature = bodyRecordSignature(savedRecord)
+        setHighlightedSignature(signature)
+
+        const currentIndex = savedRecords.findIndex((record) => sameBodyRecord(record, savedRecord))
+        const previous = currentIndex >= 0 ? savedRecords[currentIndex + 1] : undefined
+
+        if (previous) {
+          const summaryParts = enabledNumericMetrics
+            .map((metric) => {
+              const currentValue = savedRecord[metric.key]
+              const previousValue = previous[metric.key]
+              if (currentValue == null || previousValue == null) {
+                return null
+              }
+              const delta = currentValue - previousValue
+              if (delta === 0) {
+                return null
+              }
+              const sign = delta > 0 ? '+' : ''
+              const value = formatBodyMetricValue(delta, preferences.body.display[metric.key])
+              return `${t(metric.labelKey)} ${sign}${value}`
+            })
+            .filter((part): part is string => Boolean(part))
+
+          const summaryText =
+            summaryParts.length > 0
+              ? t('body.changeSummaryWithDelta', { summary: summaryParts.join(' · ') })
+              : t('body.changeSummaryNoDelta')
+          setMessage(summaryText)
+          pushInfo(summaryText)
+        } else {
+          const summaryText = t('body.changeSummaryNoPrevious')
+          setMessage(summaryText)
+          pushInfo(summaryText)
+        }
+      }
+    }
     setForm(toFormState())
     setEditingIndex(null)
   }
@@ -330,17 +418,17 @@ export function BodyPage() {
     }
   }
 
-  const chartData = useMemo(() => [...records].reverse(), [records])
+  const chartData = useMemo(
+    () => [...records].reverse().map((record) => ({ ...record, _signature: bodyRecordSignature(record) })),
+    [records],
+  )
   const rangedChartData = useMemo(
-    () => filterBodyRecordsByRange(chartData, chartRange),
+    () => filterBodyRecordsByRangeTyped(chartData, chartRange),
     [chartData, chartRange],
   )
   const showOnlyChanges = preferences.ui.showOnlyChanges.body
   const recordDiffs = useMemo(() => records.map((record) => diffBodyRecord(record)), [records])
-  const enabledNumericMetrics = useMemo(
-    () => BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key]),
-    [preferences.body],
-  )
+  const enabledNumericMetrics = BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key])
   const metricDeltas = useMemo(() => {
     const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
     for (const metric of enabledNumericMetrics) {
@@ -598,7 +686,25 @@ export function BodyPage() {
                         ifOverflow="extendDomain"
                       />
                     ) : null}
-                    <Line type="monotone" dataKey={metric.key} stroke={metric.stroke} strokeWidth={2} dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey={metric.key}
+                      stroke={metric.stroke}
+                      strokeWidth={2}
+                      dot={({ cx, cy, payload }) => {
+                        if (
+                          highlightedSignature
+                          && payload
+                          && typeof payload === 'object'
+                          && (payload as { _signature?: string })._signature === highlightedSignature
+                          && typeof cx === 'number'
+                          && typeof cy === 'number'
+                        ) {
+                          return <circle cx={cx} cy={cy} r={4.5} fill={metric.stroke} stroke="#ffffff" strokeWidth={2} />
+                        }
+                        return null
+                      }}
+                    />
                   </LineChart>
                 )}
               </MeasuredChartContainer>
@@ -622,7 +728,14 @@ export function BodyPage() {
 
         <div className="space-y-3 md:hidden">
           {visibleRecordEntries.map((entry) => (
-            <div key={`${entry.record.date}-${entry.index}`} className="dt-panel-soft p-3 text-sm">
+            <div
+              key={`${entry.record.date}-${entry.index}`}
+              className={`dt-panel-soft p-3 text-sm ${
+                bodyRecordSignature(entry.record) === highlightedSignature
+                  ? 'ring-2 ring-amber-300/70'
+                  : ''
+              }`}
+            >
               <p className="font-medium text-slate-900">{entry.record.date}</p>
               <div className="mt-1 space-y-1 text-slate-700">
                 {visibleNumericMetrics
@@ -675,7 +788,14 @@ export function BodyPage() {
             </thead>
             <tbody>
               {visibleRecordEntries.map((entry) => (
-                <tr key={`${entry.record.date}-${entry.index}`} className="border-b border-slate-100">
+                <tr
+                  key={`${entry.record.date}-${entry.index}`}
+                  className={`border-b border-slate-100 ${
+                    bodyRecordSignature(entry.record) === highlightedSignature
+                      ? 'bg-amber-50/60'
+                      : ''
+                  }`}
+                >
                   <td className="py-2">{entry.record.date}</td>
                   {visibleNumericMetrics.map((metric) => (
                     <td key={metric.key} className="py-2">
