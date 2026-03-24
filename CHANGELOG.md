@@ -6,12 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [0.8.0] - 2026-03-24
+
+### Added
+- Added playful animated task checkbox interactions for structured checklist editing.
+- Expanded the in-app tutorial into a fuller feature walkthrough (navigation, data model, sync/report flow, and recommended routine).
+
 ### Changed
 - Introduced a Calm Glass visual system with shared design tokens, glass shell surfaces, and unified card/input/button styles.
 - Reworked navigation information architecture into primary/secondary groups with a centralized route config used by desktop sidebar and mobile navigation.
 - Refreshed Dashboard, Daily, Weekly, Body, list pages, Reports, Preferences, Sync, Profiles, Settings, and onboarding modal to align with the new visual system.
 - Moved technical runtime details out of the main shell; diagnostics now live in Settings so the daily workspace stays focused.
-- Expanded guided tutorial coverage with finer navigation walkthrough steps and full feature-overview guidance (data model, sync/report workflow, and usage routine).
+- Preloaded route page chunks after startup so most tab/page switches use warmed cache and feel smoother.
+
+### Fixed
+- Removed the duplicate sidebar language switch entry and kept language switching in the top-right shell control.
+- Kept the sidebar fixed while main content scrolls and refined route transition animations.
 
 ## [0.7.3] - 2026-03-24
 
