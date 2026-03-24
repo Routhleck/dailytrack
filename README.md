@@ -374,5 +374,7 @@ Current milestone sequence:
 - `v0.9.0`: UX foundation upgrade
 - `v0.10.0`: daily and history efficiency
 - `v0.11.0`: body analytics upgrade
-- `v0.12.0`: templates and goals
+- `v0.12.0`: templates and goals loop
+- `v0.13.0`: insights and review
+- `v0.14.0`: retention and routine support
 - `v1.0.0`: reliability and trust
