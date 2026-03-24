@@ -7,19 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- Added completion badges to Daily/Weekly history rows (`checked/total` and `%`) so note status is visible before opening.
+- Added weekly lightweight goal-progress panel (sections completed count + weakest section hint + per-section badges).
+
+### Changed
+- Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
+
+## [0.11.0] - 2026-03-24
+
+### Added
 - Added body analytics helpers + tests for chart-range filtering and latest-vs-previous metric delta calculation.
 - Added body trend chart range controls (`7d / 30d / 90d / all`).
 - Added metric delta badges on Body page (`vs previous`) using per-metric unit/decimal display preferences.
 - Added per-metric body goal-line preferences (`enabled + value`) and chart `ReferenceLine` rendering.
 - Added post-submit body change summary feedback (`vs previous`) and temporary highlight for the saved record in chart/history.
-- Added weekly lightweight goal-progress panel (sections completed count + weakest section hint + per-section badges).
+
+## [0.10.0] - 2026-03-24
+
+### Added
+- Added completion badges to Daily/Weekly history rows (`checked/total` and `%`) so note status is visible before opening.
 
 ### Changed
 - Daily/Weekly history now supports status filtering (`All / Completed / Pending`) with visible item count feedback.
 - Daily/Weekly history search now supports fast open of the first match via `Enter` key or quick action button.
 - Daily/Weekly history now shows an explicit empty-state hint when no notes match current filters.
-- Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
 
 ## [0.9.0] - 2026-03-24
 
