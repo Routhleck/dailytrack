@@ -58,7 +58,7 @@ export function BottomNav() {
           <li key={item.key}>
             <button
               type="button"
-              data-tour={item.kind === 'route' ? item.tourTarget : undefined}
+              data-tour={item.tourTarget}
               aria-pressed={highlightedTab === item.key}
               className={`block w-full rounded-xl px-1 py-1.5 text-center transition-all duration-200 ${
                 highlightedTab === item.key

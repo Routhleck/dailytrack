@@ -76,15 +76,16 @@ type MobileSheetTab = {
   sheet: MobileSheetKey
   labelKey: MessageKey
   icon: NavGlyphName
+  tourTarget?: string
 }
 
 export type MobileTabItem = MobileRouteTab | MobileSheetTab
 
 export const MOBILE_TABS: MobileTabItem[] = [
   { key: 'dashboard', kind: 'route', to: '/', labelKey: 'nav.dashboard', icon: 'dashboard', end: true, tourTarget: 'nav-dashboard' },
-  { key: 'record', kind: 'sheet', sheet: 'record', labelKey: 'nav.record', icon: 'today' },
-  { key: 'history', kind: 'sheet', sheet: 'history', labelKey: 'nav.history', icon: 'daily' },
-  { key: 'more', kind: 'route', to: '/more', labelKey: 'nav.more', icon: 'more', end: true },
+  { key: 'record', kind: 'sheet', sheet: 'record', labelKey: 'nav.record', icon: 'today', tourTarget: 'nav-record' },
+  { key: 'history', kind: 'sheet', sheet: 'history', labelKey: 'nav.history', icon: 'daily', tourTarget: 'nav-history' },
+  { key: 'more', kind: 'route', to: '/more', labelKey: 'nav.more', icon: 'more', end: true, tourTarget: 'nav-more' },
 ]
 
 function pathStartsWith(pathname: string, prefix: string): boolean {

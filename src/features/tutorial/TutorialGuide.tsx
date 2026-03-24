@@ -22,10 +22,11 @@ type TutorialStep = {
 type TutorialMode = 'auto' | 'manual'
 
 const HIGHLIGHT_PADDING = 6
-const TOOLTIP_WIDTH = 360
+const TOOLTIP_MAX_WIDTH = 360
 const EDGE_GAP = 16
+const MOBILE_BREAKPOINT = 768
 
-const STEPS: TutorialStep[] = [
+const DESKTOP_STEPS: TutorialStep[] = [
   {
     target: 'nav-dashboard',
     titleKey: 'tutorial.stepDashboardTitle',
@@ -100,6 +101,46 @@ const STEPS: TutorialStep[] = [
   },
 ]
 
+const MOBILE_STEPS: TutorialStep[] = [
+  {
+    target: 'nav-dashboard',
+    titleKey: 'tutorial.stepDashboardTitle',
+    bodyKey: 'tutorial.stepDashboardBody',
+  },
+  {
+    target: 'nav-record',
+    titleKey: 'tutorial.stepRecordTitle',
+    bodyKey: 'tutorial.stepRecordBody',
+  },
+  {
+    target: 'nav-history',
+    titleKey: 'tutorial.stepHistoryTitle',
+    bodyKey: 'tutorial.stepHistoryBody',
+  },
+  {
+    target: 'nav-more',
+    titleKey: 'tutorial.stepMoreTitle',
+    bodyKey: 'tutorial.stepMoreBody',
+  },
+  {
+    target: 'shell-language',
+    titleKey: 'tutorial.stepLanguageTitle',
+    bodyKey: 'tutorial.stepLanguageBody',
+  },
+  {
+    titleKey: 'tutorial.stepSourceOfTruthTitle',
+    bodyKey: 'tutorial.stepSourceOfTruthBody',
+  },
+  {
+    titleKey: 'tutorial.stepFeatureMapTitle',
+    bodyKey: 'tutorial.stepFeatureMapBody',
+  },
+  {
+    titleKey: 'tutorial.stepWorkflowTitle',
+    bodyKey: 'tutorial.stepWorkflowBody',
+  },
+]
+
 function findStepRect(step: TutorialStep): DOMRect | null {
   if (!step.target) {
     return null
@@ -115,38 +156,47 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-function getTooltipPosition(rect: DOMRect | null): { left: number; top: number } {
+function getTooltipLayout(rect: DOMRect | null): { left: number; top: number; width: number } {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
+  const tooltipWidth = Math.min(TOOLTIP_MAX_WIDTH, viewportWidth - EDGE_GAP * 2)
   const estimatedHeight = 260
+
+  const maxLeft = Math.max(EDGE_GAP, viewportWidth - tooltipWidth - EDGE_GAP)
 
   if (!rect) {
     return {
-      left: clamp((viewportWidth - TOOLTIP_WIDTH) / 2, EDGE_GAP, viewportWidth - TOOLTIP_WIDTH - EDGE_GAP),
+      left: clamp((viewportWidth - tooltipWidth) / 2, EDGE_GAP, maxLeft),
       top: clamp(viewportHeight * 0.16, EDGE_GAP, viewportHeight - estimatedHeight - EDGE_GAP),
+      width: tooltipWidth,
     }
   }
 
   let left = rect.right + 16
-  if (left + TOOLTIP_WIDTH > viewportWidth - EDGE_GAP) {
-    left = rect.left - TOOLTIP_WIDTH - 16
+  if (left + tooltipWidth > viewportWidth - EDGE_GAP) {
+    left = rect.left - tooltipWidth - 16
   }
 
-  left = clamp(left, EDGE_GAP, viewportWidth - TOOLTIP_WIDTH - EDGE_GAP)
+  left = clamp(left, EDGE_GAP, maxLeft)
 
   const top = clamp(rect.top, EDGE_GAP, viewportHeight - estimatedHeight - EDGE_GAP)
-  return { left, top }
+  return { left, top, width: tooltipWidth }
 }
 
 export function TutorialGuide({ blocked }: { blocked: boolean }) {
   const { t } = useI18n()
+  const [isMobileLayout, setIsMobileLayout] = useState(() =>
+    window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches,
+  )
   const [active, setActive] = useState(false)
   const [mode, setMode] = useState<TutorialMode>('manual')
   const [stepIndex, setStepIndex] = useState(0)
   const [stepRect, setStepRect] = useState<DOMRect | null>(null)
 
-  const currentStep = STEPS[stepIndex]
-  const isFinalStep = stepIndex >= STEPS.length - 1
+  const steps = isMobileLayout ? MOBILE_STEPS : DESKTOP_STEPS
+  const safeStepIndex = Math.min(stepIndex, steps.length - 1)
+  const currentStep = steps[safeStepIndex] ?? steps[0]
+  const isFinalStep = safeStepIndex >= steps.length - 1
 
   const openTutorial = useCallback((nextMode: TutorialMode) => {
     clearTutorialDismissedForSession()
@@ -199,12 +249,26 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
   }, [active, blocked, openTutorial])
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const onChange = (event: MediaQueryListEvent) => {
+      setIsMobileLayout(event.matches)
+    }
+
+    mediaQuery.addEventListener('change', onChange)
+    return () => mediaQuery.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
     if (!active) {
       return
     }
 
     const refreshRect = () => {
-      setStepRect(findStepRect(STEPS[stepIndex]))
+      if (!currentStep) {
+        setStepRect(null)
+        return
+      }
+      setStepRect(findStepRect(currentStep))
     }
 
     refreshRect()
@@ -217,7 +281,7 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
       window.removeEventListener('resize', refreshRect)
       window.removeEventListener('scroll', refreshRect, true)
     }
-  }, [active, stepIndex])
+  }, [active, currentStep])
 
   useEffect(() => {
     if (!active) {
@@ -234,9 +298,9 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [active, handleSkip])
 
-  const tooltipPosition = useMemo(() => getTooltipPosition(stepRect), [stepRect])
+  const tooltipLayout = useMemo(() => getTooltipLayout(stepRect), [stepRect])
 
-  if (!active) {
+  if (!active || !currentStep) {
     return null
   }
 
@@ -259,13 +323,13 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
       <div
         className="absolute w-[320px] rounded-lg border border-slate-200 bg-white p-4 shadow-2xl pointer-events-auto"
         style={{
-          left: `${tooltipPosition.left}px`,
-          top: `${tooltipPosition.top}px`,
-          width: `${TOOLTIP_WIDTH}px`,
+          left: `${tooltipLayout.left}px`,
+          top: `${tooltipLayout.top}px`,
+          width: `${tooltipLayout.width}px`,
         }}
       >
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          {t('tutorial.progress', { current: stepIndex + 1, total: STEPS.length })}
+          {t('tutorial.progress', { current: safeStepIndex + 1, total: steps.length })}
         </p>
         <h3 className="mt-1 text-base font-semibold text-slate-900">{t(currentStep.titleKey)}</h3>
         <p className="mt-2 whitespace-pre-line text-sm text-slate-600">{t(currentStep.bodyKey)}</p>
@@ -283,7 +347,7 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
             <button
               type="button"
               onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-              disabled={stepIndex === 0}
+              disabled={safeStepIndex === 0}
               className="rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
             >
               {t('tutorial.back')}
@@ -295,7 +359,7 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
                   handleFinish()
                   return
                 }
-                setStepIndex((current) => Math.min(STEPS.length - 1, current + 1))
+                setStepIndex((current) => Math.min(steps.length - 1, current + 1))
               }}
               className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white"
             >

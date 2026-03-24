@@ -71,6 +71,15 @@ export const enMessages = {
   'tutorial.stepDashboardTitle': 'Dashboard',
   'tutorial.stepDashboardBody':
     'Dashboard gives you a quick daily snapshot: today progress, weekly completion, body latest record, and recent notes.',
+  'tutorial.stepRecordTitle': 'Record',
+  'tutorial.stepRecordBody':
+    'Record tab opens a quick sheet to jump into Today, This Week, and Body Progress editing flows.',
+  'tutorial.stepHistoryTitle': 'History',
+  'tutorial.stepHistoryBody':
+    'History tab opens Daily/Weekly history lists so you can quickly review and edit previous notes.',
+  'tutorial.stepMoreTitle': 'More',
+  'tutorial.stepMoreBody':
+    'More tab opens the utility hub: Sync, Profiles, Preferences, Settings, and Reports.',
   'tutorial.stepTodayTitle': 'Today',
   'tutorial.stepTodayBody':
     'Use Today for your daily markdown note. Toggle checkboxes, edit One Line, and keep the raw markdown fallback.',
@@ -682,6 +691,15 @@ export const zhMessages: Record<MessageKey, string> = {
   'tutorial.stepDashboardTitle': '仪表盘',
   'tutorial.stepDashboardBody':
     '仪表盘用于快速总览：今天进度、本周完成度、身体最新记录和最近笔记。',
+  'tutorial.stepRecordTitle': '记录',
+  'tutorial.stepRecordBody':
+    '“记录”标签会弹出快捷面板，可快速进入今天、本周和身体进展编辑入口。',
+  'tutorial.stepHistoryTitle': '历史',
+  'tutorial.stepHistoryBody':
+    '“历史”标签会弹出每日/每周历史列表，方便你快速回看并编辑过去的记录。',
+  'tutorial.stepMoreTitle': '更多',
+  'tutorial.stepMoreBody':
+    '“更多”标签进入工具中心，集中放置同步、档案、偏好设置、系统设置和报告。',
   'tutorial.stepTodayTitle': '今天',
   'tutorial.stepTodayBody':
     '这里是每日记录入口。可以勾选清单、编辑一句话，也可随时切换原始 Markdown 模式。',
