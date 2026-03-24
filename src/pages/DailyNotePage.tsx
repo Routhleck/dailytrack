@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
+import { TaskCheckbox } from '../components/TaskCheckbox'
 import { diffDailyAgainstTemplate } from '../features/daily/daily.diff'
 import { parseDailyMarkdown } from '../features/daily/daily.parser'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
@@ -327,24 +328,31 @@ export function DailyNotePage() {
             <ProgressBar value={coreSummary.percent} />
             <div className="mt-4 space-y-2">
               {visibleDailyCore.map((item) => (
-                <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
-                  <input
-                    type="checkbox"
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                    item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
+                  }`}
+                >
+                  <TaskCheckbox
                     checked={item.checked}
-                    onChange={(event) => {
+                    ariaLabel={item.text || 'daily-core-item'}
+                    onToggle={(next) => {
                       const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
-                      updateChecklist('dailyCore', index, { checked: event.target.checked })
+                      updateChecklist('dailyCore', index, { checked: next })
                     }}
                   />
                   <input
-                    className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
+                    className={`w-full border-none bg-transparent text-sm outline-none ${
+                      item.checked ? 'text-slate-500 line-through' : 'text-slate-800'
+                    }`}
                     value={item.text}
                     onChange={(event) => {
                       const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
                       updateChecklist('dailyCore', index, { text: event.target.value })
                     }}
                   />
-                </label>
+                </div>
               ))}
             </div>
           </article>
@@ -354,24 +362,31 @@ export function DailyNotePage() {
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.optional')}</h2>
               <div className="space-y-2">
                 {visibleOptional.map((item) => (
-                  <label key={item.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
-                    <input
-                      type="checkbox"
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                      item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
+                    }`}
+                  >
+                    <TaskCheckbox
                       checked={item.checked}
-                      onChange={(event) => {
+                      ariaLabel={item.text || 'optional-item'}
+                      onToggle={(next) => {
                         const index = note.optional.findIndex((candidate) => candidate.id === item.id)
-                        updateChecklist('optional', index, { checked: event.target.checked })
+                        updateChecklist('optional', index, { checked: next })
                       }}
                     />
                     <input
-                      className="w-full border-none bg-transparent text-sm text-slate-800 outline-none"
+                      className={`w-full border-none bg-transparent text-sm outline-none ${
+                        item.checked ? 'text-slate-500 line-through' : 'text-slate-800'
+                      }`}
                       value={item.text}
                       onChange={(event) => {
                         const index = note.optional.findIndex((candidate) => candidate.id === item.id)
                         updateChecklist('optional', index, { text: event.target.value })
                       }}
                     />
-                  </label>
+                  </div>
                 ))}
               </div>
             </article>
