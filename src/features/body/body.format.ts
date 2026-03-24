@@ -1,4 +1,4 @@
-import type { BodyMetricDisplay } from '../../types/preferences'
+import type { BodyMetricDisplay, BodyMetricGoal } from '../../types/preferences'
 import type { BodyNumericMetricKey } from '../../types/tracker'
 
 export const BODY_NUMERIC_METRIC_KEYS: BodyNumericMetricKey[] = [
@@ -23,11 +23,27 @@ export const DEFAULT_BODY_METRIC_DISPLAY: Record<BodyNumericMetricKey, BodyMetri
   hip: { unit: 'cm', decimals: 1 },
 }
 
+export const DEFAULT_BODY_METRIC_GOALS: Record<BodyNumericMetricKey, BodyMetricGoal> = {
+  weight: { enabled: false, value: null },
+  waist: { enabled: false, value: null },
+  bodyFat: { enabled: false, value: null },
+  muscleMass: { enabled: false, value: null },
+  chest: { enabled: false, value: null },
+  hip: { enabled: false, value: null },
+}
+
 export function cloneDefaultBodyMetricDisplay(): Record<BodyNumericMetricKey, BodyMetricDisplay> {
   return BODY_NUMERIC_METRIC_KEYS.reduce<Record<BodyNumericMetricKey, BodyMetricDisplay>>((acc, key) => {
     acc[key] = { ...DEFAULT_BODY_METRIC_DISPLAY[key] }
     return acc
   }, {} as Record<BodyNumericMetricKey, BodyMetricDisplay>)
+}
+
+export function cloneDefaultBodyMetricGoals(): Record<BodyNumericMetricKey, BodyMetricGoal> {
+  return BODY_NUMERIC_METRIC_KEYS.reduce<Record<BodyNumericMetricKey, BodyMetricGoal>>((acc, key) => {
+    acc[key] = { ...DEFAULT_BODY_METRIC_GOALS[key] }
+    return acc
+  }, {} as Record<BodyNumericMetricKey, BodyMetricGoal>)
 }
 
 function normalizeUnit(value: unknown, fallback: string): string {
@@ -52,6 +68,13 @@ function normalizeDecimals(value: unknown, fallback: number): number {
   return Math.min(MAX_DECIMALS, Math.max(MIN_DECIMALS, rounded))
 }
 
+function normalizeGoalValue(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null
+  }
+  return value
+}
+
 export function normalizeBodyMetricDisplay(
   raw: unknown,
   fallback: BodyMetricDisplay,
@@ -60,6 +83,18 @@ export function normalizeBodyMetricDisplay(
   return {
     unit: normalizeUnit(object.unit, fallback.unit),
     decimals: normalizeDecimals(object.decimals, fallback.decimals),
+  }
+}
+
+export function normalizeBodyMetricGoal(
+  raw: unknown,
+  fallback: BodyMetricGoal,
+): BodyMetricGoal {
+  const object = typeof raw === 'object' && raw ? (raw as Record<string, unknown>) : {}
+  const value = normalizeGoalValue(object.value)
+  return {
+    enabled: typeof object.enabled === 'boolean' ? object.enabled : fallback.enabled,
+    value: value == null ? fallback.value : value,
   }
 }
 

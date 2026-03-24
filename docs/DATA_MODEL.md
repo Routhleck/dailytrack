@@ -52,11 +52,12 @@ export type BodyRecord = {
 };
 
 export type TrackerPreferences = {
-  schemaVersion: number; // current: 3
+  schemaVersion: number; // current: 5
   sync: {
     mode: "watch" | "poll";
   };
   ui: {
+    typographyScale: "sm" | "md" | "lg";
     showOnlyChanges: {
       daily: boolean;
       weekly: boolean;
@@ -85,6 +86,13 @@ export type TrackerPreferences = {
       {
         unit: string;
         decimals: number; // 0-3
+      }
+    >;
+    goals: Record<
+      "weight" | "waist" | "bodyFat" | "muscleMass" | "chest" | "hip",
+      {
+        enabled: boolean;
+        value: number | null;
       }
     >;
   };

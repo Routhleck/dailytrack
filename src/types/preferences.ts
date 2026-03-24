@@ -6,6 +6,11 @@ export type BodyMetricDisplay = {
   decimals: number
 }
 
+export type BodyMetricGoal = {
+  enabled: boolean
+  value: number | null
+}
+
 export type SyncMode = 'watch' | 'poll'
 export type TypographyScale = 'sm' | 'md' | 'lg'
 
@@ -40,5 +45,6 @@ export type TrackerPreferences = {
     hip: boolean
     note: boolean
     display: Record<BodyNumericMetricKey, BodyMetricDisplay>
+    goals: Record<BodyNumericMetricKey, BodyMetricGoal>
   }
 }

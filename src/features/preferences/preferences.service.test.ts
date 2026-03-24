@@ -21,6 +21,8 @@ describe('preferences normalization', () => {
     expect(normalized.weekly.sections.Body).toBe(true)
     expect(normalized.body.weight).toBe(true)
     expect(normalized.body.display.weight.unit).toBe('kg')
+    expect(normalized.body.goals.weight.enabled).toBe(false)
+    expect(normalized.body.goals.weight.value).toBeNull()
   })
 
   test('keeps valid sync mode, upgrades schema, and strips invalid display config', () => {
@@ -36,6 +38,10 @@ describe('preferences normalization', () => {
         display: {
           weight: { unit: 123, decimals: 99 },
         },
+        goals: {
+          weight: { enabled: true, value: 68.5 },
+          waist: { enabled: 'yes', value: 'bad' },
+        },
       },
     })
 
@@ -48,6 +54,10 @@ describe('preferences normalization', () => {
     expect(normalized.ui.mobile.showSyncBanner).toBe(false)
     expect(normalized.body.display.weight.unit).toBe('kg')
     expect(normalized.body.display.weight.decimals).toBe(3)
+    expect(normalized.body.goals.weight.enabled).toBe(true)
+    expect(normalized.body.goals.weight.value).toBe(68.5)
+    expect(normalized.body.goals.waist.enabled).toBe(false)
+    expect(normalized.body.goals.waist.value).toBeNull()
   })
 
   test('returns deep-cloned defaults', () => {
@@ -56,5 +66,7 @@ describe('preferences normalization', () => {
 
     first.body.display.weight.unit = 'lbs'
     expect(second.body.display.weight.unit).toBe('kg')
+    first.body.goals.weight.enabled = true
+    expect(second.body.goals.weight.enabled).toBe(false)
   })
 })

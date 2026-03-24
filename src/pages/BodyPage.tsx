@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
@@ -347,6 +348,14 @@ export function BodyPage() {
     }
     return next
   }, [enabledNumericMetrics, records])
+  const metricGoals = useMemo(() => {
+    const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
+    for (const metric of enabledNumericMetrics) {
+      const goal = preferences.body.goals[metric.key]
+      next[metric.key] = goal.enabled ? goal.value : null
+    }
+    return next
+  }, [enabledNumericMetrics, preferences.body.goals])
   const visibleNumericMetrics = useMemo(
     () =>
       showOnlyChanges
@@ -581,6 +590,14 @@ export function BodyPage() {
                         return formatBodyMetricValue(parsed, preferences.body.display[metric.key])
                       }}
                     />
+                    {metricGoals[metric.key] != null ? (
+                      <ReferenceLine
+                        y={metricGoals[metric.key] as number}
+                        stroke="#f59e0b"
+                        strokeDasharray="5 4"
+                        ifOverflow="extendDomain"
+                      />
+                    ) : null}
                     <Line type="monotone" dataKey={metric.key} stroke={metric.stroke} strokeWidth={2} dot={false} />
                   </LineChart>
                 )}

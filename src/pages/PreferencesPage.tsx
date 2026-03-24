@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { decimalInputStep } from '../features/body/body.format'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import type { TrackerPreferences } from '../types/preferences'
@@ -77,6 +78,42 @@ export function PreferencesPage() {
           [key]: {
             ...draft.body.display[key],
             decimals,
+          },
+        },
+      },
+    })
+  }
+
+  function updateBodyMetricGoalToggle(key: BodyNumericMetricKey, enabled: boolean) {
+    void update({
+      ...draft,
+      body: {
+        ...draft.body,
+        goals: {
+          ...draft.body.goals,
+          [key]: {
+            ...draft.body.goals[key],
+            enabled,
+          },
+        },
+      },
+    })
+  }
+
+  function updateBodyMetricGoalValue(key: BodyNumericMetricKey, rawValue: string) {
+    const trimmed = rawValue.trim()
+    const parsed = trimmed ? Number(trimmed) : null
+    const value = parsed != null && Number.isFinite(parsed) ? parsed : null
+
+    void update({
+      ...draft,
+      body: {
+        ...draft.body,
+        goals: {
+          ...draft.body.goals,
+          [key]: {
+            ...draft.body.goals[key],
+            value,
           },
         },
       },
@@ -299,7 +336,7 @@ export function PreferencesPage() {
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.bodyMetrics')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.bodyDisplayHint')}</p>
         {BODY_METRIC_ORDER.map((metric) => (
-          <div key={metric.key} className="grid gap-2 rounded-md border border-slate-200 p-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+          <div key={metric.key} className="grid gap-2 rounded-md border border-slate-200 p-3 md:grid-cols-[1fr_auto_auto_auto] md:items-center">
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -330,6 +367,29 @@ export function PreferencesPage() {
                 <option value="3">3</option>
               </select>
             </label>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={draft.body.goals[metric.key].enabled}
+                  onChange={(event) => updateBodyMetricGoalToggle(metric.key, event.target.checked)}
+                />
+                {t('preferences.goalLine')}
+              </label>
+              <input
+                className="dt-input w-24 px-2 py-1 text-xs"
+                type="number"
+                step={decimalInputStep(draft.body.display[metric.key].decimals)}
+                disabled={!draft.body.goals[metric.key].enabled}
+                value={
+                  draft.body.goals[metric.key].value == null
+                    ? ''
+                    : String(draft.body.goals[metric.key].value)
+                }
+                placeholder={t('preferences.goalValuePlaceholder')}
+                onChange={(event) => updateBodyMetricGoalValue(metric.key, event.target.value)}
+              />
+            </div>
           </div>
         ))}
         <label className="flex items-center gap-2 text-sm text-slate-700">

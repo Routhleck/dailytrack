@@ -148,7 +148,8 @@ Progress snapshot:
 
 - Done: chart range controls (`7d / 30d / 90d / all`).
 - Done: delta badges vs previous record for enabled metrics (unit/decimal aware).
-- In progress: optional goal line and post-submit highlight summary.
+- Done: optional goal line (per metric, preference-driven).
+- In progress: post-submit highlight summary.
 
 ## v0.12.0 - Templates and Goal Loop
 

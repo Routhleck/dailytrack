@@ -487,6 +487,8 @@ export const enMessages = {
   'preferences.unit': 'Unit',
   'preferences.unitPlaceholder': 'e.g. kg',
   'preferences.decimals': 'Decimals',
+  'preferences.goalLine': 'Goal line',
+  'preferences.goalValuePlaceholder': 'Goal value',
 
   'settings.title': 'Settings',
   'settings.description':
@@ -1154,6 +1156,8 @@ export const zhMessages: Record<MessageKey, string> = {
   'preferences.unit': '单位',
   'preferences.unitPlaceholder': '例如 kg',
   'preferences.decimals': '小数位',
+  'preferences.goalLine': '目标线',
+  'preferences.goalValuePlaceholder': '目标值',
 
   'settings.title': '系统设置',
   'settings.description': '通过安全迁移和导出/导入在电脑间移动当前档案数据。',

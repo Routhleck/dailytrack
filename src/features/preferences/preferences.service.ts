@@ -1,8 +1,10 @@
 import { readTextFile, writeTextFile } from '../../lib/fs/fileApi'
 import {
   cloneDefaultBodyMetricDisplay,
+  cloneDefaultBodyMetricGoals,
   BODY_NUMERIC_METRIC_KEYS,
   normalizeBodyMetricDisplay,
+  normalizeBodyMetricGoal,
 } from '../body/body.format'
 import { joinPath } from '../../lib/fs/pathApi'
 import type { SyncMode, TrackerPreferences, TypographyScale } from '../../types/preferences'
@@ -12,7 +14,7 @@ import type { WeeklySectionKey } from '../../types/tracker'
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
 const TYPOGRAPHY_SCALES: TypographyScale[] = ['sm', 'md', 'lg']
-export const PREFERENCES_SCHEMA_VERSION = 4
+export const PREFERENCES_SCHEMA_VERSION = 5
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
   schemaVersion: PREFERENCES_SCHEMA_VERSION,
@@ -51,6 +53,7 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
     hip: false,
     note: true,
     display: cloneDefaultBodyMetricDisplay(),
+    goals: cloneDefaultBodyMetricGoals(),
   },
 }
 
@@ -87,6 +90,7 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
   const mobileUiRaw = asRecord(uiRaw.mobile)
   const bodyRaw = asRecord(object.body)
   const bodyDisplayRaw = asRecord(bodyRaw.display)
+  const bodyGoalsRaw = asRecord(bodyRaw.goals)
   const weeklySectionsRaw = asRecord(weeklyRaw.sections)
   const syncRaw = asRecord(object.sync)
 
@@ -102,6 +106,13 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
     )
     return acc
   }, {} as Record<BodyNumericMetricKey, TrackerPreferences['body']['display'][BodyNumericMetricKey]>)
+  const bodyGoals = BODY_NUMERIC_METRIC_KEYS.reduce<Record<BodyNumericMetricKey, TrackerPreferences['body']['goals'][BodyNumericMetricKey]>>((acc, key) => {
+    acc[key] = normalizeBodyMetricGoal(
+      bodyGoalsRaw[key],
+      DEFAULT_PREFERENCES.body.goals[key],
+    )
+    return acc
+  }, {} as Record<BodyNumericMetricKey, TrackerPreferences['body']['goals'][BodyNumericMetricKey]>)
 
   return {
     schemaVersion: PREFERENCES_SCHEMA_VERSION,
@@ -146,6 +157,7 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
       hip: toBoolean(bodyRaw.hip, DEFAULT_PREFERENCES.body.hip),
       note: toBoolean(bodyRaw.note, DEFAULT_PREFERENCES.body.note),
       display: bodyDisplay,
+      goals: bodyGoals,
     },
   }
 }

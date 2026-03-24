@@ -88,6 +88,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - optional "only show changes" mode for non-empty metrics/records
   - metric toggles by preferences
   - per-metric unit/decimal display config
+  - optional per-metric goal lines on trend charts
   - trend charts (improved narrow-window rendering)
 - Profiles:
   - create/switch/delete profiles
@@ -100,6 +101,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - per-profile tracking toggles (daily/weekly/body)
   - sync mode (`watch` / `poll`)
   - per-page default "only show changes" toggles
+  - per-metric body goal line config (enabled + value)
   - mobile sync status banner toggle
 - Settings:
   - diagnostics section (init/profile/root runtime state)
