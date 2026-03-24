@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [0.9.0] - 2026-03-24
+
 ### Added
-- Added profile-level typography scale preference (`small / medium / large`) and real-time UI font scaling.
+- Added profile-level typography scale preference (`small / medium / large`) with real-time UI font scaling.
 - Added a reusable global toast feedback layer for lightweight success/error/info operation feedback.
 
 ### Changed
