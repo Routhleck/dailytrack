@@ -6,7 +6,7 @@ import appLogo from '../assets/dailytrack-logo.png'
 import { NavGlyph } from './NavGlyph'
 
 export function Sidebar() {
-  const { language, setLanguage, t } = useI18n()
+  const { t } = useI18n()
 
   return (
     <aside className="h-full w-72 shrink-0 pr-4">
@@ -71,30 +71,6 @@ export function Sidebar() {
               </NavLink>
             ))}
           </nav>
-        </div>
-
-        <div className="mt-auto px-2">
-          <p className="mb-1 text-xs text-slate-500">{t('nav.language')}</p>
-          <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white/85 p-1">
-            <button
-              type="button"
-              className={`rounded-lg px-2 py-1.5 text-xs font-medium transition ${
-                language === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              onClick={() => setLanguage('en')}
-            >
-              {t('nav.languageEn')}
-            </button>
-            <button
-              type="button"
-              className={`rounded-lg px-2 py-1.5 text-xs font-medium transition ${
-                language === 'zh' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              onClick={() => setLanguage('zh')}
-            >
-              {t('nav.languageZh')}
-            </button>
-          </div>
         </div>
       </div>
     </aside>
