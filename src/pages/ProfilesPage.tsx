@@ -25,6 +25,7 @@ import {
   serializeDailyTemplateMarkdown,
   serializeWeeklyTemplateMarkdown,
 } from '../features/settings/templateSchema'
+import { reorderByOffset } from '../features/settings/templateReorder'
 import { todayDateString } from '../lib/date/date'
 import { currentWeekId } from '../lib/date/week'
 import { readTextFile, writeTextFile } from '../lib/fs/fileApi'
@@ -233,6 +234,24 @@ export function ProfilesPage() {
     })
   }
 
+  function moveNewDailyItem(section: 'dailyCore' | 'optional', index: number, offset: -1 | 1) {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const reordered = reorderByOffset(prev[section], index, offset)
+      if (reordered === prev[section]) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: reordered,
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
   function addNewDailyItem(section: 'dailyCore' | 'optional') {
     setNewDailyStructured((prev) => {
       if (!prev) {
@@ -287,6 +306,27 @@ export function ProfilesPage() {
         sections: {
           ...prev.sections,
           [section]: prev.sections[section].filter((_, itemIndex) => itemIndex !== index),
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function moveNewWeeklyItem(section: WeeklySectionKey, index: number, offset: -1 | 1) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const reordered = reorderByOffset(prev.sections[section], index, offset)
+      if (reordered === prev.sections[section]) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: reordered,
         },
       }
       setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -414,6 +454,24 @@ export function ProfilesPage() {
     })
   }
 
+  function moveDailyItem(section: 'dailyCore' | 'optional', index: number, offset: -1 | 1) {
+    setCurrentDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const reordered = reorderByOffset(prev[section], index, offset)
+      if (reordered === prev[section]) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: reordered,
+      }
+      setCurrentDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
   function addDailyItem(section: 'dailyCore' | 'optional') {
     setCurrentDailyStructured((prev) => {
       if (!prev) {
@@ -468,6 +526,27 @@ export function ProfilesPage() {
         sections: {
           ...prev.sections,
           [section]: prev.sections[section].filter((_, itemIndex) => itemIndex !== index),
+        },
+      }
+      setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function moveWeeklyItem(section: WeeklySectionKey, index: number, offset: -1 | 1) {
+    setCurrentWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const reordered = reorderByOffset(prev.sections[section], index, offset)
+      if (reordered === prev.sections[section]) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: reordered,
         },
       }
       setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -828,14 +907,32 @@ export function ProfilesPage() {
                       onChange={(event) => updateNewDailyItem('dailyCore', index, event.target.value)}
                       disabled={createBusy}
                     />
-                    <button
-                      type="button"
-                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                      onClick={() => removeNewDailyItem('dailyCore', index)}
-                      disabled={createBusy}
-                    >
-                      {t('profiles.removeItem')}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveNewDailyItem('dailyCore', index, -1)}
+                        disabled={createBusy || index === 0}
+                      >
+                        {t('profiles.moveUp')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveNewDailyItem('dailyCore', index, 1)}
+                        disabled={createBusy || index >= (newDailyStructured.dailyCore.length - 1)}
+                      >
+                        {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                        onClick={() => removeNewDailyItem('dailyCore', index)}
+                        disabled={createBusy}
+                      >
+                        {t('profiles.removeItem')}
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -858,14 +955,32 @@ export function ProfilesPage() {
                       onChange={(event) => updateNewDailyItem('optional', index, event.target.value)}
                       disabled={createBusy}
                     />
-                    <button
-                      type="button"
-                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                      onClick={() => removeNewDailyItem('optional', index)}
-                      disabled={createBusy}
-                    >
-                      {t('profiles.removeItem')}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveNewDailyItem('optional', index, -1)}
+                        disabled={createBusy || index === 0}
+                      >
+                        {t('profiles.moveUp')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveNewDailyItem('optional', index, 1)}
+                        disabled={createBusy || index >= (newDailyStructured.optional.length - 1)}
+                      >
+                        {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                        onClick={() => removeNewDailyItem('optional', index)}
+                        disabled={createBusy}
+                      >
+                        {t('profiles.removeItem')}
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -894,14 +1009,32 @@ export function ProfilesPage() {
                         onChange={(event) => updateNewWeeklyItem(section, index, event.target.value)}
                         disabled={createBusy}
                       />
-                      <button
-                        type="button"
-                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                        onClick={() => removeNewWeeklyItem(section, index)}
-                        disabled={createBusy}
-                      >
-                        {t('profiles.removeItem')}
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                          onClick={() => moveNewWeeklyItem(section, index, -1)}
+                          disabled={createBusy || index === 0}
+                        >
+                          {t('profiles.moveUp')}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                          onClick={() => moveNewWeeklyItem(section, index, 1)}
+                          disabled={createBusy || index >= (newWeeklyStructured.sections[section].length - 1)}
+                        >
+                          {t('profiles.moveDown')}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                          onClick={() => removeNewWeeklyItem(section, index)}
+                          disabled={createBusy}
+                        >
+                          {t('profiles.removeItem')}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <button
@@ -1182,14 +1315,32 @@ export function ProfilesPage() {
                       onChange={(event) => updateDailyItem('dailyCore', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
                     />
-                    <button
-                      type="button"
-                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                      onClick={() => removeDailyItem('dailyCore', index)}
-                      disabled={templateBusy || !dataRoot}
-                    >
-                      {t('profiles.removeItem')}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveDailyItem('dailyCore', index, -1)}
+                        disabled={templateBusy || !dataRoot || index === 0}
+                      >
+                        {t('profiles.moveUp')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveDailyItem('dailyCore', index, 1)}
+                        disabled={templateBusy || !dataRoot || index >= (currentDailyStructured.dailyCore.length - 1)}
+                      >
+                        {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                        onClick={() => removeDailyItem('dailyCore', index)}
+                        disabled={templateBusy || !dataRoot}
+                      >
+                        {t('profiles.removeItem')}
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -1212,14 +1363,32 @@ export function ProfilesPage() {
                       onChange={(event) => updateDailyItem('optional', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
                     />
-                    <button
-                      type="button"
-                      className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                      onClick={() => removeDailyItem('optional', index)}
-                      disabled={templateBusy || !dataRoot}
-                    >
-                      {t('profiles.removeItem')}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveDailyItem('optional', index, -1)}
+                        disabled={templateBusy || !dataRoot || index === 0}
+                      >
+                        {t('profiles.moveUp')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                        onClick={() => moveDailyItem('optional', index, 1)}
+                        disabled={templateBusy || !dataRoot || index >= (currentDailyStructured.optional.length - 1)}
+                      >
+                        {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                        onClick={() => removeDailyItem('optional', index)}
+                        disabled={templateBusy || !dataRoot}
+                      >
+                        {t('profiles.removeItem')}
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -1248,14 +1417,32 @@ export function ProfilesPage() {
                         onChange={(event) => updateWeeklyItem(section, index, event.target.value)}
                         disabled={templateBusy || !dataRoot}
                       />
-                      <button
-                        type="button"
-                        className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
-                        onClick={() => removeWeeklyItem(section, index)}
-                        disabled={templateBusy || !dataRoot}
-                      >
-                        {t('profiles.removeItem')}
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                          onClick={() => moveWeeklyItem(section, index, -1)}
+                          disabled={templateBusy || !dataRoot || index === 0}
+                        >
+                          {t('profiles.moveUp')}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-300 px-2 text-xs text-slate-700"
+                          onClick={() => moveWeeklyItem(section, index, 1)}
+                          disabled={templateBusy || !dataRoot || index >= (currentWeeklyStructured.sections[section].length - 1)}
+                        >
+                          {t('profiles.moveDown')}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
+                          onClick={() => removeWeeklyItem(section, index)}
+                          disabled={templateBusy || !dataRoot}
+                        >
+                          {t('profiles.removeItem')}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <button

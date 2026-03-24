@@ -8,9 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Added weekly lightweight goal-progress panel (sections completed count + weakest section hint + per-section badges).
+- Added structured template checklist reordering controls (`move up / move down`) in Profiles for both create-profile and current-profile template editors (daily + weekly sections).
 
 ### Changed
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
+- English locale labels now use English wording for language selectors (`English / Chinese`) instead of mixed Chinese terms.
 
 ## [0.11.0] - 2026-03-24
 
