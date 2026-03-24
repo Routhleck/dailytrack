@@ -14,6 +14,9 @@ export const enMessages = {
   'nav.languageEn': 'EN',
   'nav.languageZh': '中文',
   'nav.menu': 'Menu',
+  'nav.main': 'Main',
+  'nav.primaryGroup': 'Core',
+  'nav.secondaryGroup': 'More',
 
   'shell.initializing': 'Initializing local data folder...',
   'shell.base': 'Base',
@@ -580,6 +583,9 @@ export const zhMessages: Record<MessageKey, string> = {
   'nav.languageEn': 'EN',
   'nav.languageZh': '中文',
   'nav.menu': '菜单',
+  'nav.main': '主导航',
+  'nav.primaryGroup': '核心入口',
+  'nav.secondaryGroup': '更多功能',
 
   'shell.initializing': '正在初始化本地数据目录...',
   'shell.base': '根目录',

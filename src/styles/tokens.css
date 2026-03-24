@@ -1,0 +1,102 @@
+@layer base {
+  :root {
+    --dt-bg: #edf2f8;
+    --dt-bg-soft: #f6f9fc;
+    --dt-surface: rgba(255, 255, 255, 0.84);
+    --dt-surface-strong: #ffffff;
+    --dt-surface-muted: rgba(248, 251, 255, 0.88);
+    --dt-border: rgba(148, 163, 184, 0.26);
+    --dt-border-strong: rgba(100, 116, 139, 0.36);
+    --dt-text: #0f172a;
+    --dt-text-muted: #475569;
+    --dt-text-subtle: #64748b;
+    --dt-accent: #0f766e;
+    --dt-accent-strong: #0f5f59;
+    --dt-accent-soft: rgba(15, 118, 110, 0.12);
+    --dt-danger: #be123c;
+    --dt-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.08);
+    --dt-shadow-card: 0 6px 22px rgba(15, 23, 42, 0.06);
+    --dt-blur: 18px;
+  }
+}
+
+@layer components {
+  .dt-shell-bg {
+    background:
+      radial-gradient(120% 120% at 0% -10%, rgba(14, 116, 144, 0.12) 0%, transparent 45%),
+      radial-gradient(90% 80% at 100% 0%, rgba(15, 118, 110, 0.09) 0%, transparent 48%),
+      linear-gradient(180deg, #f5f8fc 0%, var(--dt-bg) 72%);
+  }
+
+  .dt-glass {
+    border: 1px solid var(--dt-border);
+    background: var(--dt-surface);
+    box-shadow: var(--dt-shadow-soft);
+    backdrop-filter: blur(var(--dt-blur));
+  }
+
+  .dt-panel {
+    border: 1px solid var(--dt-border);
+    border-radius: 16px;
+    background: var(--dt-surface-strong);
+    box-shadow: var(--dt-shadow-card);
+  }
+
+  .dt-panel-soft {
+    border: 1px solid var(--dt-border);
+    border-radius: 16px;
+    background: var(--dt-surface-muted);
+    box-shadow: var(--dt-shadow-card);
+  }
+
+  .dt-page {
+    @apply min-w-0 space-y-4 md:space-y-6;
+  }
+
+  .dt-input {
+    @apply w-full rounded-xl border px-3 py-2 text-sm outline-none transition;
+    border-color: var(--dt-border);
+    color: var(--dt-text);
+    background: #fff;
+  }
+
+  .dt-input:focus {
+    border-color: var(--dt-accent);
+    box-shadow: 0 0 0 3px var(--dt-accent-soft);
+  }
+
+  .dt-btn {
+    @apply inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .dt-btn-primary {
+    color: #fff;
+    background: linear-gradient(180deg, var(--dt-accent) 0%, var(--dt-accent-strong) 100%);
+    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.3);
+  }
+
+  .dt-btn-secondary {
+    border: 1px solid var(--dt-border);
+    color: var(--dt-text-muted);
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  .dt-btn-danger {
+    border: 1px solid rgba(190, 18, 60, 0.34);
+    color: var(--dt-danger);
+    background: rgba(253, 242, 248, 0.92);
+  }
+
+  .dt-link {
+    color: var(--dt-accent);
+    @apply transition hover:opacity-80;
+  }
+
+  .dt-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+    border: 1px solid var(--dt-border);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--dt-text-subtle);
+  }
+}
+

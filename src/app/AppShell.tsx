@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 
 import { BottomNav } from '../components/BottomNav'
 import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
@@ -14,78 +14,97 @@ import { MobileSyncBanner } from '../features/webdav/MobileSyncBanner'
 export function AppShell() {
   const { t, language, setLanguage } = useI18n()
   const { preferences } = usePreferences()
-  const { baseDataRoot, dataRoot, activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
+  const { activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
   const { isBannerVisible, update, installUpdate, installing, dismissUpdate } = useUpdater()
   const showMobileSyncBanner = preferences.ui.mobile.showSyncBanner
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-slate-100 text-slate-900">
-      <div className="mx-auto flex h-full max-w-[1400px] bg-white md:border-x md:border-slate-200 md:shadow-sm">
+    <div className="dt-shell-bg min-h-[100dvh] text-slate-900">
+      <div className="mx-auto flex min-h-[100dvh] max-w-[1520px] px-3 py-3 md:px-5 md:py-5">
         <div className="hidden md:block">
           <Sidebar />
         </div>
-        <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+5rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] md:px-8 md:py-6 md:pb-8">
-          <div className="mb-3 flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 md:hidden">
-            <div className="flex items-center gap-2">
-              <MobileMenu />
-              <p className="text-sm font-semibold text-slate-900">DailyTrack</p>
-            </div>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                className={`rounded px-2 py-1 text-xs ${
-                  language === 'en' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
-                }`}
-                onClick={() => setLanguage('en')}
-              >
-                {t('nav.languageEn')}
-              </button>
-              <button
-                type="button"
-                className={`rounded px-2 py-1 text-xs ${
-                  language === 'zh' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
-                }`}
-                onClick={() => setLanguage('zh')}
-              >
-                {t('nav.languageZh')}
-              </button>
-            </div>
-          </div>
-          <MobileSyncBanner enabled={showMobileSyncBanner} />
-          {isBannerVisible && update ? (
-            <div className="mb-4 rounded-md border border-teal-300 bg-teal-50 px-4 py-3 text-sm text-teal-900">
-              <p className="font-medium">
-                {t('updater.available', { version: update.version })}
-              </p>
-              <div className="mt-2 flex items-center gap-2">
+
+        <div className="dt-glass relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-[24px]">
+          <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/75 px-4 py-3 backdrop-blur md:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <MobileMenu />
+                <p className="text-sm font-semibold tracking-wide text-slate-800 md:text-base">DailyTrack</p>
+                {activeProfile ? (
+                  <span className="dt-badge hidden sm:inline-flex">
+                    {t('shell.profile')}: {activeProfile}
+                  </span>
+                ) : null}
+                {loading ? <span className="dt-badge">{t('shell.initializing')}</span> : null}
+              </div>
+
+              <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white/85 p-1">
                 <button
                   type="button"
-                  className="rounded-md bg-teal-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-                  disabled={installing}
-                  onClick={() => void installUpdate()}
+                  className={`rounded-lg px-2 py-1 text-xs font-medium transition ${
+                    language === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setLanguage('en')}
                 >
-                  {installing ? t('updater.installing') : t('updater.installAndRestart')}
+                  {t('nav.languageEn')}
                 </button>
                 <button
                   type="button"
-                  className="rounded-md border border-teal-400 px-3 py-1.5 text-xs text-teal-900"
-                  onClick={dismissUpdate}
-                  disabled={installing}
+                  className={`rounded-lg px-2 py-1 text-xs font-medium transition ${
+                    language === 'zh' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setLanguage('zh')}
                 >
-                  {t('updater.later')}
+                  {t('nav.languageZh')}
                 </button>
               </div>
             </div>
-          ) : null}
-          <div className="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-            {loading && t('shell.initializing')}
-            {!loading &&
-              !error &&
-              `${t('shell.base')}: ${baseDataRoot} | ${t('shell.profile')}: ${activeProfile} | ${t('shell.activeRoot')}: ${dataRoot}`}
-            {!loading && error && `${t('shell.initError')}: ${error}`}
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <main className="mx-auto w-full max-w-[1140px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-4 md:px-8 md:pb-8 md:pt-6">
+              {error ? (
+                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  <span>{t('shell.initError')}: {error}</span>
+                  <Link className="ml-2 font-medium underline" to="/settings">
+                    {t('nav.settings')}
+                  </Link>
+                </div>
+              ) : null}
+
+              <MobileSyncBanner enabled={showMobileSyncBanner} />
+
+              {isBannerVisible && update ? (
+                <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+                  <p className="font-medium">
+                    {t('updater.available', { version: update.version })}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="dt-btn dt-btn-primary"
+                      disabled={installing}
+                      onClick={() => void installUpdate()}
+                    >
+                      {installing ? t('updater.installing') : t('updater.installAndRestart')}
+                    </button>
+                    <button
+                      type="button"
+                      className="dt-btn dt-btn-secondary"
+                      onClick={dismissUpdate}
+                      disabled={installing}
+                    >
+                      {t('updater.later')}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <Outlet />
+            </main>
           </div>
-          <Outlet />
-        </main>
+        </div>
       </div>
       <BottomNav />
       {needsInitialTemplateSetup ? <InitialTemplateSetupModal /> : null}

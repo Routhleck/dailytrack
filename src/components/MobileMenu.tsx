@@ -1,21 +1,13 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
+import { MOBILE_MORE_ITEMS } from '../app/navigation'
 import { useI18n } from '../features/i18n/I18nContext'
+import { NavGlyph } from './NavGlyph'
 
 export function MobileMenu() {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
-
-  const navItems = [
-    { to: '/', label: t('nav.dashboard') },
-    { to: '/daily', label: t('nav.dailyNotes') },
-    { to: '/weekly', label: t('nav.weeklyNotes') },
-    { to: '/reports', label: t('nav.reports') },
-    { to: '/profiles', label: t('nav.profiles') },
-    { to: '/preferences', label: t('nav.preferences') },
-    { to: '/settings', label: t('nav.settings') },
-  ]
 
   return (
     <div className="relative md:hidden">
@@ -29,27 +21,31 @@ export function MobileMenu() {
       ) : null}
       <button
         type="button"
-        className="relative z-50 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700"
+        className="relative z-50 inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >
+        <NavGlyph name="more" className="h-3.5 w-3.5" />
         {t('nav.menu')}
       </button>
       {open ? (
-        <div className="absolute left-0 top-9 z-50 w-48 rounded-md border border-slate-200 bg-white p-1 shadow-lg">
-          {navItems.map((item) => (
+        <div className="dt-glass absolute left-0 top-10 z-50 w-56 rounded-2xl p-1.5">
+          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">{t('nav.secondaryGroup')}</p>
+          {MOBILE_MORE_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.end}
+              data-tour={item.tourTarget}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `block rounded px-2 py-1.5 text-xs ${
-                  isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
+                `flex items-center gap-2 rounded-xl px-2 py-1.5 text-xs ${
+                  isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-white'
                 }`
               }
             >
-              {item.label}
+              <NavGlyph name={item.icon} className="h-3.5 w-3.5 shrink-0" />
+              <span>{t(item.labelKey)}</span>
             </NavLink>
           ))}
         </div>

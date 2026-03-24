@@ -1,3 +1,4 @@
+@import './styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,8 +7,8 @@
   font-family: 'Avenir Next', 'SF Pro Text', 'Segoe UI', sans-serif;
   line-height: 1.45;
   font-weight: 400;
-  color: #0f172a;
-  background-color: #e2e8f0;
+  color: var(--dt-text);
+  background-color: var(--dt-bg);
 }
 
 * {
@@ -17,6 +18,8 @@
 body {
   margin: 0;
   min-width: 320px;
+  color: var(--dt-text);
+  background-color: var(--dt-bg);
 }
 
 html,
