@@ -1,0 +1,7 @@
+[permissions]
+approval_mode = "on-failure"
+auto_approve = ["git *"]
+
+[rules]
+always_allow_commands = ["git commit", "git push", "git pull"]
+respect_gitignore = true
