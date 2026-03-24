@@ -49,7 +49,8 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Structured + raw editing: fast checkbox toggles with raw markdown fallback.
 - Profile workflow: multiple profiles with separate templates and preferences.
 - Real-time feel: autosave + local file change refresh.
-- Adaptive shell: desktop sidebar + mobile bottom navigation.
+- Calm Glass UI shell: desktop + mobile layouts with cleaner hierarchy and lower visual noise.
+- Layered navigation: high-frequency primary routes plus secondary route grouping for better focus.
 - Mobile quick menu for secondary routes (`Dashboard`, `Profiles`, `Settings`, etc.) on narrow screens.
 - Mobile sync status banner shows offline/pending/conflict countdown at a glance.
 - Template-based `Only show changes` filters keep Daily/Weekly/Body focused on deltas.
@@ -100,6 +101,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - per-page default "only show changes" toggles
   - mobile sync status banner toggle
 - Settings:
+  - diagnostics section (init/profile/root runtime state)
   - data root migration (copy + switch)
   - export/import
   - WebDAV snapshot backup controls

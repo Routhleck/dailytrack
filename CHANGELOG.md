@@ -7,8 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
-- Reserve this section for changes not tagged yet.
-- Before cutting a release, move entries into a matching `## [x.y.z] - YYYY-MM-DD` section.
+- Introduced a Calm Glass visual system with shared design tokens, glass shell surfaces, and unified card/input/button styles.
+- Reworked navigation information architecture into primary/secondary groups with a centralized route config used by desktop sidebar and mobile navigation.
+- Refreshed Dashboard, Daily, Weekly, Body, list pages, Reports, Preferences, Sync, Profiles, Settings, and onboarding modal to align with the new visual system.
+- Moved technical runtime details out of the main shell; diagnostics now live in Settings so the daily workspace stays focused.
 
 ## [0.7.3] - 2026-03-24
 
