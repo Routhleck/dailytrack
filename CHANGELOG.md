@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Body history now shows first-use empty-state guidance when there are no visible records.
 - Daily structured checklist now supports row-click toggle (not only checkbox click) for faster completion.
 - Daily Core card now shows an explicit remaining-item hint (`N remaining`).
+- Daily/Weekly mode switch now shows clearer guidance text (`structured = recommended`, `raw markdown = advanced`).
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.

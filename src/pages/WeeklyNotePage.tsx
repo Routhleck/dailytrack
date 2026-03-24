@@ -328,6 +328,9 @@ export function WeeklyNotePage() {
           />
           {t('sync.showOnlyChanges')}
         </label>
+        <p className="basis-full text-xs text-slate-600 lg:basis-auto">
+          {mode === 'structured' ? t('common.structuredHint') : t('common.rawMarkdownHint')}
+        </p>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         <Link className="ml-auto text-sm dt-link" to="/weekly">
           {t('weeklyNote.backToList')}
