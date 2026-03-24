@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
 import { useI18n } from '../features/i18n/I18nContext'
+import { useMobileKeyboardState } from '../features/mobile/useMobileKeyboardState'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
@@ -15,6 +16,7 @@ export function AppShell() {
   const { preferences } = usePreferences()
   const { activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
   const { isBannerVisible, update, installUpdate, installing, dismissUpdate } = useUpdater()
+  const { isKeyboardOpen } = useMobileKeyboardState()
   const showMobileSyncBanner = preferences.ui.mobile.showSyncBanner
   const location = useLocation()
 
@@ -62,7 +64,13 @@ export function AppShell() {
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <main className="mx-auto w-full max-w-[1140px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-4 md:px-8 md:pb-8 md:pt-6">
+            <main
+              className={`mx-auto w-full max-w-[1140px] px-4 pt-4 md:px-8 md:pb-8 md:pt-6 ${
+                isKeyboardOpen
+                  ? 'pb-[calc(env(safe-area-inset-bottom)+1.25rem)]'
+                  : 'pb-[calc(env(safe-area-inset-bottom)+6rem)]'
+              }`}
+            >
               {error ? (
                 <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   <span>{t('shell.initError')}: {error}</span>

@@ -53,6 +53,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Layered navigation: high-frequency primary routes plus secondary route grouping for better focus.
 - Mobile 4-tab navigation (`Dashboard`, `Record`, `History`, `More`) with grouped quick sheets for high-frequency flows.
 - Mobile sync status banner shows offline/pending/conflict countdown at a glance.
+- Mobile keyboard-aware shell behavior hides bottom overlays while typing to reduce input obstruction.
 - Template-based `Only show changes` filters keep Daily/Weekly/Body focused on deltas.
 
 ## Screenshots

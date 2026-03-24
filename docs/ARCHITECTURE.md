@@ -40,9 +40,11 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 ## Responsive Shell
 - Desktop: fixed-height shell with left sidebar + independent main-content scroll.
 - Narrow/mobile-like windows:
-  - bottom primary nav (Today/Week/Body/Sync)
-  - top quick menu for secondary routes (Dashboard/Lists/Reports/Profiles/Preferences/Settings)
+  - bottom 4-tab nav (`Dashboard` / `Record` / `History` / `More`)
+  - grouped sheet shortcuts for `Record` (Today/This Week/Body) and `History` (Daily/Weekly list)
+  - dedicated `More` hub page for sync/profiles/preferences/settings/reports
   - compact sync status banner (offline/pending/conflicts/next pull)
+  - keyboard-aware bottom bar behavior (auto-hide bar/sheets while typing to avoid overlap)
 
 ## Runtime Boundaries
 - Frontend: React + TypeScript + Tailwind.

@@ -19,7 +19,8 @@ Goal: fix mobile friction found in recent testing and improve baseline readabili
 - Ship mobile-specific tutorial flow and overlay positioning fixes.
 - Add per-profile typography size control (`small / medium / large`).
 - Validate Android safe-area + bottom navigation interactions (tutorial, keyboard, tab overlays).
-- Update docs/screenshots for new mobile navigation model.
+- Update docs for the new mobile navigation model (`Dashboard / Record / History / More`).
+- Defer full screenshot refresh to the pre-`v1.0` release polish pass.
 
 ## v0.9.0 - UX Foundation Upgrade
 

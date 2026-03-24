@@ -42,7 +42,7 @@
 - [ ] Profiles page `Merge` update preserves custom checklist items while appending missing preset items.
 - [ ] Profiles page `Overwrite` update replaces templates after explicit confirmation.
 - [ ] Applying template update writes `templates/template-meta.json` with preset/language/mode/timestamp.
-- [ ] After first-launch template setup completes, 5-step sidebar tutorial auto-opens once.
+- [ ] After first-launch template setup completes, tutorial auto-opens once (desktop/mobile steps differ by layout).
 - [ ] Skipping auto tutorial closes it and prevents repeated automatic prompts.
 - [ ] `Settings -> Start Tutorial` can replay the tutorial on demand.
 
@@ -70,6 +70,8 @@
 - [ ] `Preferences -> Live Sync -> Poll` disables watcher path and still refreshes via polling.
 - [ ] Mobile sync status banner reflects offline/pending/conflict states and links to Sync page.
 - [ ] Mobile sync banner visibility toggle in Preferences persists across restart.
+- [ ] Mobile keyboard open state hides bottom navigation and any record/history group sheet overlay.
+- [ ] Mobile keyboard close restores bottom navigation without route or sheet state corruption.
 
 ## WebDAV Sync
 - [ ] Save WebDAV config succeeds and persists after app restart.

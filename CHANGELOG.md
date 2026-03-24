@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Added
+- Added profile-level typography scale preference (`small / medium / large`) and real-time UI font scaling.
+
+### Changed
+- Updated mobile tutorial flow to use mobile-specific tour anchors (`Dashboard / Record / History / More`) with responsive tooltip sizing.
+- Updated roadmap/docs wording to align with the new mobile navigation model and defer screenshot refresh to pre-`v1.0.0` polish.
+
+### Fixed
+- Fixed mobile tutorial overlay positioning on narrow layouts.
+- Improved mobile input ergonomics by auto-hiding bottom navigation/group sheets while the software keyboard is open.
 
 ## [0.8.1] - 2026-03-24
 

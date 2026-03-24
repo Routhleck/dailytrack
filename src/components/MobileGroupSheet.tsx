@@ -14,13 +14,14 @@ function isPathMatch(pathname: string, target: string, end?: boolean): boolean {
 
 type MobileGroupSheetProps = {
   open: boolean
+  hidden?: boolean
   title: string
   description: string
   items: MobileGroupItem[]
   onClose: () => void
 }
 
-export function MobileGroupSheet({ open, title, description, items, onClose }: MobileGroupSheetProps) {
+export function MobileGroupSheet({ open, hidden = false, title, description, items, onClose }: MobileGroupSheetProps) {
   const { t } = useI18n()
   const location = useLocation()
   const navigate = useNavigate()
@@ -40,7 +41,7 @@ export function MobileGroupSheet({ open, title, description, items, onClose }: M
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onClose, open])
 
-  if (!open) {
+  if (!open || hidden) {
     return null
   }
 
