@@ -7,6 +7,7 @@ export type BodyMetricDisplay = {
 }
 
 export type SyncMode = 'watch' | 'poll'
+export type TypographyScale = 'sm' | 'md' | 'lg'
 
 export type TrackerPreferences = {
   schemaVersion: number
@@ -14,6 +15,7 @@ export type TrackerPreferences = {
     mode: SyncMode
   }
   ui: {
+    typographyScale: TypographyScale
     showOnlyChanges: {
       daily: boolean
       weekly: boolean

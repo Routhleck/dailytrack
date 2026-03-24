@@ -15,6 +15,7 @@ import {
   savePreferences,
 } from './preferences.service'
 import { emitDataChanged } from '../../lib/liveSync'
+import { applyTypographyScale, resetTypographyScale } from './uiPreferences'
 
 type PreferencesContextValue = {
   preferences: TrackerPreferences
@@ -54,6 +55,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void loadFromRoot(dataRoot)
   }, [dataRoot])
+
+  useEffect(() => {
+    applyTypographyScale(preferences.ui.typographyScale)
+    return () => resetTypographyScale()
+  }, [preferences.ui.typographyScale])
 
   const value = useMemo<PreferencesContextValue>(
     () => ({

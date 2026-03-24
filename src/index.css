@@ -11,6 +11,10 @@
   background-color: var(--dt-bg);
 }
 
+html {
+  font-size: calc(16px * var(--dt-font-scale, 1));
+}
+
 * {
   box-sizing: border-box;
 }

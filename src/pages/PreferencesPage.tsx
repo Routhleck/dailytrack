@@ -149,6 +149,31 @@ export function PreferencesPage() {
       </article>
 
       <article className="dt-panel space-y-3 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('preferences.ui')}</h2>
+        <p className="text-xs text-slate-500">{t('preferences.uiHint')}</p>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <span>{t('preferences.typographyScale')}</span>
+          <select
+            className="dt-input w-44 px-2 py-1 text-xs"
+            value={draft.ui.typographyScale}
+            onChange={(event) => {
+              void update({
+                ...draft,
+                ui: {
+                  ...draft.ui,
+                  typographyScale: event.target.value as TrackerPreferences['ui']['typographyScale'],
+                },
+              })
+            }}
+          >
+            <option value="sm">{t('preferences.typographySmall')}</option>
+            <option value="md">{t('preferences.typographyMedium')}</option>
+            <option value="lg">{t('preferences.typographyLarge')}</option>
+          </select>
+        </label>
+      </article>
+
+      <article className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('preferences.sync')}</h2>
         <p className="text-xs text-slate-500">{t('preferences.syncHint')}</p>
         <div className="flex items-center gap-4 text-sm text-slate-700">

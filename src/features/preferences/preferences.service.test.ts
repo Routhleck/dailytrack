@@ -12,6 +12,7 @@ describe('preferences normalization', () => {
 
     expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('watch')
+    expect(normalized.ui.typographyScale).toBe('md')
     expect(normalized.ui.showOnlyChanges.daily).toBe(false)
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
     expect(normalized.ui.showOnlyChanges.body).toBe(false)
@@ -27,6 +28,7 @@ describe('preferences normalization', () => {
       schemaVersion: 1,
       sync: { mode: 'poll' },
       ui: {
+        typographyScale: 'lg',
         showOnlyChanges: { daily: true, weekly: false },
         mobile: { showSyncBanner: false },
       },
@@ -39,6 +41,7 @@ describe('preferences normalization', () => {
 
     expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('poll')
+    expect(normalized.ui.typographyScale).toBe('lg')
     expect(normalized.ui.showOnlyChanges.daily).toBe(true)
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
     expect(normalized.ui.showOnlyChanges.body).toBe(false)

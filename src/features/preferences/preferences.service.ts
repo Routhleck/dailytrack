@@ -5,13 +5,14 @@ import {
   normalizeBodyMetricDisplay,
 } from '../body/body.format'
 import { joinPath } from '../../lib/fs/pathApi'
-import type { SyncMode, TrackerPreferences } from '../../types/preferences'
+import type { SyncMode, TrackerPreferences, TypographyScale } from '../../types/preferences'
 import type { BodyNumericMetricKey } from '../../types/tracker'
 import type { WeeklySectionKey } from '../../types/tracker'
 
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
-export const PREFERENCES_SCHEMA_VERSION = 3
+const TYPOGRAPHY_SCALES: TypographyScale[] = ['sm', 'md', 'lg']
+export const PREFERENCES_SCHEMA_VERSION = 4
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
   schemaVersion: PREFERENCES_SCHEMA_VERSION,
@@ -19,6 +20,7 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
     mode: 'watch',
   },
   ui: {
+    typographyScale: 'md',
     showOnlyChanges: {
       daily: false,
       weekly: false,
@@ -70,6 +72,12 @@ function toSyncMode(value: unknown, fallback: SyncMode): SyncMode {
     : fallback
 }
 
+function toTypographyScale(value: unknown, fallback: TypographyScale): TypographyScale {
+  return typeof value === 'string' && TYPOGRAPHY_SCALES.includes(value as TypographyScale)
+    ? (value as TypographyScale)
+    : fallback
+}
+
 export function normalizePreferences(raw: unknown): TrackerPreferences {
   const object = asRecord(raw)
   const dailyRaw = asRecord(object.daily)
@@ -101,6 +109,7 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
       mode: toSyncMode(syncRaw.mode, DEFAULT_PREFERENCES.sync.mode),
     },
     ui: {
+      typographyScale: toTypographyScale(uiRaw.typographyScale, DEFAULT_PREFERENCES.ui.typographyScale),
       showOnlyChanges: {
         daily: toBoolean(
           showOnlyChangesRaw.daily,
