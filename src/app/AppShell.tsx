@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { BottomNav } from '../components/BottomNav'
 import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
-import { MobileMenu } from '../components/MobileMenu'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { Sidebar } from '../components/Sidebar'
@@ -20,7 +19,7 @@ export function AppShell() {
   const location = useLocation()
 
   return (
-    <div className="dt-shell-bg h-[100dvh] overflow-hidden text-slate-900">
+    <div className="dt-shell-bg h-[100dvh] overflow-hidden pt-[env(safe-area-inset-top)] text-slate-900 md:pt-0">
       <div className="mx-auto flex h-full max-w-[1520px] p-3 md:p-5">
         <div className="hidden h-full md:block">
           <Sidebar />
@@ -30,7 +29,6 @@ export function AppShell() {
           <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/75 px-4 py-3 backdrop-blur md:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <MobileMenu />
                 <p className="text-sm font-semibold tracking-wide text-slate-800 md:text-base">DailyTrack</p>
                 {activeProfile ? (
                   <span className="dt-badge hidden sm:inline-flex">

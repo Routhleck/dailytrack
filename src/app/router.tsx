@@ -11,6 +11,7 @@ const loadWeeklyNotePage = () => import('../pages/WeeklyNotePage')
 const loadDailyListPage = () => import('../pages/DailyListPage')
 const loadWeeklyListPage = () => import('../pages/WeeklyListPage')
 const loadBodyPage = () => import('../pages/BodyPage')
+const loadMorePage = () => import('../pages/MorePage')
 const loadReportsPage = () => import('../pages/ReportsPage')
 const loadSettingsPage = () => import('../pages/SettingsPage')
 const loadSyncPage = () => import('../pages/SyncPage')
@@ -23,6 +24,7 @@ const WeeklyNotePage = lazy(async () => ({ default: (await loadWeeklyNotePage())
 const DailyListPage = lazy(async () => ({ default: (await loadDailyListPage()).DailyListPage }))
 const WeeklyListPage = lazy(async () => ({ default: (await loadWeeklyListPage()).WeeklyListPage }))
 const BodyPage = lazy(async () => ({ default: (await loadBodyPage()).BodyPage }))
+const MorePage = lazy(async () => ({ default: (await loadMorePage()).MorePage }))
 const ReportsPage = lazy(async () => ({ default: (await loadReportsPage()).ReportsPage }))
 const SettingsPage = lazy(async () => ({ default: (await loadSettingsPage()).SettingsPage }))
 const SyncPage = lazy(async () => ({ default: (await loadSyncPage()).SyncPage }))
@@ -36,6 +38,7 @@ const routePageLoaders = [
   loadDailyListPage,
   loadWeeklyListPage,
   loadBodyPage,
+  loadMorePage,
   loadReportsPage,
   loadSettingsPage,
   loadSyncPage,
@@ -78,6 +81,7 @@ export const router = createHashRouter([
       { path: 'weekly', element: withSuspense(<WeeklyListPage />) },
       { path: 'weekly/:weekId', element: withSuspense(<WeeklyNotePage />) },
       { path: 'body', element: withSuspense(<BodyPage />) },
+      { path: 'more', element: withSuspense(<MorePage />) },
       { path: 'reports', element: withSuspense(<ReportsPage />) },
       { path: 'sync', element: withSuspense(<SyncPage />) },
       { path: 'profiles', element: withSuspense(<ProfilesPage />) },

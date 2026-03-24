@@ -1,5 +1,8 @@
 export const enMessages = {
   'nav.dashboard': 'Dashboard',
+  'nav.record': 'Record',
+  'nav.history': 'History',
+  'nav.more': 'More',
   'nav.today': 'Today',
   'nav.thisWeek': 'This Week',
   'nav.dailyNotes': 'Daily Notes',
@@ -132,6 +135,13 @@ export const enMessages = {
   'dashboard.recentDaily': 'Recent Daily Notes',
   'dashboard.recentWeekly': 'Recent Weekly Notes',
   'dashboard.loadFailed': 'Failed to load dashboard data.',
+
+  'more.title': 'More',
+  'more.description': 'Sync, profile, preferences, system settings, and AI report tools.',
+  'mobile.recordTitle': 'Record',
+  'mobile.recordDescription': 'Quickly jump to today, this week, or body progress.',
+  'mobile.historyTitle': 'History',
+  'mobile.historyDescription': 'Browse and open your daily and weekly note history.',
   'sync.title': 'Sync',
   'sync.description': 'WebDAV realtime sync status and conflict handling.',
   'sync.placeholder': 'Realtime sync panel is being connected. You can continue using Settings WebDAV controls now.',
@@ -603,6 +613,9 @@ export type MessageKey = keyof typeof enMessages
 
 export const zhMessages: Record<MessageKey, string> = {
   'nav.dashboard': '仪表盘',
+  'nav.record': '记录',
+  'nav.history': '历史',
+  'nav.more': '更多',
   'nav.today': '今天',
   'nav.thisWeek': '本周',
   'nav.dailyNotes': '每日记录',
@@ -731,6 +744,13 @@ export const zhMessages: Record<MessageKey, string> = {
   'dashboard.recentDaily': '最近每日记录',
   'dashboard.recentWeekly': '最近每周记录',
   'dashboard.loadFailed': '加载仪表盘数据失败。',
+
+  'more.title': '更多',
+  'more.description': '同步、档案、偏好设置、系统设置和 AI 报告入口。',
+  'mobile.recordTitle': '记录',
+  'mobile.recordDescription': '快速跳转到今天、本周和身体进展。',
+  'mobile.historyTitle': '历史',
+  'mobile.historyDescription': '浏览并打开每日与每周历史记录。',
   'sync.title': '同步',
   'sync.description': 'WebDAV 实时同步状态与冲突处理。',
   'sync.placeholder': '实时同步面板正在接入中。当前可继续在设置页使用 WebDAV 控制。',
