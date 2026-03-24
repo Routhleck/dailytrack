@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 No unreleased changes yet.
 
+## [0.8.1] - 2026-03-24
+
+### Added
+- Added mobile grouped-navigation sheets for `Record` (Today/This Week/Body) and `History` (Daily/Weekly list).
+- Added a dedicated `/more` mobile hub page for Sync, Profiles, Preferences, Settings, and Reports.
+- Added mobile navigation route-to-tab mapping tests for the new 4-tab architecture.
+
+### Changed
+- Redesigned mobile bottom navigation from 5 direct tabs to 4 tabs: Dashboard / Record / History / More.
+- Updated mobile information architecture by removing the top-left menu entry and consolidating secondary tools under the More hub.
+
+### Fixed
+- Fixed Android top safe-area handling by applying status-bar inset spacing to the shell container.
+
 ## [0.8.0] - 2026-03-24
 
 ### Added
