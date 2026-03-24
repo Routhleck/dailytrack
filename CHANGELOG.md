@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Added
+- Added completion badges to Daily/Weekly history rows (`checked/total` and `%`) so note status is visible before opening.
+
+### Changed
+- Daily/Weekly history now supports status filtering (`All / Completed / Pending`) with visible item count feedback.
+- Daily/Weekly history search now supports fast open of the first match via `Enter` key or quick action button.
+- Daily/Weekly history now shows an explicit empty-state hint when no notes match current filters.
 
 ## [0.9.0] - 2026-03-24
 

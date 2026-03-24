@@ -104,7 +104,7 @@ Acceptance focus:
 - New users can understand “what to do next” from empty states.
 - Sync page can be understood without reading raw diagnostics.
 
-## v0.10.0 - Daily and History Efficiency
+## v0.10.0 - Daily and History Efficiency (In Progress)
 
 Goal: reduce interaction cost on high-frequency workflows.
 
@@ -120,6 +120,13 @@ Acceptance focus:
 
 - Daily flow can be completed with fewer taps/clicks.
 - History is useful for retrieval, not only indexing.
+
+Progress snapshot:
+
+- Done: Daily checklist row-click toggle and remaining-item cue.
+- Done: structured/raw mode guidance (`recommended` vs `advanced` hint).
+- Done: explicit “only show changes” hints and no-change feedback on structured note pages.
+- Done: Daily/Weekly history search + completion status filter + completion badges + first-match quick open.
 
 ## v0.11.0 - Body Analytics Upgrade
 
