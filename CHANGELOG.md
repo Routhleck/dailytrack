@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Added profile-level typography scale preference (`small / medium / large`) and real-time UI font scaling.
+- Added a reusable global toast feedback layer for lightweight success/error/info operation feedback.
 
 ### Changed
 - Updated mobile tutorial flow to use mobile-specific tour anchors (`Dashboard / Record / History / More`) with responsive tooltip sizing.
@@ -15,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Dashboard summary cards now emphasize completion percentage and remaining-item hints for Today/This Week.
 - Dashboard empty states now include direct CTA links for first body record, first daily note, and first weekly note.
 - Sync page now uses a summary-first information hierarchy (status, mode, action needed, quick actions) and moves technical details into collapsible advanced diagnostics.
+- Sync page actions now emit toast feedback for refresh/sync/export/resolve flows.
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.

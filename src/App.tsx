@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
 
 import { preloadRoutePages, router } from './app/router'
+import { ToastProvider, ToastViewport } from './features/feedback/ToastContext'
 import { I18nProvider } from './features/i18n/I18nContext'
 import { PreferencesProvider } from './features/preferences/PreferencesContext'
 import { FilesystemWatchBridge } from './features/settings/FilesystemWatchBridge'
@@ -25,9 +26,12 @@ function App() {
       <UpdaterProvider>
         <DataRootProvider>
           <PreferencesProvider>
-            <FilesystemWatchBridge />
-            <WebdavSyncBridge />
-            <RouterProvider router={router} />
+            <ToastProvider>
+              <FilesystemWatchBridge />
+              <WebdavSyncBridge />
+              <RouterProvider router={router} />
+              <ToastViewport />
+            </ToastProvider>
           </PreferencesProvider>
         </DataRootProvider>
       </UpdaterProvider>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../features/feedback/ToastContext'
 import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import {
@@ -162,6 +163,7 @@ function summarizeDryRun(
 
 export function SyncPage() {
   const { t } = useI18n()
+  const { pushError, pushInfo, pushSuccess } = useToast()
   const { baseDataRoot } = useDataRoot()
   const [status, setStatus] = useState<RealtimeSyncStatus | null>(null)
   const [webdavConfig, setWebdavConfig] = useState<WebdavConfig | null>(null)
@@ -279,7 +281,7 @@ export function SyncPage() {
     setRefreshing(true)
     try {
       await load()
-      setMessage(t('sync.refreshed'))
+      pushSuccess(t('sync.refreshed'))
     } finally {
       setRefreshing(false)
     }
@@ -290,11 +292,10 @@ export function SyncPage() {
       return
     }
     setSyncing(true)
-    setMessage('')
     try {
       const result = await webdavRealtimeSyncNow(baseDataRoot, direction)
       setStatus(result.status)
-      setMessage(
+      pushSuccess(
         t('sync.syncDone', {
           pushed: result.pushed,
           pulled: result.pulled,
@@ -304,7 +305,7 @@ export function SyncPage() {
       await load()
       emitDataChanged({ scope: 'all' })
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('sync.syncFailed'))
+      pushError(error instanceof Error ? error.message : t('sync.syncFailed'))
     } finally {
       setSyncing(false)
     }
@@ -345,7 +346,6 @@ export function SyncPage() {
     }
 
     setBatchResolving(true)
-    setMessage('')
 
     try {
       const result = await webdavRealtimeConflictsResolveBatch(baseDataRoot, conflictIds, strategy)
@@ -355,21 +355,21 @@ export function SyncPage() {
       await load()
       emitDataChanged({ scope: 'all' })
       if (failed > 0) {
-        setMessage(
+        pushInfo(
           t(mode === 'preset' ? 'sync.presetResolvePartial' : 'sync.batchResolvePartial', {
             success,
             failed,
           }),
         )
       } else {
-        setMessage(
+        pushSuccess(
           t(mode === 'preset' ? 'sync.presetResolveDone' : 'sync.batchResolveDone', {
             success,
           }),
         )
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
+      pushError(error instanceof Error ? error.message : t('sync.resolveFailed'))
     } finally {
       setBatchResolving(false)
     }
@@ -403,9 +403,9 @@ export function SyncPage() {
       await runResolve(conflictId, strategy)
       await load()
       emitDataChanged({ scope: 'all' })
-      setMessage(t('sync.resolveDone'))
+      pushSuccess(t('sync.resolveDone'))
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('sync.resolveFailed'))
+      pushError(error instanceof Error ? error.message : t('sync.resolveFailed'))
     } finally {
       setResolvingId(null)
     }
@@ -527,7 +527,6 @@ export function SyncPage() {
     }
 
     setExportingDiagnostics(true)
-    setMessage('')
     try {
       const fileName = buildDiagnosticFileName()
       const path = joinPath(baseDataRoot, 'sync-diagnostics', fileName)
@@ -567,10 +566,10 @@ export function SyncPage() {
       }
 
       await writeTextFile(baseDataRoot, path, JSON.stringify(payload, null, 2))
-      setMessage(t('sync.diagnosticExported', { path }))
+      pushSuccess(t('sync.diagnosticExported', { path }))
     } catch (error) {
       const details = error instanceof Error ? error.message : t('sync.diagnosticExportFailed')
-      setMessage(`${t('sync.diagnosticExportFailed')} ${details}`)
+      pushError(`${t('sync.diagnosticExportFailed')} ${details}`)
     } finally {
       setExportingDiagnostics(false)
     }
