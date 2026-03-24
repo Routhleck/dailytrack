@@ -18,6 +18,10 @@ Use this skill to run the end-to-end release workflow for `dailytrack` with cons
 7. Verify artifacts and updater metadata.
 8. Edit release notes to human-readable format.
 
+## Release Note Language Policy
+- Default language is **English** for release titles and release-note bodies.
+- Keep wording concise and user-facing; avoid mixed-language notes in one release.
+
 Read [references/runbook.md](references/runbook.md) before executing the workflow.
 
 ## Generate Release Notes Draft

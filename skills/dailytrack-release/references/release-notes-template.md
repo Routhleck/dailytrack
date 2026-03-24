@@ -1,3 +1,5 @@
+<!-- Keep this release note in English by default. -->
+
 ## Summary
 One short paragraph that explains what changed and why it matters.
 

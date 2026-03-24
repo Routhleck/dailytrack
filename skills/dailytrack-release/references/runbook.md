@@ -60,6 +60,7 @@ Use `references/checks.md` commands.
 ## 8) Finalize Release Notes
 - Generate draft from commit range.
 - Rewrite into concise human-readable notes.
+- Use English for the final release title/body by default.
 - Apply notes with `gh release edit`.
 
 Template: `references/release-notes-template.md`
