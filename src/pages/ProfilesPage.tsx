@@ -90,6 +90,7 @@ export function ProfilesPage() {
   )
   const [updateMode, setUpdateMode] = useState<TemplateApplyMode>('merge')
   const [updatePreview, setUpdatePreview] = useState<TemplateUpdatePreview | null>(null)
+  const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false)
   const [updateBusy, setUpdateBusy] = useState(false)
   const updatePreset = useMemo(() => getTemplatePresetById(updatePresetId), [updatePresetId])
   const currentTemplateSourcePreset = useMemo(
@@ -105,6 +106,10 @@ export function ProfilesPage() {
     setNewWeeklyStructured(parseWeeklyTemplateMarkdown(selectedVariant.weeklyTemplate))
     setCreateTemplateMessage('')
   }, [selectedPreset, templateLanguage])
+
+  useEffect(() => {
+    setOverwriteAcknowledged(false)
+  }, [updateMode, updatePresetId, updateTemplateLanguage])
 
   useEffect(() => {
     if (!dataRoot) {
@@ -597,6 +602,10 @@ export function ProfilesPage() {
       setTemplateMessage(t('profiles.activeProfileNotReady'))
       return
     }
+    if (updateMode === 'overwrite' && !overwriteAcknowledged) {
+      setTemplateMessage(t('profiles.templateUpdateOverwriteNeedAcknowledge'))
+      return
+    }
     setTemplateBusy(true)
     setUpdateBusy(true)
     setTemplateMessage('')
@@ -1022,7 +1031,9 @@ export function ProfilesPage() {
                 id="update-template-mode"
                 className="mt-1 dt-input"
                 value={updateMode}
-                onChange={(event) => setUpdateMode(event.target.value as TemplateApplyMode)}
+                onChange={(event) => {
+                  setUpdateMode(event.target.value as TemplateApplyMode)
+                }}
                 disabled={templateBusy || updateBusy || !dataRoot}
               >
                 <option value="merge">{t('profiles.templateUpdateModeMerge')}</option>
@@ -1044,7 +1055,7 @@ export function ProfilesPage() {
             </button>
             <button
               type="button"
-              disabled={templateBusy || updateBusy || !dataRoot}
+              disabled={templateBusy || updateBusy || !dataRoot || (updateMode === 'overwrite' && !overwriteAcknowledged)}
               className="dt-btn rounded-xl border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700"
               onClick={() => void handleApplyTemplateUpdate()}
             >
@@ -1053,6 +1064,20 @@ export function ProfilesPage() {
           </div>
           {updatePreview ? (
             <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+              <p className="mb-1 font-medium text-slate-800">
+                {t('profiles.templateUpdateImpactTitle')}
+              </p>
+              <p>
+                {t('profiles.templateUpdateImpactFiles', { count: 2 })}
+              </p>
+              <p>
+                {t('profiles.templateUpdateImpactMode', {
+                  mode:
+                    updatePreview.mode === 'merge'
+                      ? t('profiles.templateUpdateModeMerge')
+                      : t('profiles.templateUpdateModeOverwrite'),
+                })}
+              </p>
               <p>
                 {t('profiles.templateUpdateSummaryDaily', {
                   before: updatePreview.daily.before,
@@ -1076,7 +1101,27 @@ export function ProfilesPage() {
                   filled: updatePreview.reflection.filledFromPreset,
                 })}
               </p>
+              {updatePreview.mode === 'overwrite' && (updatePreview.daily.removed > 0 || updatePreview.weekly.removed > 0) ? (
+                <p className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800">
+                  {t('profiles.templateUpdateOverwriteRisk', {
+                    total: updatePreview.daily.removed + updatePreview.weekly.removed,
+                    daily: updatePreview.daily.removed,
+                    weekly: updatePreview.weekly.removed,
+                  })}
+                </p>
+              ) : null}
             </div>
+          ) : null}
+          {updateMode === 'overwrite' ? (
+            <label className="flex items-center gap-2 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={overwriteAcknowledged}
+                onChange={(event) => setOverwriteAcknowledged(event.target.checked)}
+                disabled={templateBusy || updateBusy || !dataRoot}
+              />
+              {t('profiles.templateUpdateOverwriteAcknowledge')}
+            </label>
           ) : null}
         </article>
 

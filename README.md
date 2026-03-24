@@ -95,7 +95,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - create/switch/delete profiles
   - template presets loaded from repo config (`config/template-presets.json`)
   - current template editing (structured by default, raw mode available)
-  - template update flow (`merge` recommended, `overwrite` optional) with dry-run summary
+  - template update flow (`merge` recommended, `overwrite` optional) with impact preview and overwrite risk acknowledgment
   - template source metadata tracking per profile
   - one-click apply template to today/this week (overwrite)
 - Preferences:

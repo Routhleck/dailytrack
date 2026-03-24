@@ -438,6 +438,14 @@ export const enMessages = {
     'Weekly checklist: before {before}, after {after}, +{added}, -{removed}',
   'profiles.templateUpdateSummaryReflection':
     'Reflection filled: before {before}, after {after}, filled from preset {filled}',
+  'profiles.templateUpdateImpactTitle': 'Update impact (preview)',
+  'profiles.templateUpdateImpactFiles': 'Templates to update: {count} files (daily.md, weekly.md).',
+  'profiles.templateUpdateImpactMode': 'Apply mode: {mode}',
+  'profiles.templateUpdateOverwriteRisk':
+    'Overwrite risk: total removed {total} items (daily {daily}, weekly {weekly}).',
+  'profiles.templateUpdateOverwriteAcknowledge': 'I understand overwrite may remove existing template items.',
+  'profiles.templateUpdateOverwriteNeedAcknowledge':
+    'Please acknowledge overwrite risk before applying update.',
   'profiles.structuredTemplateParseFailed': 'Failed to parse template in structured mode. Switch to raw mode to fix markdown format.',
   'profiles.dailyTemplateStructuredHint': 'Edit daily template items in a structured way. Changes sync back to markdown template.',
   'profiles.weeklyTemplateStructuredHint': 'Edit weekly template sections and reflection fields structurally.',
@@ -1112,6 +1120,13 @@ export const zhMessages: Record<MessageKey, string> = {
     'Weekly 清单：更新前 {before}，更新后 {after}，新增 {added}，删除 {removed}',
   'profiles.templateUpdateSummaryReflection':
     '反思字段已填写：更新前 {before}，更新后 {after}，其中来自预设补齐 {filled}',
+  'profiles.templateUpdateImpactTitle': '更新影响（预览）',
+  'profiles.templateUpdateImpactFiles': '将更新模板文件：{count} 个（daily.md、weekly.md）。',
+  'profiles.templateUpdateImpactMode': '应用模式：{mode}',
+  'profiles.templateUpdateOverwriteRisk':
+    '覆盖风险：预计删除 {total} 项（daily {daily}，weekly {weekly}）。',
+  'profiles.templateUpdateOverwriteAcknowledge': '我已知晓：全量覆盖可能删除现有模板条目。',
+  'profiles.templateUpdateOverwriteNeedAcknowledge': '请先勾选覆盖风险确认，再执行应用更新。',
   'profiles.structuredTemplateParseFailed': '结构化解析模板失败，请切换到原始 Markdown 修正格式。',
   'profiles.dailyTemplateStructuredHint': '以结构化方式编辑每日模板条目，修改会同步回 Markdown 模板。',
   'profiles.weeklyTemplateStructuredHint': '以结构化方式编辑每周模板分区与反思字段。',

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Daily/Weekly history now supports status filtering (`All / Completed / Pending`) with visible item count feedback.
 - Daily/Weekly history search now supports fast open of the first match via `Enter` key or quick action button.
 - Daily/Weekly history now shows an explicit empty-state hint when no notes match current filters.
+- Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
 
 ## [0.9.0] - 2026-03-24
 

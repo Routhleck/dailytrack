@@ -166,6 +166,12 @@ Acceptance focus:
 
 - Template customization stays readable and markdown-compatible.
 
+Progress snapshot:
+
+- Done: safer template apply UX with clearer impact preview copy.
+- Done: overwrite-mode explicit risk acknowledgment before apply.
+- In progress: weekly goals and progress indicators.
+
 ## v0.13.0 - Insights and Review
 
 Goal: convert records into actionable review signals.
