@@ -67,6 +67,9 @@ type FormState = {
   note: string
 }
 
+const FORM_INTERACTION_GRACE_MS = 1800
+const RESUME_POLL_GRACE_MS = 2200
+
 function parseNullableNumber(value: string): number | null {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -141,6 +144,26 @@ export function BodyPage() {
   const recordsRef = useRef<BodyRecord[]>([])
   const editingIndexRef = useRef<number | null>(null)
   const syncingRef = useRef(false)
+  const formFocusedRef = useRef(false)
+  const lastFormInteractionAtRef = useRef(0)
+  const resumePollAfterRef = useRef(0)
+
+  function markFormInteraction() {
+    lastFormInteractionAtRef.current = Date.now()
+  }
+
+  function isFormInteracting(): boolean {
+    if (formFocusedRef.current) {
+      return true
+    }
+
+    const now = Date.now()
+    if (now < resumePollAfterRef.current) {
+      return true
+    }
+
+    return now - lastFormInteractionAtRef.current < FORM_INTERACTION_GRACE_MS
+  }
 
   useEffect(() => {
     recordsRef.current = records
@@ -149,6 +172,24 @@ export function BodyPage() {
   useEffect(() => {
     editingIndexRef.current = editingIndex
   }, [editingIndex])
+
+  useEffect(() => {
+    resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+        return
+      }
+
+      formFocusedRef.current = false
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [])
 
   useEffect(() => {
     if (!dataRoot) {
@@ -185,7 +226,7 @@ export function BodyPage() {
     const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
 
     const timer = window.setInterval(() => {
-      if (editingIndexRef.current != null || syncingRef.current) {
+      if (editingIndexRef.current != null || syncingRef.current || isFormInteracting()) {
         return
       }
 
@@ -194,7 +235,9 @@ export function BodyPage() {
         .then((latest) => {
           if (!areBodyRecordsEqual(recordsRef.current, latest)) {
             setRecords(latest)
-            setMessage(t('body.updatedFromDisk'))
+            if (!isFormInteracting()) {
+              setMessage(t('body.updatedFromDisk'))
+            }
           }
         })
         .catch((error) => {
@@ -256,6 +299,7 @@ export function BodyPage() {
   }
 
   async function handleDelete(index: number) {
+    markFormInteraction()
     const nextRecords = records.filter((_, idx) => idx !== index)
     await persist(nextRecords)
 
@@ -268,6 +312,36 @@ export function BodyPage() {
   const chartData = useMemo(() => [...records].reverse(), [records])
   const showOnlyChanges = preferences.ui.showOnlyChanges.body
   const recordDiffs = useMemo(() => records.map((record) => diffBodyRecord(record)), [records])
+  const enabledNumericMetrics = useMemo(
+    () => BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key]),
+    [preferences.body],
+  )
+  const visibleNumericMetrics = useMemo(
+    () =>
+      showOnlyChanges
+        ? enabledNumericMetrics.filter((metric) =>
+          records.some((_, index) => recordDiffs[index].changedMetrics[metric.key]),
+        )
+        : enabledNumericMetrics,
+    [enabledNumericMetrics, recordDiffs, records, showOnlyChanges],
+  )
+  const showNote = preferences.body.note
+  const showNoteColumn = useMemo(
+    () => showNote && (!showOnlyChanges || records.some((_, index) => recordDiffs[index].noteChanged)),
+    [recordDiffs, records, showNote, showOnlyChanges],
+  )
+  const visibleRecordEntries = useMemo(
+    () =>
+      records
+        .map((record, index) => ({
+          record,
+          index,
+          diff: recordDiffs[index],
+        }))
+        .filter((entry) => !showOnlyChanges || entry.diff.hasAnyChange),
+    [recordDiffs, records, showOnlyChanges],
+  )
+  const showNoChangesHint = showOnlyChanges && visibleRecordEntries.length === 0
 
   if (preferencesLoading) {
     return (
@@ -276,23 +350,6 @@ export function BodyPage() {
       </section>
     )
   }
-
-  const enabledNumericMetrics = BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key])
-  const visibleNumericMetrics = showOnlyChanges
-    ? enabledNumericMetrics.filter((metric) =>
-      records.some((_, index) => recordDiffs[index].changedMetrics[metric.key]),
-    )
-    : enabledNumericMetrics
-  const showNote = preferences.body.note
-  const showNoteColumn = showNote && (!showOnlyChanges || records.some((_, index) => recordDiffs[index].noteChanged))
-  const visibleRecordEntries = records
-    .map((record, index) => ({
-      record,
-      index,
-      diff: recordDiffs[index],
-    }))
-    .filter((entry) => !showOnlyChanges || entry.diff.hasAnyChange)
-  const showNoChangesHint = showOnlyChanges && visibleRecordEntries.length === 0
 
   return (
     <section className="min-w-0 space-y-4 md:space-y-6">
@@ -333,7 +390,18 @@ export function BodyPage() {
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           type="date"
           value={form.date}
-          onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+          onFocus={() => {
+            formFocusedRef.current = true
+            markFormInteraction()
+          }}
+          onBlur={() => {
+            formFocusedRef.current = false
+            markFormInteraction()
+          }}
+          onChange={(event) => {
+            markFormInteraction()
+            setForm((prev) => ({ ...prev, date: event.target.value }))
+          }}
           required
         />
 
@@ -345,7 +413,16 @@ export function BodyPage() {
             step={decimalInputStep(preferences.body.display[metric.key].decimals)}
             placeholder={metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key])}
             value={form[metric.key]}
+            onFocus={() => {
+              formFocusedRef.current = true
+              markFormInteraction()
+            }}
+            onBlur={() => {
+              formFocusedRef.current = false
+              markFormInteraction()
+            }}
             onChange={(event) => {
+              markFormInteraction()
               const nextValue = event.target.value
               setForm((prev) => ({ ...prev, [metric.key]: nextValue }))
             }}
@@ -357,7 +434,18 @@ export function BodyPage() {
             className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2 lg:col-span-2"
             placeholder={t('body.note')}
             value={form.note}
-            onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
+            onFocus={() => {
+              formFocusedRef.current = true
+              markFormInteraction()
+            }}
+            onBlur={() => {
+              formFocusedRef.current = false
+              markFormInteraction()
+            }}
+            onChange={(event) => {
+              markFormInteraction()
+              setForm((prev) => ({ ...prev, note: event.target.value }))
+            }}
           />
         ) : null}
 
@@ -370,6 +458,7 @@ export function BodyPage() {
               type="button"
               className="w-full rounded-md bg-slate-300 px-4 py-2 text-sm text-slate-800 sm:w-auto"
               onClick={() => {
+                markFormInteraction()
                 setEditingIndex(null)
                 setForm(toFormState())
               }}
@@ -451,6 +540,7 @@ export function BodyPage() {
                 <button
                   className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
                   onClick={() => {
+                    markFormInteraction()
                     setEditingIndex(entry.index)
                     setForm(toFormState(entry.record))
                   }}
@@ -500,10 +590,11 @@ export function BodyPage() {
                     <div className="flex gap-2">
                       <button
                         className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700"
-                        onClick={() => {
-                          setEditingIndex(entry.index)
-                          setForm(toFormState(entry.record))
-                        }}
+                      onClick={() => {
+                        markFormInteraction()
+                        setEditingIndex(entry.index)
+                        setForm(toFormState(entry.record))
+                      }}
                         type="button"
                       >
                         {t('common.edit')}
@@ -527,4 +618,3 @@ export function BodyPage() {
     </section>
   )
 }
-
