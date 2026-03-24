@@ -77,7 +77,7 @@ On Windows, default base root falls back to `%USERPROFILE%\\dailytrack-data`.
 - Keep entries user-facing and grouped under `Added`, `Changed`, `Fixed` when applicable.
 
 ## Roadmap and Milestone Rules
-- `README.md` `Future Roadmap` should stay version-based (for example `v0.5.0`, `v0.6.0`, ...).
+- Detailed roadmap/backlog lives in `docs/ROADMAP.md`; `README.md` should keep a concise versioned summary and link to it.
 - Keep milestone scope practical for solo iteration:
   - one theme per milestone
   - 3-5 concrete outcomes max

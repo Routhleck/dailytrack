@@ -51,7 +51,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Real-time feel: autosave + local file change refresh.
 - Calm Glass UI shell: desktop + mobile layouts with cleaner hierarchy and lower visual noise.
 - Layered navigation: high-frequency primary routes plus secondary route grouping for better focus.
-- Mobile quick menu for secondary routes (`Dashboard`, `Profiles`, `Settings`, etc.) on narrow screens.
+- Mobile 4-tab navigation (`Dashboard`, `Record`, `History`, `More`) with grouped quick sheets for high-frequency flows.
 - Mobile sync status banner shows offline/pending/conflict countdown at a glance.
 - Template-based `Only show changes` filters keep Daily/Weekly/Body focused on deltas.
 
@@ -359,37 +359,19 @@ Useful docs:
 - [docs/PREFERENCES_SCHEMA.md](./docs/PREFERENCES_SCHEMA.md)
 - [docs/QA_CHECKLIST.md](./docs/QA_CHECKLIST.md)
 - [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
+- [docs/ROADMAP.md](./docs/ROADMAP.md)
 
 ## Future Roadmap
 
-Milestones are intentionally scoped for solo, iterative shipping and may adjust based on user feedback.
+Roadmap and backlog now live in:
 
-### v0.5.0 - Sync Reliability
+- [docs/ROADMAP.md](./docs/ROADMAP.md)
 
-- Improve WebDAV status visibility (last successful pull/push time, retry states, clearer error categories).
-- Simplify conflict resolution with safer defaults and optional batch actions.
-- Add sync diagnostic export for easier issue triage.
+Current milestone sequence:
 
-### v0.6.0 - Profiles and Templates
-
-- Unify structured template editing across profile creation and profile settings.
-- Add more built-in bilingual template packs with cleaner onboarding selection.
-- Add template update flow that preserves user customizations where possible.
-
-### v0.7.0 - Mobile Usability
-
-- Improve Android layout and chart behavior on smaller screens.
-- Expand "show only changes" style views to more high-frequency workflows.
-- Improve offline status and sync queue visibility for mobile scenarios.
-
-### v0.8.0 - Reports and AI Assist
-
-- Add weekly/monthly report generation with configurable prompts.
-- Support report style presets (training-focused, life-focused, research-focused).
-- Add one-click export for generated summaries (Markdown first, optional PDF later).
-
-### v1.0.0 - Distribution and Ops
-
-- Separate signed stable distribution and unsigned testing distribution strategy.
-- Add automated release verification checklist coverage (sync, update, onboarding, migration).
-- Improve release documentation and troubleshooting playbooks for users.
+- `v0.8.2`: mobile polish and readability
+- `v0.9.0`: UX foundation upgrade
+- `v0.10.0`: daily and history efficiency
+- `v0.11.0`: body analytics upgrade
+- `v0.12.0`: templates and goals
+- `v1.0.0`: reliability and trust
