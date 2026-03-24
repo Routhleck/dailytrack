@@ -352,6 +352,8 @@ export const enMessages = {
   'body.hipTrend': 'Hip Trend',
   'body.allDisabled': 'All body metrics are disabled in Preferences.',
   'body.history': 'History',
+  'body.noRecords': 'No body records yet.',
+  'body.noRecordsHint': 'Add your first record with the form above to unlock trend charts and history.',
 
   'profiles.title': 'Profiles',
   'profiles.description': 'Create, switch, delete profiles, and customize profile templates.',
@@ -995,6 +997,8 @@ export const zhMessages: Record<MessageKey, string> = {
   'body.hipTrend': '臀围趋势',
   'body.allDisabled': '身体指标均已在偏好设置中关闭。',
   'body.history': '历史记录',
+  'body.noRecords': '还没有身体记录。',
+  'body.noRecordsHint': '先在上方表单添加第一条记录，即可查看趋势图和历史。',
 
   'profiles.title': '档案',
   'profiles.description': '创建、切换、删除档案，并自定义档案模板。',

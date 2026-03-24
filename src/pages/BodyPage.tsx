@@ -18,6 +18,7 @@ import {
   metricLabelWithUnit,
 } from '../features/body/body.format'
 import { getBodyRecords, saveBodyRecords } from '../features/body/body.service'
+import { useToast } from '../features/feedback/ToastContext'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
@@ -133,6 +134,7 @@ function areBodyRecordsEqual(left: BodyRecord[], right: BodyRecord[]): boolean {
 
 export function BodyPage() {
   const { t } = useI18n()
+  const { pushError, pushInfo, pushSuccess } = useToast()
   const { dataRoot } = useDataRoot()
   const { preferences, loading: preferencesLoading, updatePreferences } = usePreferences()
 
@@ -211,10 +213,12 @@ export function BodyPage() {
     try {
       const saved = await saveBodyRecords(dataRoot, nextRecords)
       setRecords(saved)
-      setMessage(t('body.saved'))
+      setMessage('')
+      pushSuccess(t('body.saved'))
       emitDataChanged({ scope: 'body' })
     } catch {
       setMessage(t('body.saveFailed'))
+      pushError(t('body.saveFailed'))
     }
   }
 
@@ -236,7 +240,7 @@ export function BodyPage() {
           if (!areBodyRecordsEqual(recordsRef.current, latest)) {
             setRecords(latest)
             if (!isFormInteracting()) {
-              setMessage(t('body.updatedFromDisk'))
+              pushInfo(t('body.updatedFromDisk'))
             }
           }
         })
@@ -251,7 +255,7 @@ export function BodyPage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [dataRoot, preferences.sync.mode, t])
+  }, [dataRoot, preferences.sync.mode, pushInfo, t])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -283,6 +287,7 @@ export function BodyPage() {
 
     if (!nextRecord.date) {
       setMessage(t('body.dateRequired'))
+      pushError(t('body.dateRequired'))
       return
     }
 
@@ -520,6 +525,12 @@ export function BodyPage() {
 
       <article className="dt-panel p-4">
         <h2 className="mb-3 text-base font-semibold text-slate-900">{t('body.history')}</h2>
+        {visibleRecordEntries.length === 0 ? (
+          <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-sm font-medium text-slate-800">{t('body.noRecords')}</p>
+            <p className="mt-1 text-xs text-slate-600">{t('body.noRecordsHint')}</p>
+          </div>
+        ) : null}
 
         <div className="space-y-3 md:hidden">
           {visibleRecordEntries.map((entry) => (

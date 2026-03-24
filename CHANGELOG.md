@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Dashboard empty states now include direct CTA links for first body record, first daily note, and first weekly note.
 - Sync page now uses a summary-first information hierarchy (status, mode, action needed, quick actions) and moves technical details into collapsible advanced diagnostics.
 - Sync page actions now emit toast feedback for refresh/sync/export/resolve flows.
+- Body page actions now emit toast feedback for save/update-from-disk/date-required flows.
+- Body history now shows first-use empty-state guidance when there are no visible records.
 
 ### Fixed
 - Fixed mobile tutorial overlay positioning on narrow layouts.
