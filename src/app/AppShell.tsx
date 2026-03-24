@@ -39,7 +39,7 @@ export function AppShell() {
                 {loading ? <span className="dt-badge">{t('shell.initializing')}</span> : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white/85 p-1">
+              <div data-tour="shell-language" className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white/85 p-1">
                 <button
                   type="button"
                   className={`rounded-lg px-2 py-1 text-xs font-medium transition ${

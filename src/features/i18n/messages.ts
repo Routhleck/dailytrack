@@ -65,6 +65,9 @@ export const enMessages = {
   'tutorial.back': 'Back',
   'tutorial.next': 'Next',
   'tutorial.finish': 'Finish',
+  'tutorial.stepDashboardTitle': 'Dashboard',
+  'tutorial.stepDashboardBody':
+    'Dashboard gives you a quick daily snapshot: today progress, weekly completion, body latest record, and recent notes.',
   'tutorial.stepTodayTitle': 'Today',
   'tutorial.stepTodayBody':
     'Use Today for your daily markdown note. Toggle checkboxes, edit One Line, and keep the raw markdown fallback.',
@@ -74,12 +77,39 @@ export const enMessages = {
   'tutorial.stepBodyTitle': 'Body Progress',
   'tutorial.stepBodyBody':
     'Body Progress reads and updates local body.csv. Add records and review trend charts here.',
+  'tutorial.stepReportsTitle': 'Reports',
+  'tutorial.stepReportsBody':
+    'Reports can generate weekly/monthly AI summaries from your local files. Provider settings are configurable per profile.',
+  'tutorial.stepDailyListTitle': 'Daily Notes List',
+  'tutorial.stepDailyListBody':
+    'Use Daily Notes to quickly search and open past dates. You can always fall back to raw markdown editing in each note.',
+  'tutorial.stepWeeklyListTitle': 'Weekly Notes List',
+  'tutorial.stepWeeklyListBody':
+    'Use Weekly Notes to jump between week files and review historical weekly reflections/checklists.',
+  'tutorial.stepSyncTitle': 'Sync',
+  'tutorial.stepSyncBody':
+    'Sync page shows WebDAV realtime status, pending changes, conflicts, dry-run info, and conflict resolution actions.',
   'tutorial.stepProfilesTitle': 'Profiles',
   'tutorial.stepProfilesBody':
     'Profiles let you switch personal/work setups and use different templates under the same base data root.',
+  'tutorial.stepPreferencesTitle': 'Preferences',
+  'tutorial.stepPreferencesBody':
+    'Preferences control tracking dimensions, default filters, sync mode, and body metric units/decimal formats.',
   'tutorial.stepSettingsTitle': 'Settings',
   'tutorial.stepSettingsBody':
     'Settings manages data root, migration, import/export, and you can replay this tutorial anytime.',
+  'tutorial.stepLanguageTitle': 'Language',
+  'tutorial.stepLanguageBody':
+    'You can switch UI language anytime from the top-right switcher. Templates support both Chinese and English variants.',
+  'tutorial.stepSourceOfTruthTitle': 'Data Model (Most Important)',
+  'tutorial.stepSourceOfTruthBody':
+    'dailytrack is local-first:\n- Markdown and CSV files are the only source of truth\n- Structured UI is an editor layer, not a hidden database\n- Raw markdown mode is always available as fallback',
+  'tutorial.stepFeatureMapTitle': 'Feature Map',
+  'tutorial.stepFeatureMapBody':
+    'Current complete feature set:\n- Daily/Weekly structured editing + raw mode\n- Body metrics table/form/charts\n- Multi-profile templates and preferences\n- Import/Export/Migrate data root\n- WebDAV snapshot + realtime sync + conflict tools\n- In-app updater and diagnostics',
+  'tutorial.stepWorkflowTitle': 'Recommended Workflow',
+  'tutorial.stepWorkflowBody':
+    'A practical routine:\n1) Update Today\n2) Review This Week\n3) Record body metrics\n4) Resolve sync if needed\n5) Generate weekly/monthly report\n6) Use Profiles for different life contexts',
 
   'dashboard.title': 'Dashboard',
   'dashboard.loadingDescription': 'Loading local tracker summary...',
@@ -636,6 +666,9 @@ export const zhMessages: Record<MessageKey, string> = {
   'tutorial.back': '上一步',
   'tutorial.next': '下一步',
   'tutorial.finish': '完成',
+  'tutorial.stepDashboardTitle': '仪表盘',
+  'tutorial.stepDashboardBody':
+    '仪表盘用于快速总览：今天进度、本周完成度、身体最新记录和最近笔记。',
   'tutorial.stepTodayTitle': '今天',
   'tutorial.stepTodayBody':
     '这里是每日记录入口。可以勾选清单、编辑一句话，也可随时切换原始 Markdown 模式。',
@@ -644,11 +677,38 @@ export const zhMessages: Record<MessageKey, string> = {
     '这里处理每周清单和复盘内容，结构化编辑与原始 Markdown 会保持一致。',
   'tutorial.stepBodyTitle': '身体进展',
   'tutorial.stepBodyBody': '这里读取和更新本地 body.csv，可新增记录并查看趋势图。',
+  'tutorial.stepReportsTitle': '报告',
+  'tutorial.stepReportsBody':
+    '报告页可基于本地数据生成周报/月报（AI 总结），并支持按档案配置 provider。',
+  'tutorial.stepDailyListTitle': '每日记录列表',
+  'tutorial.stepDailyListBody':
+    '在这里可快速检索并打开历史日期记录；进入单日后也可随时切回原始 Markdown 编辑。',
+  'tutorial.stepWeeklyListTitle': '每周记录列表',
+  'tutorial.stepWeeklyListBody':
+    '在这里可快速切换历史周文件，回看每周清单与复盘内容。',
+  'tutorial.stepSyncTitle': '同步',
+  'tutorial.stepSyncBody':
+    '同步页展示 WebDAV 实时状态、待同步变更、冲突列表、dry-run 摘要和冲突处理操作。',
   'tutorial.stepProfilesTitle': '档案',
   'tutorial.stepProfilesBody': '这里管理多个档案，支持切换、创建，并给不同档案使用不同模板。',
+  'tutorial.stepPreferencesTitle': '偏好设置',
+  'tutorial.stepPreferencesBody':
+    '偏好页用于配置追踪维度、默认过滤器、同步模式，以及 body 指标单位/小数格式。',
   'tutorial.stepSettingsTitle': '系统设置',
   'tutorial.stepSettingsBody':
     '这里管理数据根目录、迁移、导入导出，也可以随时重新打开本教程。',
+  'tutorial.stepLanguageTitle': '语言切换',
+  'tutorial.stepLanguageBody':
+    '可在右上角随时切换界面语言。模板预设同样支持中英文版本。',
+  'tutorial.stepSourceOfTruthTitle': '数据模型（最重要）',
+  'tutorial.stepSourceOfTruthBody':
+    'dailytrack 是本地优先：\n- Markdown/CSV 才是唯一真源\n- 结构化界面只是编辑层，不是隐藏数据库\n- 始终保留原始 Markdown 兜底模式',
+  'tutorial.stepFeatureMapTitle': '完整功能图谱',
+  'tutorial.stepFeatureMapBody':
+    '目前完整功能包括：\n- Daily/Weekly 结构化编辑 + 原始模式\n- Body 指标表单/历史/图表\n- 多档案 + 模板 + 偏好\n- 数据迁移/导出/导入\n- WebDAV 快照与实时同步 + 冲突处理\n- 应用更新与诊断信息',
+  'tutorial.stepWorkflowTitle': '推荐使用流程',
+  'tutorial.stepWorkflowBody':
+    '建议日常节奏：\n1）更新 Today\n2）回看 This Week\n3）记录身体指标\n4）必要时处理同步冲突\n5）生成周报/月报\n6）使用 Profiles 管理不同生活场景',
 
   'dashboard.title': '仪表盘',
   'dashboard.loadingDescription': '正在加载本地追踪概览...',

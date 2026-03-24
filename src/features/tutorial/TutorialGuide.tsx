@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useI18n } from '../i18n/I18nContext'
+import type { MessageKey } from '../i18n/messages'
 import { onTutorialOpen } from './tutorial.events'
 import {
   clearTutorialDismissedForSession,
@@ -13,28 +14,23 @@ import {
 } from './tutorial.store'
 
 type TutorialStep = {
-  target: string
-  titleKey:
-    | 'tutorial.stepTodayTitle'
-    | 'tutorial.stepWeekTitle'
-    | 'tutorial.stepBodyTitle'
-    | 'tutorial.stepProfilesTitle'
-    | 'tutorial.stepSettingsTitle'
-  bodyKey:
-    | 'tutorial.stepTodayBody'
-    | 'tutorial.stepWeekBody'
-    | 'tutorial.stepBodyBody'
-    | 'tutorial.stepProfilesBody'
-    | 'tutorial.stepSettingsBody'
+  target?: string
+  titleKey: MessageKey
+  bodyKey: MessageKey
 }
 
 type TutorialMode = 'auto' | 'manual'
 
 const HIGHLIGHT_PADDING = 6
-const TOOLTIP_WIDTH = 320
+const TOOLTIP_WIDTH = 360
 const EDGE_GAP = 16
 
 const STEPS: TutorialStep[] = [
+  {
+    target: 'nav-dashboard',
+    titleKey: 'tutorial.stepDashboardTitle',
+    bodyKey: 'tutorial.stepDashboardBody',
+  },
   {
     target: 'nav-today',
     titleKey: 'tutorial.stepTodayTitle',
@@ -51,18 +47,63 @@ const STEPS: TutorialStep[] = [
     bodyKey: 'tutorial.stepBodyBody',
   },
   {
+    target: 'nav-reports',
+    titleKey: 'tutorial.stepReportsTitle',
+    bodyKey: 'tutorial.stepReportsBody',
+  },
+  {
+    target: 'nav-daily-list',
+    titleKey: 'tutorial.stepDailyListTitle',
+    bodyKey: 'tutorial.stepDailyListBody',
+  },
+  {
+    target: 'nav-weekly-list',
+    titleKey: 'tutorial.stepWeeklyListTitle',
+    bodyKey: 'tutorial.stepWeeklyListBody',
+  },
+  {
+    target: 'nav-sync',
+    titleKey: 'tutorial.stepSyncTitle',
+    bodyKey: 'tutorial.stepSyncBody',
+  },
+  {
     target: 'nav-profiles',
     titleKey: 'tutorial.stepProfilesTitle',
     bodyKey: 'tutorial.stepProfilesBody',
+  },
+  {
+    target: 'nav-preferences',
+    titleKey: 'tutorial.stepPreferencesTitle',
+    bodyKey: 'tutorial.stepPreferencesBody',
   },
   {
     target: 'nav-settings',
     titleKey: 'tutorial.stepSettingsTitle',
     bodyKey: 'tutorial.stepSettingsBody',
   },
+  {
+    target: 'shell-language',
+    titleKey: 'tutorial.stepLanguageTitle',
+    bodyKey: 'tutorial.stepLanguageBody',
+  },
+  {
+    titleKey: 'tutorial.stepSourceOfTruthTitle',
+    bodyKey: 'tutorial.stepSourceOfTruthBody',
+  },
+  {
+    titleKey: 'tutorial.stepFeatureMapTitle',
+    bodyKey: 'tutorial.stepFeatureMapBody',
+  },
+  {
+    titleKey: 'tutorial.stepWorkflowTitle',
+    bodyKey: 'tutorial.stepWorkflowBody',
+  },
 ]
 
 function findStepRect(step: TutorialStep): DOMRect | null {
+  if (!step.target) {
+    return null
+  }
   const element = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`)
   if (!element) {
     return null
@@ -75,13 +116,16 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function getTooltipPosition(rect: DOMRect | null): { left: number; top: number } {
-  if (!rect) {
-    return { left: EDGE_GAP, top: EDGE_GAP }
-  }
-
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
-  const estimatedHeight = 230
+  const estimatedHeight = 260
+
+  if (!rect) {
+    return {
+      left: clamp((viewportWidth - TOOLTIP_WIDTH) / 2, EDGE_GAP, viewportWidth - TOOLTIP_WIDTH - EDGE_GAP),
+      top: clamp(viewportHeight * 0.16, EDGE_GAP, viewportHeight - estimatedHeight - EDGE_GAP),
+    }
+  }
 
   let left = rect.right + 16
   if (left + TOOLTIP_WIDTH > viewportWidth - EDGE_GAP) {
@@ -224,7 +268,7 @@ export function TutorialGuide({ blocked }: { blocked: boolean }) {
           {t('tutorial.progress', { current: stepIndex + 1, total: STEPS.length })}
         </p>
         <h3 className="mt-1 text-base font-semibold text-slate-900">{t(currentStep.titleKey)}</h3>
-        <p className="mt-2 text-sm text-slate-600">{t(currentStep.bodyKey)}</p>
+        <p className="mt-2 whitespace-pre-line text-sm text-slate-600">{t(currentStep.bodyKey)}</p>
 
         <div className="mt-4 flex items-center justify-between">
           <button
