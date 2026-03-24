@@ -10,6 +10,11 @@ import {
 
 import { MeasuredChartContainer } from '../components/MeasuredChartContainer'
 import { PageHeader } from '../components/PageHeader'
+import {
+  filterBodyRecordsByRange,
+  metricDeltaFromLatest,
+  type BodyChartRange,
+} from '../features/body/body.analytics'
 import { diffBodyRecord } from '../features/body/body.diff'
 import {
   decimalInputStep,
@@ -70,6 +75,15 @@ type FormState = {
 
 const FORM_INTERACTION_GRACE_MS = 1800
 const RESUME_POLL_GRACE_MS = 2200
+const BODY_CHART_RANGE_OPTIONS: {
+  key: BodyChartRange
+  labelKey: 'body.range7d' | 'body.range30d' | 'body.range90d' | 'body.rangeAll'
+}[] = [
+  { key: '7d', labelKey: 'body.range7d' },
+  { key: '30d', labelKey: 'body.range30d' },
+  { key: '90d', labelKey: 'body.range90d' },
+  { key: 'all', labelKey: 'body.rangeAll' },
+]
 
 function parseNullableNumber(value: string): number | null {
   const trimmed = value.trim()
@@ -142,6 +156,7 @@ export function BodyPage() {
   const [form, setForm] = useState<FormState>(toFormState())
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [message, setMessage] = useState('')
+  const [chartRange, setChartRange] = useState<BodyChartRange>('30d')
 
   const recordsRef = useRef<BodyRecord[]>([])
   const editingIndexRef = useRef<number | null>(null)
@@ -315,12 +330,23 @@ export function BodyPage() {
   }
 
   const chartData = useMemo(() => [...records].reverse(), [records])
+  const rangedChartData = useMemo(
+    () => filterBodyRecordsByRange(chartData, chartRange),
+    [chartData, chartRange],
+  )
   const showOnlyChanges = preferences.ui.showOnlyChanges.body
   const recordDiffs = useMemo(() => records.map((record) => diffBodyRecord(record)), [records])
   const enabledNumericMetrics = useMemo(
     () => BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key]),
     [preferences.body],
   )
+  const metricDeltas = useMemo(() => {
+    const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
+    for (const metric of enabledNumericMetrics) {
+      next[metric.key] = metricDeltaFromLatest(records, metric.key)
+    }
+    return next
+  }, [enabledNumericMetrics, records])
   const visibleNumericMetrics = useMemo(
     () =>
       showOnlyChanges
@@ -347,6 +373,8 @@ export function BodyPage() {
     [recordDiffs, records, showOnlyChanges],
   )
   const showNoChangesHint = showOnlyChanges && visibleRecordEntries.length === 0
+  const selectedRangeLabelKey =
+    BODY_CHART_RANGE_OPTIONS.find((option) => option.key === chartRange)?.labelKey ?? 'body.rangeAll'
 
   if (preferencesLoading) {
     return (
@@ -385,6 +413,46 @@ export function BodyPage() {
         <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
           {t('common.noTemplateChanges')}
         </p>
+      ) : null}
+
+      {enabledNumericMetrics.length > 0 ? (
+        <article className="dt-panel-soft space-y-2 p-3 sm:p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-600">{t('body.chartRange')}</span>
+            {BODY_CHART_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                className={`dt-btn px-2.5 py-1 text-xs ${
+                  chartRange === option.key ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
+                }`}
+                onClick={() => setChartRange(option.key)}
+              >
+                {t(option.labelKey)}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {enabledNumericMetrics.map((metric) => {
+              const delta = metricDeltas[metric.key]
+              const deltaText =
+                delta == null
+                  ? t('body.deltaNotAvailable')
+                  : `${delta > 0 ? '+' : ''}${formatBodyMetricValue(
+                    delta,
+                    preferences.body.display[metric.key],
+                  )}`
+              return (
+                <span key={metric.key} className="dt-badge">
+                  {t('body.deltaFromPrevious', {
+                    metric: metricLabelWithUnit(t(metric.labelKey), preferences.body.display[metric.key]),
+                    delta: deltaText,
+                  })}
+                </span>
+              )
+            })}
+          </div>
+        </article>
       ) : null}
 
       <form
@@ -479,12 +547,15 @@ export function BodyPage() {
         <div className={`grid min-w-0 gap-3 md:gap-4 ${visibleNumericMetrics.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
           {visibleNumericMetrics.map((metric) => (
             <article key={metric.key} className="dt-panel min-w-0 overflow-hidden p-3 sm:p-4">
-              <h2 className="mb-2 text-sm font-semibold text-slate-900 sm:mb-3 sm:text-base">
-                {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
-              </h2>
+              <div className="mb-2 flex items-center justify-between sm:mb-3">
+                <h2 className="text-sm font-semibold text-slate-900 sm:text-base">
+                  {metricLabelWithUnit(t(metric.trendLabelKey), preferences.body.display[metric.key])}
+                </h2>
+                <span className="dt-badge">{t(selectedRangeLabelKey)}</span>
+              </div>
               <MeasuredChartContainer className="h-44 min-w-0 sm:h-52 md:h-56">
                 {({ width, height }) => (
-                  <LineChart width={width} height={height} data={chartData} margin={{ top: 8, right: 12, left: 6, bottom: 4 }}>
+                  <LineChart width={width} height={height} data={rangedChartData} margin={{ top: 8, right: 12, left: 6, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={24} interval="preserveStartEnd" />
                     <YAxis

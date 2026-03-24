@@ -144,6 +144,12 @@ Acceptance focus:
 
 - User can quickly tell trend direction and recent change.
 
+Progress snapshot:
+
+- Done: chart range controls (`7d / 30d / 90d / all`).
+- Done: delta badges vs previous record for enabled metrics (unit/decimal aware).
+- In progress: optional goal line and post-submit highlight summary.
+
 ## v0.12.0 - Templates and Goal Loop
 
 Goal: support personalization while keeping model simple.

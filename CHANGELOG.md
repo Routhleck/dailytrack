@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Added completion badges to Daily/Weekly history rows (`checked/total` and `%`) so note status is visible before opening.
+- Added body analytics helpers + tests for chart-range filtering and latest-vs-previous metric delta calculation.
+- Added body trend chart range controls (`7d / 30d / 90d / all`).
+- Added metric delta badges on Body page (`vs previous`) using per-metric unit/decimal display preferences.
 
 ### Changed
 - Daily/Weekly history now supports status filtering (`All / Completed / Pending`) with visible item count feedback.
