@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Refined desktop/app icon assets to use transparent outer corners and normalized visual padding for better macOS launcher consistency.
 - Reworked Android adaptive icon sources (dedicated foreground/background and larger foreground scale) to avoid the "small icon inside rounded rectangle" look.
 - Adjusted Android adaptive foreground framing (smaller + upward offset) to prevent bottom letters from being clipped on launcher masks.
+- Improved Android new-day resilience by adding built-in daily/weekly template fallback and dashboard partial-load tolerance when one local file read fails.
 
 ## [0.7.1] - 2026-03-22
 

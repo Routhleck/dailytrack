@@ -56,13 +56,26 @@ export function DashboardPage() {
     }
 
     try {
-      const [today, week, bodyRecords, dailyDates, weeklyIds] = await Promise.all([
+      const [todayResult, weekResult, bodyResult, dailyResult, weeklyResult] = await Promise.allSettled([
         getTodayNote(dataRoot),
         getCurrentWeekNote(dataRoot),
         getBodyRecords(dataRoot),
         listDailyDates(dataRoot),
         listWeeklyIds(dataRoot),
       ])
+
+      if (todayResult.status !== 'fulfilled') {
+        throw todayResult.reason
+      }
+      if (weekResult.status !== 'fulfilled') {
+        throw weekResult.reason
+      }
+
+      const today = todayResult.value
+      const week = weekResult.value
+      const bodyRecords = bodyResult.status === 'fulfilled' ? bodyResult.value : []
+      const dailyDates = dailyResult.status === 'fulfilled' ? dailyResult.value : []
+      const weeklyIds = weeklyResult.status === 'fulfilled' ? weeklyResult.value : []
 
       const weeklyItems = WEEKLY_SECTION_ORDER.flatMap((section) =>
         preferences.weekly.sections[section] ? week.sections[section] : [],
@@ -78,7 +91,8 @@ export function DashboardPage() {
         recentWeekly: weeklyIds.slice(0, 5),
       })
       setError('')
-    } catch {
+    } catch (error) {
+      console.warn('[dashboard] failed to load dashboard data', error)
       setError(t('dashboard.loadFailed'))
     }
   }, [dataRoot, preferences, t])

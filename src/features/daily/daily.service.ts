@@ -5,12 +5,36 @@ import type { DailyNote } from '../../types/tracker'
 import { parseDailyMarkdown } from './daily.parser'
 import { serializeDailyMarkdown } from './daily.serializer'
 
+const FALLBACK_DAILY_TEMPLATE = `# {{date}}
+
+## Daily Core
+- [ ] Train / move body
+- [ ] Eat well / protein target
+- [ ] Finish the most important research task
+- [ ] Walk outside / get sunlight
+- [ ] Record one small win / good moment
+
+## Optional
+- [ ] Read / learn something
+- [ ] Tidy room / desk
+- [ ] Social interaction
+- [ ] Capture life note / photo / thought
+
+## One Line
+-
+`
+
 function buildDailyPath(dataRoot: string, date: string): string {
   return joinPath(dataRoot, 'daily', `${date}.md`)
 }
 
 async function readTemplate(dataRoot: string): Promise<string> {
-  return readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'))
+  try {
+    return await readTextFile(dataRoot, joinPath(dataRoot, 'templates', 'daily.md'))
+  } catch (error) {
+    console.warn('[daily] failed to read daily template, falling back to built-in template', error)
+    return FALLBACK_DAILY_TEMPLATE
+  }
 }
 
 async function ensureDailyFile(dataRoot: string, date: string): Promise<string> {

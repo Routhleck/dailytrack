@@ -9,8 +9,14 @@ function bodyPath(dataRoot: string): string {
 }
 
 export async function getBodyRecords(dataRoot: string): Promise<BodyRecord[]> {
-  const raw = await readTextFile(dataRoot, bodyPath(dataRoot))
-  return parseBodyCsv(raw)
+  const path = bodyPath(dataRoot)
+  try {
+    const raw = await readTextFile(dataRoot, path)
+    return parseBodyCsv(raw)
+  } catch (error) {
+    console.warn('[body] failed to read body.csv, returning empty records', error)
+    return []
+  }
 }
 
 export async function saveBodyRecords(dataRoot: string, records: BodyRecord[]): Promise<BodyRecord[]> {
