@@ -29,10 +29,10 @@ export function Sidebar() {
                 end={item.end}
                 data-tour={item.tourTarget}
                 className={({ isActive }) =>
-                  `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition ${
+                  `group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
                     isActive
                       ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-700 hover:bg-white hover:text-slate-900'
+                      : 'text-slate-700 hover:bg-white hover:text-slate-900 hover:translate-x-0.5'
                   }`
                 }
               >
@@ -56,10 +56,10 @@ export function Sidebar() {
                 end={item.end}
                 data-tour={item.tourTarget}
                 className={({ isActive }) =>
-                  `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition ${
+                  `group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
                     isActive
                       ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-700 hover:bg-white hover:text-slate-900'
+                      : 'text-slate-700 hover:bg-white hover:text-slate-900 hover:translate-x-0.5'
                   }`
                 }
               >

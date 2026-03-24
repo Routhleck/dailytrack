@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { BottomNav } from '../components/BottomNav'
 import { InitialTemplateSetupModal } from '../components/InitialTemplateSetupModal'
@@ -17,11 +17,12 @@ export function AppShell() {
   const { activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
   const { isBannerVisible, update, installUpdate, installing, dismissUpdate } = useUpdater()
   const showMobileSyncBanner = preferences.ui.mobile.showSyncBanner
+  const location = useLocation()
 
   return (
-    <div className="dt-shell-bg min-h-[100dvh] text-slate-900">
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1520px] px-3 py-3 md:px-5 md:py-5">
-        <div className="hidden md:block">
+    <div className="dt-shell-bg h-[100dvh] overflow-hidden text-slate-900">
+      <div className="mx-auto flex h-full max-w-[1520px] p-3 md:p-5">
+        <div className="hidden h-full md:block">
           <Sidebar />
         </div>
 
@@ -101,7 +102,9 @@ export function AppShell() {
                 </div>
               ) : null}
 
-              <Outlet />
+              <div key={location.pathname} className="dt-route-enter">
+                <Outlet />
+              </div>
             </main>
           </div>
         </div>

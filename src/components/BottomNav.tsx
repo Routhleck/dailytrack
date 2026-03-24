@@ -17,9 +17,9 @@ export function BottomNav() {
               data-tour={item.tourTarget}
               end={item.end}
               className={({ isActive }) =>
-                `block rounded-xl px-1 py-1.5 text-center ${
+                `block rounded-xl px-1 py-1.5 text-center transition-all duration-200 ${
                   isActive
-                    ? 'bg-slate-900 text-white'
+                    ? 'bg-slate-900 text-white shadow-sm scale-[1.02]'
                     : 'text-slate-600 hover:bg-white/90'
                 }`
               }
