@@ -170,7 +170,8 @@ Progress snapshot:
 
 - Done: safer template apply UX with clearer impact preview copy.
 - Done: overwrite-mode explicit risk acknowledgment before apply.
-- In progress: weekly goals and progress indicators.
+- Done: weekly lightweight goals and progress indicators.
+- In progress: deeper template customization (category/order/required semantics).
 
 ## v0.13.0 - Insights and Review
 

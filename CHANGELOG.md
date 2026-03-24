@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added metric delta badges on Body page (`vs previous`) using per-metric unit/decimal display preferences.
 - Added per-metric body goal-line preferences (`enabled + value`) and chart `ReferenceLine` rendering.
 - Added post-submit body change summary feedback (`vs previous`) and temporary highlight for the saved record in chart/history.
+- Added weekly lightweight goal-progress panel (sections completed count + weakest section hint + per-section badges).
 
 ### Changed
 - Daily/Weekly history now supports status filtering (`All / Completed / Pending`) with visible item count feedback.

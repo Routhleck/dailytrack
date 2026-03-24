@@ -281,6 +281,19 @@ export function WeeklyNotePage() {
       0,
     )
     : 0
+  const sectionGoalStats = enabledSections.map((section) => {
+    const summary = summarizeChecklist(note.sections[section])
+    return {
+      section,
+      summary,
+      met: summary.total > 0 && summary.checked === summary.total,
+    }
+  })
+  const sectionsWithItemsCount = sectionGoalStats.filter((item) => item.summary.total > 0).length
+  const metSectionsCount = sectionGoalStats.filter((item) => item.met).length
+  const weakestGoalSection = sectionGoalStats
+    .filter((item) => item.summary.total > 0)
+    .sort((left, right) => left.summary.percent - right.summary.percent)[0] ?? null
 
   return (
     <section className="dt-page">
@@ -353,102 +366,142 @@ export function WeeklyNotePage() {
       ) : null}
 
       {mode === 'structured' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {visibleSections.map((section) => {
-            const items = showOnlyChanges && templateDiff
-              ? note.sections[section].filter((item) => templateDiff.sections[section].changedIds.has(item.id))
-              : note.sections[section]
-            const summary = summarizeChecklist(items)
-
-            return (
-              <article key={section} className="dt-panel p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-slate-900">{t(`section.${section}` as 'section.Body')}</h2>
-                  <span className="text-xs text-slate-600">
-                    {summary.checked}/{summary.total}
-                  </span>
-                </div>
-                <ProgressBar value={summary.percent} />
-                <div className="mt-4 space-y-2">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
-                        item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
-                      }`}
-                    >
-                      <TaskCheckbox
-                        checked={item.checked}
-                        ariaLabel={item.text || `${section}-item`}
-                        onToggle={(next) => {
-                          const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
-                          updateChecklist(section, index, { checked: next })
-                        }}
-                      />
-                      <input
-                        className={`w-full border-none bg-transparent text-sm outline-none ${
-                          item.checked ? 'text-slate-500 line-through' : 'text-slate-800'
-                        }`}
-                        value={item.text}
-                        onChange={(event) => {
-                          const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
-                          updateChecklist(section, index, { text: event.target.value })
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </article>
-            )
-          })}
-
-          <article className="dt-panel p-4 lg:col-span-2">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">{t('weeklyNote.reflection')}</h2>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 rounded-md bg-slate-50 p-3">
-                <h3 className="text-sm font-medium text-slate-700">{t('weeklyNote.goodThings')}</h3>
-                {note.reflection.goodThings.map((value, index) => {
-                  if (showOnlyChanges && templateDiff && !templateDiff.reflection.goodThings.has(index)) {
-                    return null
-                  }
-                  return (
-                    <input
-                    key={`good-${index}`}
-                    className="dt-input"
-                    value={value}
-                    onChange={(event) => {
-                      updateReflection('goodThings', index, event.target.value)
-                    }}
-                    placeholder={`${index + 1}.`}
-                    />
-                  )
+        <div className="space-y-4">
+          <article className="dt-panel p-4">
+            <h2 className="text-base font-semibold text-slate-900">{t('weeklyNote.goalProgressTitle')}</h2>
+            <p className="mt-1 text-sm text-slate-700">
+              {t('weeklyNote.goalProgressSummary', { met: metSectionsCount, total: sectionsWithItemsCount })}
+            </p>
+            {sectionsWithItemsCount === 0 ? (
+              <p className="mt-1 text-xs text-slate-600">{t('weeklyNote.goalNoItems')}</p>
+            ) : weakestGoalSection && metSectionsCount < sectionsWithItemsCount ? (
+              <p className="mt-1 text-xs text-amber-700">
+                {t('weeklyNote.goalProgressWeakest', {
+                  section: t(`section.${weakestGoalSection.section}` as 'section.Body'),
+                  checked: weakestGoalSection.summary.checked,
+                  total: weakestGoalSection.summary.total,
                 })}
-              </div>
-
-              <div className="space-y-2 rounded-md bg-slate-50 p-3">
-                <h3 className="text-sm font-medium text-slate-700">
-                  {t('weeklyNote.nextTop3')}
-                </h3>
-                {note.reflection.nextWeekTop3.map((value, index) => {
-                  if (showOnlyChanges && templateDiff && !templateDiff.reflection.nextWeekTop3.has(index)) {
-                    return null
-                  }
-                  return (
-                    <input
-                    key={`next-${index}`}
-                    className="dt-input"
-                    value={value}
-                    onChange={(event) => {
-                      updateReflection('nextWeekTop3', index, event.target.value)
-                    }}
-                    placeholder={`${index + 1}.`}
-                    />
-                  )
-                })}
-              </div>
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-emerald-700">{t('weeklyNote.goalProgressAllMet')}</p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {sectionGoalStats.map((item) => (
+                <span
+                  key={item.section}
+                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${
+                    item.met
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-slate-200 bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  {t('weeklyNote.goalSectionBadge', {
+                    section: t(`section.${item.section}` as 'section.Body'),
+                    checked: item.summary.checked,
+                    total: item.summary.total,
+                  })}
+                </span>
+              ))}
             </div>
           </article>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {visibleSections.map((section) => {
+              const items = showOnlyChanges && templateDiff
+                ? note.sections[section].filter((item) => templateDiff.sections[section].changedIds.has(item.id))
+                : note.sections[section]
+              const summary = summarizeChecklist(items)
+
+              return (
+                <article key={section} className="dt-panel p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-base font-semibold text-slate-900">{t(`section.${section}` as 'section.Body')}</h2>
+                    <span className="text-xs text-slate-600">
+                      {summary.checked}/{summary.total}
+                    </span>
+                  </div>
+                  <ProgressBar value={summary.percent} />
+                  <div className="mt-4 space-y-2">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                          item.checked ? 'border border-teal-200 bg-teal-50/80' : 'bg-slate-50'
+                        }`}
+                      >
+                        <TaskCheckbox
+                          checked={item.checked}
+                          ariaLabel={item.text || `${section}-item`}
+                          onToggle={(next) => {
+                            const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
+                            updateChecklist(section, index, { checked: next })
+                          }}
+                        />
+                        <input
+                          className={`w-full border-none bg-transparent text-sm outline-none ${
+                            item.checked ? 'text-slate-500 line-through' : 'text-slate-800'
+                          }`}
+                          value={item.text}
+                          onChange={(event) => {
+                            const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
+                            updateChecklist(section, index, { text: event.target.value })
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )
+            })}
+
+            <article className="dt-panel p-4 lg:col-span-2">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('weeklyNote.reflection')}</h2>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2 rounded-md bg-slate-50 p-3">
+                  <h3 className="text-sm font-medium text-slate-700">{t('weeklyNote.goodThings')}</h3>
+                  {note.reflection.goodThings.map((value, index) => {
+                    if (showOnlyChanges && templateDiff && !templateDiff.reflection.goodThings.has(index)) {
+                      return null
+                    }
+                    return (
+                      <input
+                      key={`good-${index}`}
+                      className="dt-input"
+                      value={value}
+                      onChange={(event) => {
+                        updateReflection('goodThings', index, event.target.value)
+                      }}
+                      placeholder={`${index + 1}.`}
+                      />
+                    )
+                  })}
+                </div>
+
+                <div className="space-y-2 rounded-md bg-slate-50 p-3">
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t('weeklyNote.nextTop3')}
+                  </h3>
+                  {note.reflection.nextWeekTop3.map((value, index) => {
+                    if (showOnlyChanges && templateDiff && !templateDiff.reflection.nextWeekTop3.has(index)) {
+                      return null
+                    }
+                    return (
+                      <input
+                      key={`next-${index}`}
+                      className="dt-input"
+                      value={value}
+                      onChange={(event) => {
+                        updateReflection('nextWeekTop3', index, event.target.value)
+                      }}
+                      placeholder={`${index + 1}.`}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
       ) : (
         <MarkdownEditor value={rawDraft} onChange={setRawDraft} />

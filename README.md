@@ -79,6 +79,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - debounced autosave (no manual save button)
 - Weekly note:
   - section checklist editing
+  - weekly goals progress panel (completed sections + weakest section hint)
   - template-based "only show changes" mode
   - reflection field editing
   - raw markdown mode
