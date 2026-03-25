@@ -28,3 +28,4 @@ dist-ssr
 dailytrack-updater.key
 dailytrack-updater.key.pub
 .local-secrets/
+/artifacts

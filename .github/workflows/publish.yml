@@ -286,7 +286,6 @@ jobs:
   publish-android-apk:
     needs:
       - verify-frontend
-      - publish-tauri
     runs-on: ubuntu-latest
     env:
       CI: true
