@@ -139,6 +139,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - built-in previous-period comparison deltas in structured snapshot
   - local rule-based `Local Recommendations` block (model-independent baseline guidance)
   - report output language follows current UI language (`English` / `中文`)
+  - companion JSON export per report (`reports/<period>/<target>.json`, schemaVersion=1)
 
 ## Data Ownership and Storage
 

@@ -113,7 +113,14 @@ export function ReportsPage() {
         language,
       })
       setPreview(result.reportMarkdown)
-      setMessage(t('reports.generatedAtPath', { path: result.reportPath }))
+      setMessage(
+        result.reportJsonPath
+          ? t('reports.generatedAtPaths', {
+              mdPath: result.reportPath,
+              jsonPath: result.reportJsonPath,
+            })
+          : t('reports.generatedAtPath', { path: result.reportPath }),
+      )
       await loadReportFiles()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('reports.generateFailed'))

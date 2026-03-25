@@ -46,8 +46,27 @@ type ReportPeriodData = {
   bodyRecords: BodyRecord[]
 }
 
+type ReportExportPayload = {
+  schemaVersion: 1
+  generatedAt: string
+  period: ReportPeriod
+  targetId: string
+  language: ReportLanguage
+  provider: {
+    providerName: string
+    model: string
+  }
+  snapshot: StructuredSnapshotStats
+  comparison: PeriodComparisonStats
+  recommendations: string[]
+}
+
 function reportPath(dataRoot: string, period: ReportPeriod, targetId: string): string {
   return joinPath(dataRoot, 'reports', period, `${targetId}.md`)
+}
+
+function reportJsonPath(dataRoot: string, period: ReportPeriod, targetId: string): string {
+  return joinPath(dataRoot, 'reports', period, `${targetId}.json`)
 }
 
 function normalizeGeneratedContent(content: string): string {
@@ -491,6 +510,31 @@ function buildFinalReportMarkdown(
   ].join('\n')
 }
 
+export function buildReportExportPayload(
+  period: ReportPeriod,
+  targetId: string,
+  provider: ReportProviderConfig,
+  language: ReportLanguage,
+  snapshot: StructuredSnapshotStats,
+  comparison: PeriodComparisonStats,
+  recommendations: string[],
+): ReportExportPayload {
+  return {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    period,
+    targetId,
+    language,
+    provider: {
+      providerName: provider.providerName,
+      model: provider.model,
+    },
+    snapshot,
+    comparison,
+    recommendations,
+  }
+}
+
 async function loadWeeklyNotesByIds(dataRoot: string, weekIds: string[]): Promise<WeeklyNote[]> {
   const notes: WeeklyNote[] = []
   for (const weekId of weekIds) {
@@ -591,10 +635,24 @@ export async function buildAndSaveAiReport(
     result.content,
   )
   const path = reportPath(dataRoot, input.period, input.targetId)
-  await writeTextFile(dataRoot, path, finalMarkdown)
+  const exportPayload = buildReportExportPayload(
+    input.period,
+    input.targetId,
+    provider,
+    language,
+    snapshot,
+    comparison,
+    recommendations,
+  )
+  const jsonPath = reportJsonPath(dataRoot, input.period, input.targetId)
+  await Promise.all([
+    writeTextFile(dataRoot, path, finalMarkdown),
+    writeTextFile(dataRoot, jsonPath, `${JSON.stringify(exportPayload, null, 2)}\n`),
+  ])
 
   return {
     reportPath: path,
+    reportJsonPath: jsonPath,
     reportMarkdown: finalMarkdown,
   }
 }

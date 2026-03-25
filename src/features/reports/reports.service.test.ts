@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'vitest'
 
 import type { BodyRecord, DailyNote, WeeklyNote } from '../../types/tracker'
-import { buildLocalActionRecommendations, buildStructuredSnapshotStats } from './reports.service'
+import {
+  buildLocalActionRecommendations,
+  buildReportExportPayload,
+  buildStructuredSnapshotStats,
+} from './reports.service'
 
 function makeDaily(date: string, checkedCore: number, totalCore: number): DailyNote {
   return {
@@ -150,5 +154,52 @@ describe('reports local recommendations', () => {
     expect(recommendations).toEqual([
       'Keep your current routine and set one slightly harder stretch goal for the next period.',
     ])
+  })
+})
+
+describe('reports export payload', () => {
+  test('builds deterministic schema with snapshot/comparison/recommendations', () => {
+    const payload = buildReportExportPayload(
+      'weekly',
+      '2026-W12',
+      {
+        providerName: 'test-provider',
+        baseUrl: 'https://example.com/v1',
+        apiKey: 'secret',
+        model: 'gpt-test',
+        temperature: 0.2,
+      },
+      'en',
+      {
+        dailyNotesCount: 3,
+        dailyCoreAveragePercent: 70,
+        weeklyNotesCount: 1,
+        weeklyChecklistAveragePercent: 68,
+        weakestWeeklySection: { section: 'Research', checked: 2, total: 5, percent: 40 },
+        bodyRecordsCount: 2,
+        latestBodyDate: '2026-03-25',
+        bodyWeightDelta: -0.6,
+      },
+      {
+        previousTargetId: '2026-W11',
+        dailyCoreAverageDelta: -5,
+        weeklyChecklistAverageDelta: -4,
+        bodyRecordsDelta: 1,
+      },
+      ['Action A', 'Action B'],
+    )
+
+    expect(payload.schemaVersion).toBe(1)
+    expect(payload.period).toBe('weekly')
+    expect(payload.targetId).toBe('2026-W12')
+    expect(payload.language).toBe('en')
+    expect(payload.provider).toEqual({
+      providerName: 'test-provider',
+      model: 'gpt-test',
+    })
+    expect(payload.snapshot.dailyCoreAveragePercent).toBe(70)
+    expect(payload.comparison.previousTargetId).toBe('2026-W11')
+    expect(payload.recommendations).toEqual(['Action A', 'Action B'])
+    expect(typeof payload.generatedAt).toBe('string')
   })
 })

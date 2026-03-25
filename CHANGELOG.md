@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added previous-period comparison lines in report structured snapshot (`current target` vs `previous target`) for completion/body count deltas.
 - Added report-language aware markdown rendering:
   - report generation now follows current UI language (`en`/`zh`) for section headings and local recommendations.
+- Added structured report companion JSON export:
+  - generating a report now also writes `reports/<period>/<target>.json` (schemaVersion=1) with snapshot/comparison/recommendation fields.
 
 ### Changed
 - Dashboard recent daily/weekly lists now use normalized latest-first ordering before rendering.

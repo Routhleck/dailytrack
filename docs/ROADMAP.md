@@ -200,6 +200,7 @@ Progress snapshot:
 - Done: report markdown now includes deterministic `Structured Snapshot` section for export-friendly review output.
 - Done: report markdown now includes local rule-based `Local Recommendations` section plus snapshot/recommendation unit-test coverage.
 - Done: report structured snapshot now includes previous-period comparison deltas and follows current UI language (`en/zh`) for exported review readability.
+- Done: report generation now writes companion structured JSON (`schemaVersion=1`) for export-friendly downstream processing.
 
 ## v0.14.0 - Retention and Routine Support
 

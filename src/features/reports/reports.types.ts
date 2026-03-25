@@ -17,5 +17,6 @@ export type BuildReportInput = {
 
 export type BuildReportResult = {
   reportPath: string
+  reportJsonPath?: string
   reportMarkdown: string
 }
