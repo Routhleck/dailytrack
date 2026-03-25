@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No user-visible changes yet.
+
+## [0.12.1] - 2026-03-25
+
+### Added
+- Added lightweight runtime performance telemetry sampling:
+  - startup and shell marks
+  - resume-to-first-frame samples
+  - route-switch-to-frame samples
+  - dashboard/daily/weekly load-duration samples
+  - browser paint/input/long-task snapshots when supported by runtime.
+- Added Settings diagnostics export for performance snapshots to local data root (`perf-diagnostics/*.json`).
+
 ### Changed
 - Reduced startup jank by making route-page preload less aggressive:
   - desktop preload now starts later
