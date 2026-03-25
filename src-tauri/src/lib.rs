@@ -1,5 +1,6 @@
 use std::fs;
 use std::collections::HashMap;
+use std::io::{Cursor, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -553,6 +554,92 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
   Ok(())
 }
 
+fn import_bundle_from_directory(
+  source_root: &Path,
+  data_root: &Path,
+  overwrite: bool,
+) -> Result<ImportDataBundleResult, String> {
+  validate_bundle_root(source_root)?;
+  ensure_tracker_layout(data_root)?;
+
+  let source_canonical = fs::canonicalize(source_root).map_err(|err| {
+    format!(
+      "Failed to resolve import source {}: {err}",
+      source_root.to_string_lossy()
+    )
+  })?;
+  let target_canonical = fs::canonicalize(data_root).map_err(|err| {
+    format!(
+      "Failed to resolve data root {}: {err}",
+      data_root.to_string_lossy()
+    )
+  })?;
+
+  if source_canonical == target_canonical {
+    return Err("Import source cannot be the same as current data root".to_string());
+  }
+
+  let summary = copy_dir_recursive(
+    source_canonical.as_path(),
+    target_canonical.as_path(),
+    overwrite,
+  )?;
+  Ok(ImportDataBundleResult {
+    data_root: target_canonical.to_string_lossy().to_string(),
+    summary,
+  })
+}
+
+fn extract_zip_to_temp_dir(zip_bytes: &[u8], temp_dir: &Path) -> Result<PathBuf, String> {
+  fs::create_dir_all(temp_dir)
+    .map_err(|err| format!("Failed to create temp import directory {}: {err}", temp_dir.display()))?;
+
+  let cursor = Cursor::new(zip_bytes.to_vec());
+  let mut archive = zip::ZipArchive::new(cursor)
+    .map_err(|err| format!("Failed to open zip archive: {err}"))?;
+
+  for index in 0..archive.len() {
+    let mut entry = archive
+      .by_index(index)
+      .map_err(|err| format!("Failed to read zip entry #{index}: {err}"))?;
+    let enclosed = entry
+      .enclosed_name()
+      .ok_or_else(|| format!("Invalid zip entry path: {}", entry.name()))?;
+    let out_path = temp_dir.join(enclosed);
+
+    if entry.name().ends_with('/') {
+      fs::create_dir_all(out_path.as_path())
+        .map_err(|err| format!("Failed to create directory {}: {err}", out_path.display()))?;
+      continue;
+    }
+
+    if let Some(parent) = out_path.parent() {
+      fs::create_dir_all(parent)
+        .map_err(|err| format!("Failed to create directory {}: {err}", parent.display()))?;
+    }
+
+    let mut output = fs::File::create(out_path.as_path())
+      .map_err(|err| format!("Failed to create file {}: {err}", out_path.display()))?;
+    std::io::copy(&mut entry, &mut output)
+      .map_err(|err| format!("Failed to extract file {}: {err}", out_path.display()))?;
+    output
+      .flush()
+      .map_err(|err| format!("Failed to flush file {}: {err}", out_path.display()))?;
+  }
+
+  let entries: Vec<PathBuf> = fs::read_dir(temp_dir)
+    .map_err(|err| format!("Failed to read extracted import directory {}: {err}", temp_dir.display()))?
+    .filter_map(Result::ok)
+    .map(|entry| entry.path())
+    .collect();
+
+  if entries.len() == 1 && entries[0].is_dir() {
+    return Ok(entries[0].clone());
+  }
+
+  Ok(temp_dir.to_path_buf())
+}
+
 fn now_unix_millis() -> u64 {
   match SystemTime::now().duration_since(UNIX_EPOCH) {
     Ok(duration) => duration.as_millis() as u64,
@@ -1022,37 +1109,37 @@ fn import_data_bundle(
   overwrite: Option<bool>,
 ) -> Result<ImportDataBundleResult, String> {
   let source_root = PathBuf::from(source_dir);
-  validate_bundle_root(source_root.as_path())?;
-
   let target_root = PathBuf::from(data_root);
-  ensure_tracker_layout(target_root.as_path())?;
+  import_bundle_from_directory(
+    source_root.as_path(),
+    target_root.as_path(),
+    overwrite.unwrap_or(true),
+  )
+}
 
-  let source_canonical = fs::canonicalize(source_root.as_path()).map_err(|err| {
-    format!(
-      "Failed to resolve import source {}: {err}",
-      source_root.to_string_lossy()
-    )
-  })?;
-  let target_canonical = fs::canonicalize(target_root.as_path()).map_err(|err| {
-    format!(
-      "Failed to resolve data root {}: {err}",
-      target_root.to_string_lossy()
-    )
-  })?;
-
-  if source_canonical == target_canonical {
-    return Err("Import source cannot be the same as current data root".to_string());
+#[tauri::command]
+fn import_data_bundle_zip(
+  zip_bytes: Vec<u8>,
+  data_root: String,
+  overwrite: Option<bool>,
+) -> Result<ImportDataBundleResult, String> {
+  if zip_bytes.is_empty() {
+    return Err("Import zip is empty".to_string());
   }
 
-  let summary = copy_dir_recursive(
-    source_canonical.as_path(),
-    target_canonical.as_path(),
-    overwrite.unwrap_or(true),
-  )?;
-  Ok(ImportDataBundleResult {
-    data_root: target_canonical.to_string_lossy().to_string(),
-    summary,
-  })
+  let target_root = PathBuf::from(data_root);
+  let temp_dir = std::env::temp_dir().join(format!("dailytrack-import-{}", now_unix_millis()));
+  let result = (|| {
+    let extracted_source = extract_zip_to_temp_dir(zip_bytes.as_slice(), temp_dir.as_path())?;
+    import_bundle_from_directory(
+      extracted_source.as_path(),
+      target_root.as_path(),
+      overwrite.unwrap_or(true),
+    )
+  })();
+
+  let _ = fs::remove_dir_all(temp_dir.as_path());
+  result
 }
 
 #[tauri::command]
@@ -1133,6 +1220,7 @@ fn reset_tracker_data(data_root: String) -> Result<String, String> {
 pub fn run() {
   tauri::Builder::default()
     .manage(FsWatchState::default())
+    .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![
@@ -1151,6 +1239,7 @@ pub fn run() {
       generate_llm_report,
       export_data_bundle,
       import_data_bundle,
+      import_data_bundle_zip,
       migrate_data_root,
       reset_tracker_data,
       webdav::get_webdav_config,

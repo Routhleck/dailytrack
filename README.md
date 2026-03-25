@@ -115,7 +115,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Settings:
   - diagnostics section (init/profile/root runtime state)
   - data root migration (copy + switch)
-  - export/import
+  - export/import (import supports folder or `.zip` bundle path)
   - native folder-picker buttons for migration/export/import paths (manual typing fallback kept)
   - WebDAV snapshot backup controls
   - updater controls (auto-check, manual check, install+restart)

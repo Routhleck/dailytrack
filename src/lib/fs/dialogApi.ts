@@ -8,7 +8,7 @@ function isDirectoryPickerUnsupportedOnMobile(message: string): boolean {
     || text.includes('directory picker is not implemented on mobile')
 }
 
-function parentPath(path: string): string {
+export function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/')
   const index = normalized.lastIndexOf('/')
   if (index <= 0) {
@@ -30,25 +30,41 @@ function normalizeDialogResult(result: DialogResult): string | null {
 
 export async function pickDirectory(defaultPath?: string): Promise<string | null> {
   const resolvedDefaultPath = defaultPath && defaultPath.trim() ? defaultPath : undefined
+  const result = await open({
+    directory: true,
+    multiple: false,
+    defaultPath: resolvedDefaultPath,
+  })
+  return normalizeDialogResult(result)
+}
+
+export async function pickDirectoryOrParentFromFile(
+  defaultPath?: string,
+): Promise<string | null> {
   try {
-    const result = await open({
-      directory: true,
-      multiple: false,
-      defaultPath: resolvedDefaultPath,
-    })
-    return normalizeDialogResult(result)
+    return await pickDirectory(defaultPath)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     if (!isDirectoryPickerUnsupportedOnMobile(message)) {
       throw error
     }
-
-    const fileResult = await open({
-      directory: false,
-      multiple: false,
-      defaultPath: resolvedDefaultPath,
-    })
-    const pickedFile = normalizeDialogResult(fileResult)
+    const pickedFile = await pickFile(defaultPath)
     return pickedFile ? parentPath(pickedFile) : null
   }
+}
+
+export async function pickFile(defaultPath?: string): Promise<string | null> {
+  const resolvedDefaultPath = defaultPath && defaultPath.trim() ? defaultPath : undefined
+  const result = await open({
+    directory: false,
+    multiple: false,
+    defaultPath: resolvedDefaultPath,
+    pickerMode: 'document',
+  })
+  return normalizeDialogResult(result)
+}
+
+export function isMobileDirectoryPickerError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return isDirectoryPickerUnsupportedOnMobile(message)
 }

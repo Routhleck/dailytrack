@@ -12,13 +12,13 @@ import {
 import { extractErrorMessage } from '../lib/error'
 import {
   getWebdavConfig,
-  importDataBundle,
+  importDataBundleSmart,
   pullWebdavSnapshot,
   saveWebdavConfig,
   testWebdavConnection,
   type WebdavConfig,
 } from '../lib/fs/fileApi'
-import { pickDirectory } from '../lib/fs/dialogApi'
+import { isMobileDirectoryPickerError, pickDirectory, pickFile } from '../lib/fs/dialogApi'
 
 type OnboardingStep = 'language' | 'userType' | 'template' | 'existing'
 type ExistingMode = 'import' | 'webdav'
@@ -164,7 +164,7 @@ export function InitialTemplateSetupModal() {
     setBusy(true)
     setMessage('')
     try {
-      await importDataBundle(importSource.trim(), dataRoot, importOverwrite)
+      await importDataBundleSmart(importSource.trim(), dataRoot, importOverwrite)
       await finishInitialTemplateSetup({ runTutorial: false })
     } catch (error) {
       setMessage(extractErrorMessage(error, t('onboarding.importFailed')))
@@ -180,6 +180,18 @@ export function InitialTemplateSetupModal() {
         setImportSource(picked)
       }
     } catch (error) {
+      if (isMobileDirectoryPickerError(error)) {
+        try {
+          const pickedFile = await pickFile(importSource || undefined)
+          if (pickedFile) {
+            setImportSource(pickedFile)
+          }
+          return
+        } catch (fileError) {
+          setMessage(extractErrorMessage(fileError, t('onboarding.pathPickFailed')))
+          return
+        }
+      }
       setMessage(extractErrorMessage(error, t('onboarding.pathPickFailed')))
     }
   }

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
+import { readFile } from '@tauri-apps/plugin-fs'
 
 export type EnsureDataRootInfo = {
   root: string
@@ -223,6 +224,36 @@ export async function importDataBundle(
   overwrite = true,
 ): Promise<ImportDataBundleResult> {
   return invoke<ImportDataBundleResult>('import_data_bundle', { sourceDir, dataRoot, overwrite })
+}
+
+export async function importDataBundleZip(
+  zipBytes: Uint8Array,
+  dataRoot: string,
+  overwrite = true,
+): Promise<ImportDataBundleResult> {
+  return invoke<ImportDataBundleResult>('import_data_bundle_zip', {
+    zipBytes: Array.from(zipBytes),
+    dataRoot,
+    overwrite,
+  })
+}
+
+function shouldImportAsZipSource(sourcePath: string): boolean {
+  const lower = sourcePath.trim().toLowerCase()
+  return lower.endsWith('.zip') || lower.startsWith('content://') || lower.startsWith('file://')
+}
+
+export async function importDataBundleSmart(
+  sourcePath: string,
+  dataRoot: string,
+  overwrite = true,
+): Promise<ImportDataBundleResult> {
+  const normalized = sourcePath.trim()
+  if (shouldImportAsZipSource(normalized)) {
+    const bytes = await readFile(normalized)
+    return importDataBundleZip(bytes, dataRoot, overwrite)
+  }
+  return importDataBundle(normalized, dataRoot, overwrite)
 }
 
 export async function migrateDataRoot(

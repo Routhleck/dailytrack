@@ -10,7 +10,7 @@ import {
   deleteWebdavSnapshot,
   exportDataBundle,
   getWebdavConfig,
-  importDataBundle,
+  importDataBundleSmart,
   listWebdavSnapshots,
   pullWebdavSnapshot,
   pushWebdavSnapshot,
@@ -20,7 +20,12 @@ import {
   type WebdavConfig,
   type WebdavSnapshot,
 } from '../lib/fs/fileApi'
-import { pickDirectory } from '../lib/fs/dialogApi'
+import {
+  isMobileDirectoryPickerError,
+  pickDirectory,
+  pickDirectoryOrParentFromFile,
+  pickFile,
+} from '../lib/fs/dialogApi'
 import { emitDataChanged } from '../lib/liveSync'
 import {
   defaultWebdavConfig,
@@ -481,7 +486,7 @@ export function SettingsPage() {
 
   async function handlePickMigrateTarget() {
     try {
-      const picked = await pickDirectory(migrateTarget || baseDataRoot || undefined)
+      const picked = await pickDirectoryOrParentFromFile(migrateTarget || baseDataRoot || undefined)
       if (picked) {
         setMigrateTarget(picked)
       }
@@ -494,7 +499,7 @@ export function SettingsPage() {
 
   async function handlePickExportDir() {
     try {
-      const picked = await pickDirectory(exportDir || defaultExportDir || undefined)
+      const picked = await pickDirectoryOrParentFromFile(exportDir || defaultExportDir || undefined)
       if (picked) {
         setExportDir(picked)
       }
@@ -512,6 +517,20 @@ export function SettingsPage() {
         setImportSource(picked)
       }
     } catch (error) {
+      if (isMobileDirectoryPickerError(error)) {
+        try {
+          const pickedFile = await pickFile(importSource || exportDir || defaultExportDir || undefined)
+          if (pickedFile) {
+            setImportSource(pickedFile)
+          }
+          return
+        } catch (fileError) {
+          const text = fileError instanceof Error ? fileError.message : t('settings.pathPickFailed')
+          setImportMessage(text)
+          pushError(text)
+          return
+        }
+      }
       const text = error instanceof Error ? error.message : t('settings.pathPickFailed')
       setImportMessage(text)
       pushError(text)
@@ -580,7 +599,7 @@ export function SettingsPage() {
     setImportMessage('')
 
     try {
-      const result = await importDataBundle(source, dataRoot, overwriteImport)
+      const result = await importDataBundleSmart(source, dataRoot, overwriteImport)
       await refresh()
       emitDataChanged({ scope: 'all' })
       const text = `${t('settings.importCompleted')} ${formatCopySummary(result.summary, t)}`
@@ -1072,7 +1091,7 @@ export function SettingsPage() {
             className="dt-input min-w-56 flex-1"
             value={importSource}
             onChange={(event) => setImportSource(event.target.value)}
-            placeholder="/Users/you/Desktop/dailytrack-export-123456789"
+            placeholder="/Users/you/Desktop/dailytrack-export-123456789 or /Users/you/Desktop/export.zip"
             disabled={loading || importBusy}
           />
           <button

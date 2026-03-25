@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added native folder picker support (Tauri dialog plugin) for path-heavy flows:
   - onboarding existing-user import source path
   - Settings migrate destination / export destination / import source.
+- Added smart import path handling:
+  - import now supports both directory source and `.zip` source.
+  - Android/mobile import can use document picker file selection and import from selected zip bytes.
 
 ### Changed
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
@@ -34,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed onboarding template language mismatch on first run by preventing route preloads during initial template setup and force-applying selected template content to current-day/current-week notes after onboarding apply.
 - Fixed Android path picker regression by adding mobile fallback for directory picking:
   - when folder picker is unavailable on mobile, the app now asks to pick any file and derives its parent directory automatically.
+- Fixed Android old-user import usability by switching import flow to mobile-compatible strategy:
+  - when directory picker is unsupported, users can pick a file (for example export zip) and complete import in-app.
 
 ## [0.11.0] - 2026-03-24
 
