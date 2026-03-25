@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { BottomNav } from '../components/BottomNav'
@@ -19,6 +20,17 @@ export function AppShell() {
   const { isKeyboardOpen } = useMobileKeyboardState()
   const showMobileSyncBanner = preferences.ui.mobile.showSyncBanner
   const location = useLocation()
+  const [deferredOverlayReady, setDeferredOverlayReady] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDeferredOverlayReady(true)
+    }, 1800)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <div className="dt-shell-bg h-[100dvh] overflow-hidden pt-[env(safe-area-inset-top)] text-slate-900 md:pt-0">
@@ -80,7 +92,9 @@ export function AppShell() {
                 </div>
               ) : null}
 
-              <MobileSyncBanner enabled={showMobileSyncBanner} />
+              {deferredOverlayReady ? (
+                <MobileSyncBanner enabled={showMobileSyncBanner} />
+              ) : null}
 
               {isBannerVisible && update ? (
                 <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
@@ -123,7 +137,9 @@ export function AppShell() {
       </div>
       <BottomNav />
       {needsInitialTemplateSetup ? <InitialTemplateSetupModal /> : null}
-      <TutorialGuide blocked={loading || needsInitialTemplateSetup || Boolean(error)} />
+      {deferredOverlayReady ? (
+        <TutorialGuide blocked={loading || needsInitialTemplateSetup || Boolean(error)} />
+      ) : null}
     </div>
   )
 }

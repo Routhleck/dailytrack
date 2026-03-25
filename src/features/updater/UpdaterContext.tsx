@@ -67,37 +67,40 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
-    void getVersion()
-      .then((version) => {
-        if (!cancelled) {
-          setCurrentVersion(version)
-        }
-      })
-      .catch(() => {
-        // ignore version resolution failures on unsupported runtimes
-      })
+    const timer = window.setTimeout(() => {
+      void getVersion()
+        .then((version) => {
+          if (!cancelled) {
+            setCurrentVersion(version)
+          }
+        })
+        .catch(() => {
+          // ignore version resolution failures on unsupported runtimes
+        })
 
-    void Promise.all([isUpdaterSupported(), isUpdaterConfigured()])
-      .then(([isSupported, enabled]) => {
-        if (!cancelled) {
-          setSupported(isSupported)
-          setConfigured(isSupported && enabled)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSupported(false)
-          setConfigured(false)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setResolved(true)
-        }
-      })
+      void Promise.all([isUpdaterSupported(), isUpdaterConfigured()])
+        .then(([isSupported, enabled]) => {
+          if (!cancelled) {
+            setSupported(isSupported)
+            setConfigured(isSupported && enabled)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setSupported(false)
+            setConfigured(false)
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setResolved(true)
+          }
+        })
+    }, 1800)
 
     return () => {
       cancelled = true
+      window.clearTimeout(timer)
     }
   }, [])
 

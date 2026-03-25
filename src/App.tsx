@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 
 import { preloadRoutePages, router } from './app/router'
@@ -11,6 +11,8 @@ import { UpdaterProvider } from './features/updater/UpdaterContext'
 import { WebdavSyncBridge } from './features/webdav/WebdavSyncBridge'
 
 function App() {
+  const [bridgesReady, setBridgesReady] = useState(false)
+
   useEffect(() => {
     const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
     const isMobileRuntime = /android|iphone|ipad|ipod/i.test(userAgent)
@@ -18,12 +20,32 @@ function App() {
       return
     }
 
-    const preloadTimer = window.setTimeout(() => {
+    const fallbackTimer = window.setTimeout(() => {
       void preloadRoutePages()
-    }, 1200)
+    }, 1800)
+
+    let idleId: number | null = null
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(() => {
+        void preloadRoutePages()
+      }, { timeout: 3000 })
+    }
 
     return () => {
-      window.clearTimeout(preloadTimer)
+      window.clearTimeout(fallbackTimer)
+      if (idleId != null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setBridgesReady(true)
+    }, 1700)
+
+    return () => {
+      window.clearTimeout(timer)
     }
   }, [])
 
@@ -33,8 +55,8 @@ function App() {
         <DataRootProvider>
           <PreferencesProvider>
             <ToastProvider>
-              <FilesystemWatchBridge />
-              <WebdavSyncBridge />
+              {bridgesReady ? <FilesystemWatchBridge /> : null}
+              {bridgesReady ? <WebdavSyncBridge /> : null}
               <RouterProvider router={router} />
               <ToastViewport />
             </ToastProvider>
