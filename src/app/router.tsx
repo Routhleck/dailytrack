@@ -33,6 +33,10 @@ const PreferencesPage = lazy(async () => ({ default: (await loadPreferencesPage(
 
 const routePageLoaders = [
   loadDashboardPage,
+  loadSettingsPage,
+  loadSyncPage,
+  loadPreferencesPage,
+  loadProfilesPage,
   loadDailyNotePage,
   loadWeeklyNotePage,
   loadDailyListPage,
@@ -40,10 +44,6 @@ const routePageLoaders = [
   loadBodyPage,
   loadMorePage,
   loadReportsPage,
-  loadSettingsPage,
-  loadSyncPage,
-  loadProfilesPage,
-  loadPreferencesPage,
 ]
 
 let routePreloadPromise: Promise<void> | null = null

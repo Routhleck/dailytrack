@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - replaced abrupt plain-text `Loading...` fallback with a skeleton-style loading card.
   - added a short delayed-display threshold to avoid flicker on fast route transitions.
   - added motion-reduced fallback behavior for accessibility-friendly transitions.
+- Improved Settings page transition smoothness (especially `/settings` route spikes seen in diagnostics):
+  - WebDAV section is now collapsed by default and initialized lazily on first expand.
+  - deferred WebDAV config/snapshot bootstrap to reduce first-enter render pressure.
+  - raised Settings-related route preload priority during background page preloading.
 
 ### Fixed
 - Fixed performance diagnostics export path on Settings:
