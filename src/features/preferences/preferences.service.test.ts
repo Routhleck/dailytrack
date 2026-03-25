@@ -12,6 +12,10 @@ describe('preferences normalization', () => {
 
     expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('watch')
+    expect(normalized.reminders.enabled).toBe(true)
+    expect(normalized.reminders.dailyGapDays).toBe(2)
+    expect(normalized.reminders.weeklyGapWeeks).toBe(1)
+    expect(normalized.reminders.bodyGapDays).toBe(7)
     expect(normalized.ui.typographyScale).toBe('md')
     expect(normalized.ui.showOnlyChanges.daily).toBe(false)
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
@@ -29,6 +33,12 @@ describe('preferences normalization', () => {
     const normalized = normalizePreferences({
       schemaVersion: 1,
       sync: { mode: 'poll' },
+      reminders: {
+        enabled: false,
+        dailyGapDays: 5,
+        weeklyGapWeeks: 3,
+        bodyGapDays: 14,
+      },
       ui: {
         typographyScale: 'lg',
         showOnlyChanges: { daily: true, weekly: false },
@@ -47,6 +57,10 @@ describe('preferences normalization', () => {
 
     expect(normalized.schemaVersion).toBe(PREFERENCES_SCHEMA_VERSION)
     expect(normalized.sync.mode).toBe('poll')
+    expect(normalized.reminders.enabled).toBe(false)
+    expect(normalized.reminders.dailyGapDays).toBe(5)
+    expect(normalized.reminders.weeklyGapWeeks).toBe(3)
+    expect(normalized.reminders.bodyGapDays).toBe(14)
     expect(normalized.ui.typographyScale).toBe('lg')
     expect(normalized.ui.showOnlyChanges.daily).toBe(true)
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
@@ -68,5 +82,21 @@ describe('preferences normalization', () => {
     expect(second.body.display.weight.unit).toBe('kg')
     first.body.goals.weight.enabled = true
     expect(second.body.goals.weight.enabled).toBe(false)
+  })
+
+  test('normalizes invalid reminder thresholds', () => {
+    const normalized = normalizePreferences({
+      reminders: {
+        enabled: 'bad',
+        dailyGapDays: 0,
+        weeklyGapWeeks: 30,
+        bodyGapDays: 999,
+      },
+    })
+
+    expect(normalized.reminders.enabled).toBe(true)
+    expect(normalized.reminders.dailyGapDays).toBe(2)
+    expect(normalized.reminders.weeklyGapWeeks).toBe(1)
+    expect(normalized.reminders.bodyGapDays).toBe(7)
   })
 })

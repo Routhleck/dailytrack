@@ -10,5 +10,9 @@
 - [ ] 记录 3 条想法
 - [ ] 回看用户反馈
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

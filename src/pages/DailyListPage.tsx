@@ -2,13 +2,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
-import { summarizeChecklist, type ProgressSummary } from '../features/dashboard/dashboard.service'
+import {
+  diffIsoDateDays,
+  summarizeChecklist,
+  type ProgressSummary,
+} from '../features/dashboard/dashboard.service'
 import { useI18n } from '../features/i18n/I18nContext'
 import { getDailyNote, listDailyDates } from '../features/daily/daily.service'
 import { useDataRoot } from '../features/settings/DataRootContext'
+import { todayDateString } from '../lib/date/date'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 
 type CompletionFilter = 'all' | 'completed' | 'pending'
+type RecencyFilter = 'all' | '7d' | '30d' | '90d'
+type DetailFilter = 'all' | 'hasOneLine' | 'hasMoodEnergy'
+
+type DailyListMeta = {
+  summary: ProgressSummary
+  oneLine: string
+  moodTag: string
+  energyTag: string
+}
 
 function extractDateFromPath(path?: string): string | null {
   if (!path) {
@@ -25,7 +39,9 @@ export function DailyListPage() {
   const [dates, setDates] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all')
-  const [summaries, setSummaries] = useState<Record<string, ProgressSummary>>({})
+  const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all')
+  const [detailFilter, setDetailFilter] = useState<DetailFilter>('all')
+  const [metadata, setMetadata] = useState<Record<string, DailyListMeta>>({})
   const [error, setError] = useState('')
   const loadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
@@ -42,9 +58,14 @@ export function DailyListPage() {
 
     try {
       const note = await getDailyNote(dataRoot, date)
-      setSummaries((prev) => ({
+      setMetadata((prev) => ({
         ...prev,
-        [date]: summarizeChecklist(note.dailyCore),
+        [date]: {
+          summary: summarizeChecklist(note.dailyCore),
+          oneLine: note.oneLine,
+          moodTag: note.moodTag,
+          energyTag: note.energyTag,
+        },
       }))
     } catch (error) {
       console.warn('[daily-list] failed to refresh summary for date', date, error)
@@ -65,8 +86,8 @@ export function DailyListPage() {
     try {
       const next = await listDailyDates(dataRoot)
       setDates(next)
-      setSummaries((prev) => {
-        const kept: Record<string, ProgressSummary> = {}
+      setMetadata((prev) => {
+        const kept: Record<string, DailyListMeta> = {}
         for (const date of next) {
           if (prev[date]) {
             kept[date] = prev[date]
@@ -115,7 +136,7 @@ export function DailyListPage() {
       }
 
       if (detail.scope === 'profile' || detail.scope === 'all') {
-        setSummaries({})
+        setMetadata({})
         void loadDailyList()
       }
     })
@@ -135,8 +156,8 @@ export function DailyListPage() {
   }, [loadDailyList, refreshDailySummary])
 
   const missingSummaries = useMemo(
-    () => dates.filter((date) => !summaries[date]),
-    [dates, summaries],
+    () => dates.filter((date) => !metadata[date]),
+    [dates, metadata],
   )
 
   useEffect(() => {
@@ -155,7 +176,15 @@ export function DailyListPage() {
       const settled = await Promise.allSettled(
         targets.map(async (date) => {
           const note = await getDailyNote(dataRoot, date)
-          return [date, summarizeChecklist(note.dailyCore)] as const
+          return [
+            date,
+            {
+              summary: summarizeChecklist(note.dailyCore),
+              oneLine: note.oneLine,
+              moodTag: note.moodTag,
+              energyTag: note.energyTag,
+            },
+          ] as const
         }),
       )
 
@@ -163,12 +192,12 @@ export function DailyListPage() {
         return
       }
 
-      setSummaries((prev) => {
+      setMetadata((prev) => {
         const next = { ...prev }
         for (const item of settled) {
           if (item.status === 'fulfilled') {
-            const [date, summary] = item.value
-            next[date] = summary
+            const [date, value] = item.value
+            next[date] = value
           }
         }
         return next
@@ -182,19 +211,54 @@ export function DailyListPage() {
     }
   }, [dataRoot, missingSummaries])
 
-  const normalizedQuery = query.trim()
+  const normalizedQuery = query.trim().toLowerCase()
+  const today = todayDateString()
+  const recencyLimit = recencyFilter === '7d'
+    ? 7
+    : recencyFilter === '30d'
+      ? 30
+      : recencyFilter === '90d'
+        ? 90
+        : null
   const filtered = dates
-    .filter((date) => date.includes(normalizedQuery))
+    .filter((date) => {
+      if (!normalizedQuery) {
+        return true
+      }
+      const meta = metadata[date]
+      const searchable = `${date} ${meta?.oneLine ?? ''} ${meta?.moodTag ?? ''} ${meta?.energyTag ?? ''}`.toLowerCase()
+      return searchable.includes(normalizedQuery)
+    })
     .filter((date) => {
       if (completionFilter === 'all') {
         return true
       }
-      const summary = summaries[date]
+      const summary = metadata[date]?.summary
       if (!summary) {
         return true
       }
       const completed = summary.total > 0 && summary.checked === summary.total
       return completionFilter === 'completed' ? completed : !completed
+    })
+    .filter((date) => {
+      if (recencyLimit == null) {
+        return true
+      }
+      const gap = diffIsoDateDays(today, date)
+      return gap != null && gap >= 0 && gap < recencyLimit
+    })
+    .filter((date) => {
+      if (detailFilter === 'all') {
+        return true
+      }
+      const meta = metadata[date]
+      if (!meta) {
+        return true
+      }
+      if (detailFilter === 'hasOneLine') {
+        return meta.oneLine.trim().length > 0
+      }
+      return meta.moodTag.trim().length > 0 || meta.energyTag.trim().length > 0
     })
 
   const firstMatch = filtered[0]
@@ -236,6 +300,31 @@ export function DailyListPage() {
               <option value="pending">{t('dailyList.statusPending')}</option>
             </select>
           </label>
+          <label className="dt-badge gap-2">
+            <span>{t('dailyList.recencyFilter')}</span>
+            <select
+              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+              value={recencyFilter}
+              onChange={(event) => setRecencyFilter(event.target.value as RecencyFilter)}
+            >
+              <option value="all">{t('dailyList.recencyAll')}</option>
+              <option value="7d">{t('dailyList.recency7d')}</option>
+              <option value="30d">{t('dailyList.recency30d')}</option>
+              <option value="90d">{t('dailyList.recency90d')}</option>
+            </select>
+          </label>
+          <label className="dt-badge gap-2">
+            <span>{t('dailyList.detailFilter')}</span>
+            <select
+              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+              value={detailFilter}
+              onChange={(event) => setDetailFilter(event.target.value as DetailFilter)}
+            >
+              <option value="all">{t('dailyList.detailAll')}</option>
+              <option value="hasOneLine">{t('dailyList.detailHasOneLine')}</option>
+              <option value="hasMoodEnergy">{t('dailyList.detailHasMoodEnergy')}</option>
+            </select>
+          </label>
           <span className="text-xs text-slate-600">
             {t('dailyList.itemsCount', { count: filtered.length, total: dates.length })}
           </span>
@@ -259,27 +348,42 @@ export function DailyListPage() {
       ) : (
         <ul className="space-y-2">
           {filtered.map((date) => {
-            const summary = summaries[date]
+            const summary = metadata[date]?.summary
             const summaryComplete = summary ? summary.total > 0 && summary.checked === summary.total : false
             return (
               <li key={date} className="dt-panel px-3 py-2">
-                <Link className="flex items-center justify-between gap-3" to={`/daily/${date}`}>
-                  <span className="dt-link">{date}</span>
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${
-                      summaryComplete
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-slate-200 bg-slate-50 text-slate-600'
-                    }`}
-                  >
-                    {summary
-                      ? t('dailyList.completionBadge', {
-                        checked: summary.checked,
-                        total: summary.total,
-                        percent: summary.percent,
-                      })
-                      : t('common.loading')}
-                  </span>
+                <Link className="block space-y-1" to={`/daily/${date}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="dt-link">{date}</span>
+                    <span
+                      className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${
+                        summaryComplete
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      {summary
+                        ? t('dailyList.completionBadge', {
+                          checked: summary.checked,
+                          total: summary.total,
+                          percent: summary.percent,
+                        })
+                        : t('common.loading')}
+                    </span>
+                  </div>
+                  {metadata[date]?.oneLine ? (
+                    <p className="truncate text-xs text-slate-600">
+                      {t('dailyList.oneLinePreview')}: {metadata[date]?.oneLine}
+                    </p>
+                  ) : null}
+                  {(metadata[date]?.moodTag || metadata[date]?.energyTag) ? (
+                    <p className="text-[11px] text-slate-500">
+                      {t('dailyList.tagPreview', {
+                        mood: metadata[date]?.moodTag || '-',
+                        energy: metadata[date]?.energyTag || '-',
+                      })}
+                    </p>
+                  ) : null}
                 </Link>
               </li>
             )

@@ -112,6 +112,15 @@ export function isPreviousIsoDate(referenceIsoDate: string, candidateIsoDate: st
   return reference - candidate === ONE_DAY_MS
 }
 
+export function diffIsoDateDays(referenceIsoDate: string, candidateIsoDate: string): number | null {
+  const reference = parseIsoDateUtcMs(referenceIsoDate)
+  const candidate = parseIsoDateUtcMs(candidateIsoDate)
+  if (reference == null || candidate == null) {
+    return null
+  }
+  return Math.floor((reference - candidate) / ONE_DAY_MS)
+}
+
 export function isPreviousWeekId(referenceWeekId: string, candidateWeekId: string): boolean {
   const reference = weekIdToMondayUtcMs(referenceWeekId)
   const candidate = weekIdToMondayUtcMs(candidateWeekId)
@@ -119,6 +128,30 @@ export function isPreviousWeekId(referenceWeekId: string, candidateWeekId: strin
     return false
   }
   return reference - candidate === ONE_WEEK_MS
+}
+
+export function diffWeekId(referenceWeekId: string, candidateWeekId: string): number | null {
+  const reference = weekIdToMondayUtcMs(referenceWeekId)
+  const candidate = weekIdToMondayUtcMs(candidateWeekId)
+  if (reference == null || candidate == null) {
+    return null
+  }
+  return Math.floor((reference - candidate) / ONE_WEEK_MS)
+}
+
+export function recentIsoDates(referenceIsoDate: string, days: number): string[] {
+  const normalizedDays = Math.max(0, Math.trunc(days))
+  const referenceTs = parseIsoDateUtcMs(referenceIsoDate)
+  if (referenceTs == null || normalizedDays === 0) {
+    return []
+  }
+
+  const values: string[] = []
+  for (let offset = normalizedDays - 1; offset >= 0; offset -= 1) {
+    const date = new Date(referenceTs - offset * ONE_DAY_MS)
+    values.push(date.toISOString().slice(0, 10))
+  }
+  return values
 }
 
 export function latestBodyRecord(records: BodyRecord[]): BodyRecord | null {

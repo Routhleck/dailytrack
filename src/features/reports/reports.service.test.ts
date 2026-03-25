@@ -18,6 +18,8 @@ function makeDaily(date: string, checkedCore: number, totalCore: number): DailyN
       checked: index < checkedCore,
     })),
     optional: [],
+    moodTag: '',
+    energyTag: '',
     oneLine: '',
     raw: '',
   }

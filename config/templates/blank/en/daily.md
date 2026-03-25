@@ -6,5 +6,9 @@
 ## Optional
 - [ ] 
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

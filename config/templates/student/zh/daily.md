@@ -10,5 +10,9 @@
 - [ ] 间隔复习
 - [ ] 用一段话讲解当天内容
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

@@ -217,6 +217,13 @@ Acceptance focus:
 
 - User can maintain routine with less memory burden.
 
+Progress snapshot:
+
+- Done: configurable reminder strategy shipped in Preferences (`daily/weekly/body` inactivity thresholds with dashboard reminders).
+- Done: dashboard now includes a 28-day daily-completion heatmap for quick streak visibility.
+- Done: daily notes now support lightweight `Mood & Energy` tags in structured mode and markdown schema.
+- Done: history lists now support stronger combined filtering (keyword + status + recency + detail signals).
+
 ## v1.0.0 - Reliability and Trust
 
 Goal: make `dailytrack` safe enough for long-term primary use.

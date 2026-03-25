@@ -10,6 +10,8 @@ export type DailyNote = {
   title: string
   dailyCore: CheckboxItem[]
   optional: CheckboxItem[]
+  moodTag: string
+  energyTag: string
   oneLine: string
   raw: string
 }

@@ -10,5 +10,9 @@
 - [ ] 10 分钟呼吸/冥想
 - [ ] 记录一次情绪状态
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

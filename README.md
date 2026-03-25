@@ -76,10 +76,13 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - period-over-period comparison (`today` and `this week` vs previous tracked period)
   - daily/weekly completion streak signals
   - weakest weekly section hint + local rule-based `Next Best Action`
+  - configurable routine reminders (`daily/weekly/body` inactivity gaps)
+  - 28-day daily completion heatmap
   - latest body metrics snapshot
   - recent files list
 - Daily note:
   - structured checklist editing
+  - lightweight mood/energy tags
   - template-based "only show changes" mode
   - one-line editing
   - raw markdown mode
@@ -112,6 +115,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 - Preferences:
   - per-profile tracking toggles (daily/weekly/body)
   - sync mode (`watch` / `poll`)
+  - configurable dashboard reminder thresholds (`daily/weekly/body` gaps)
   - per-page default "only show changes" toggles
   - per-metric body goal line config (enabled + value)
   - mobile sync status banner toggle
@@ -221,6 +225,10 @@ Daily note (`daily/YYYY-MM-DD.md`):
 
 ## Optional
 - [ ] ...
+
+## Mood & Energy
+- Mood: -
+- Energy: -
 
 ## One Line
 -

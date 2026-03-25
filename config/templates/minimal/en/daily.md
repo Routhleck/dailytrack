@@ -8,5 +8,9 @@
 ## Optional
 - [ ] Read 20 min
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

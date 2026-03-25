@@ -7,8 +7,10 @@ export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
   const optional: CheckboxItem[] = []
 
   let title = date
+  let moodTag = ''
+  let energyTag = ''
   let oneLine = ''
-  let currentSection: 'dailyCore' | 'optional' | 'oneLine' | null = null
+  let currentSection: 'dailyCore' | 'optional' | 'moodEnergy' | 'oneLine' | null = null
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd()
@@ -34,6 +36,11 @@ export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
       continue
     }
 
+    if (line === '## Mood & Energy') {
+      currentSection = 'moodEnergy'
+      continue
+    }
+
     if (line.startsWith('## ')) {
       currentSection = null
       continue
@@ -54,6 +61,33 @@ export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
       continue
     }
 
+    if (currentSection === 'moodEnergy') {
+      if (!line || line === '-') {
+        continue
+      }
+
+      const normalized = line.replace(/^-+\s*/, '')
+      const paired = normalized.match(/^(Mood|Energy)\s*:\s*(.*)$/i)
+      if (paired) {
+        const key = paired[1].toLowerCase()
+        const value = paired[2].trim() === '-' ? '' : paired[2].trim()
+        if (key === 'mood') {
+          moodTag = value
+        }
+        if (key === 'energy') {
+          energyTag = value
+        }
+        continue
+      }
+
+      if (!moodTag) {
+        moodTag = normalized
+      } else if (!energyTag) {
+        energyTag = normalized
+      }
+      continue
+    }
+
     if (currentSection === 'oneLine') {
       if (!line || line === '-') {
         continue
@@ -70,6 +104,8 @@ export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
     title,
     dailyCore,
     optional,
+    moodTag,
+    energyTag,
     oneLine,
     raw: markdown,
   }

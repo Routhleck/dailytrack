@@ -8,6 +8,8 @@ export type ChecklistTemplateDiff = {
 export type DailyTemplateDiff = {
   dailyCore: ChecklistTemplateDiff
   optional: ChecklistTemplateDiff
+  moodTagChanged: boolean
+  energyTagChanged: boolean
   oneLineChanged: boolean
   hasAnyChange: boolean
 }
@@ -58,18 +60,23 @@ export function diffDailyAgainstTemplate(
 ): DailyTemplateDiff {
   const dailyCore = compareChecklistWithTemplate(note.dailyCore, template.dailyCore)
   const optional = compareChecklistWithTemplate(note.optional, template.optional)
+  const moodTagChanged = normalizeText(note.moodTag) !== normalizeText(template.moodTag)
+  const energyTagChanged = normalizeText(note.energyTag) !== normalizeText(template.energyTag)
   const oneLineChanged = normalizeText(note.oneLine) !== normalizeText(template.oneLine)
   const hasAnyChange = dailyCore.changedIds.size > 0
     || optional.changedIds.size > 0
     || dailyCore.missingTemplateCount > 0
     || optional.missingTemplateCount > 0
+    || moodTagChanged
+    || energyTagChanged
     || oneLineChanged
 
   return {
     dailyCore,
     optional,
+    moodTagChanged,
+    energyTagChanged,
     oneLineChanged,
     hasAnyChange,
   }
 }
-

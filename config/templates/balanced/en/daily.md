@@ -13,5 +13,9 @@
 - [ ] Social interaction
 - [ ] Capture life note / photo / thought
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

@@ -14,11 +14,19 @@ export type BodyMetricGoal = {
 export type SyncMode = 'watch' | 'poll'
 export type TypographyScale = 'sm' | 'md' | 'lg'
 
+export type ReminderPreferences = {
+  enabled: boolean
+  dailyGapDays: number
+  weeklyGapWeeks: number
+  bodyGapDays: number
+}
+
 export type TrackerPreferences = {
   schemaVersion: number
   sync: {
     mode: SyncMode
   }
+  reminders: ReminderPreferences
   ui: {
     typographyScale: TypographyScale
     showOnlyChanges: {

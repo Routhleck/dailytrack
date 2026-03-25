@@ -14,12 +14,18 @@ import type { WeeklySectionKey } from '../../types/tracker'
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
 const TYPOGRAPHY_SCALES: TypographyScale[] = ['sm', 'md', 'lg']
-export const PREFERENCES_SCHEMA_VERSION = 5
+export const PREFERENCES_SCHEMA_VERSION = 6
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
   schemaVersion: PREFERENCES_SCHEMA_VERSION,
   sync: {
     mode: 'watch',
+  },
+  reminders: {
+    enabled: true,
+    dailyGapDays: 2,
+    weeklyGapWeeks: 1,
+    bodyGapDays: 7,
   },
   ui: {
     typographyScale: 'md',
@@ -81,8 +87,25 @@ function toTypographyScale(value: unknown, fallback: TypographyScale): Typograph
     : fallback
 }
 
+function toPositiveInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback
+  }
+  const normalized = Math.trunc(value)
+  if (normalized < min || normalized > max) {
+    return fallback
+  }
+  return normalized
+}
+
 export function normalizePreferences(raw: unknown): TrackerPreferences {
   const object = asRecord(raw)
+  const remindersRaw = asRecord(object.reminders)
   const dailyRaw = asRecord(object.daily)
   const weeklyRaw = asRecord(object.weekly)
   const uiRaw = asRecord(object.ui)
@@ -118,6 +141,27 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
     schemaVersion: PREFERENCES_SCHEMA_VERSION,
     sync: {
       mode: toSyncMode(syncRaw.mode, DEFAULT_PREFERENCES.sync.mode),
+    },
+    reminders: {
+      enabled: toBoolean(remindersRaw.enabled, DEFAULT_PREFERENCES.reminders.enabled),
+      dailyGapDays: toPositiveInteger(
+        remindersRaw.dailyGapDays,
+        DEFAULT_PREFERENCES.reminders.dailyGapDays,
+        1,
+        30,
+      ),
+      weeklyGapWeeks: toPositiveInteger(
+        remindersRaw.weeklyGapWeeks,
+        DEFAULT_PREFERENCES.reminders.weeklyGapWeeks,
+        1,
+        12,
+      ),
+      bodyGapDays: toPositiveInteger(
+        remindersRaw.bodyGapDays,
+        DEFAULT_PREFERENCES.reminders.bodyGapDays,
+        1,
+        90,
+      ),
     },
     ui: {
       typographyScale: toTypographyScale(uiRaw.typographyScale, DEFAULT_PREFERENCES.ui.typographyScale),

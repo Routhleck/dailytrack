@@ -13,5 +13,9 @@
 - [ ] 进行一次社交互动
 - [ ] 记录一条生活片段 / 想法
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

@@ -2,9 +2,12 @@ import { describe, expect, test } from 'vitest'
 
 import {
   compareProgress,
+  diffIsoDateDays,
+  diffWeekId,
   findWeakestSection,
   isPreviousIsoDate,
   isPreviousWeekId,
+  recentIsoDates,
   type ProgressSummary,
 } from './dashboard.service'
 
@@ -49,11 +52,32 @@ describe('dashboard continuity helpers', () => {
     expect(isPreviousIsoDate('invalid', '2026-03-24')).toBe(false)
   })
 
+  test('computes daily gap between two ISO dates', () => {
+    expect(diffIsoDateDays('2026-03-25', '2026-03-25')).toBe(0)
+    expect(diffIsoDateDays('2026-03-25', '2026-03-22')).toBe(3)
+    expect(diffIsoDateDays('bad', '2026-03-22')).toBeNull()
+  })
+
   test('checks previous week id exactly one ISO week apart', () => {
     expect(isPreviousWeekId('2026-W12', '2026-W11')).toBe(true)
     expect(isPreviousWeekId('2026-W01', '2025-W52')).toBe(true)
     expect(isPreviousWeekId('2026-W12', '2026-W10')).toBe(false)
     expect(isPreviousWeekId('bad', '2026-W11')).toBe(false)
+  })
+
+  test('computes week gap between two week ids', () => {
+    expect(diffWeekId('2026-W12', '2026-W12')).toBe(0)
+    expect(diffWeekId('2026-W12', '2026-W10')).toBe(2)
+    expect(diffWeekId('bad', '2026-W10')).toBeNull()
+  })
+
+  test('builds recent ISO date range in chronological order', () => {
+    expect(recentIsoDates('2026-03-25', 4)).toEqual([
+      '2026-03-22',
+      '2026-03-23',
+      '2026-03-24',
+      '2026-03-25',
+    ])
   })
 })
 

@@ -295,6 +295,10 @@ export function DailyNotePage() {
   const visibleOptional = showOnlyChanges && templateDiff
     ? note.optional.filter((item) => templateDiff.optional.changedIds.has(item.id))
     : note.optional
+  const showMoodEnergyCard = !showOnlyChanges
+    || !templateDiff
+    || templateDiff.moodTagChanged
+    || templateDiff.energyTagChanged
   const showOneLineCard = !showOnlyChanges || !templateDiff || templateDiff.oneLineChanged
   const showNoChangesHint = showOnlyChanges && templateDiff != null && !templateDiff.hasAnyChange
 
@@ -451,6 +455,36 @@ export function DailyNotePage() {
                     />
                   </div>
                 ))}
+              </div>
+            </article>
+          ) : null}
+
+          {showMoodEnergyCard ? (
+            <article className="dt-panel p-4">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.moodEnergy')}</h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="text-xs text-slate-600">{t('dailyNote.moodTag')}</span>
+                  <input
+                    className="dt-input"
+                    value={note.moodTag}
+                    onChange={(event) => {
+                      setNote((prev) => (prev ? { ...prev, moodTag: event.target.value } : prev))
+                    }}
+                    placeholder={t('dailyNote.moodPlaceholder')}
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs text-slate-600">{t('dailyNote.energyTag')}</span>
+                  <input
+                    className="dt-input"
+                    value={note.energyTag}
+                    onChange={(event) => {
+                      setNote((prev) => (prev ? { ...prev, energyTag: event.target.value } : prev))
+                    }}
+                    placeholder={t('dailyNote.energyPlaceholder')}
+                  />
+                </label>
               </div>
             </article>
           ) : null}

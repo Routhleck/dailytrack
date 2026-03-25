@@ -12,6 +12,10 @@ export function serializeDailyMarkdown(note: DailyNote): string {
   lines.push('## Optional')
   lines.push(...serializeChecklist(note.optional))
   lines.push('')
+  lines.push('## Mood & Energy')
+  lines.push(`- Mood: ${note.moodTag.trim() || '-'}`)
+  lines.push(`- Energy: ${note.energyTag.trim() || '-'}`)
+  lines.push('')
   lines.push('## One Line')
   lines.push(note.oneLine.trim() || '-')
 

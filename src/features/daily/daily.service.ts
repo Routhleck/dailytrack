@@ -20,6 +20,10 @@ const FALLBACK_DAILY_TEMPLATE = `# {{date}}
 - [ ] Social interaction
 - [ ] Capture life note / photo / thought
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -
 `

@@ -9,11 +9,14 @@ import { getBodyRecords } from '../features/body/body.service'
 import { getDailyNote, getTodayNote, listDailyDates } from '../features/daily/daily.service'
 import {
   compareProgress,
+  diffIsoDateDays,
+  diffWeekId,
   findWeakestSection,
   isChecklistComplete,
   isPreviousIsoDate,
   isPreviousWeekId,
   latestBodyRecord,
+  recentIsoDates,
   summarizeChecklist,
   type ProgressComparison,
   type ProgressSummary,
@@ -63,6 +66,16 @@ type DashboardState = {
     | { kind: 'addBodyRecord' }
     | { kind: 'reviewWeek' }
   body: BodyRecord | null
+  reminders: {
+    kind: 'daily' | 'weekly' | 'body'
+    gap: number | null
+    threshold: number
+    anchor: string | null
+  }[]
+  dailyHeatmap: {
+    date: string
+    percent: number | null
+  }[]
   recentDaily: string[]
   recentWeekly: string[]
 }
@@ -131,8 +144,12 @@ export function DashboardPage() {
       let dailyStreak = 0
       let dailyStreakActive = true
       let dailyStreakAnchor = today.date
+      let lastCompletedDailyDate: string | null = null
+      const dailySummaryByDate: Record<string, ProgressSummary> = {
+        [today.date]: todayCoreSummary,
+      }
 
-      for (const date of orderedDailyDates.slice(0, 30)) {
+      for (const date of orderedDailyDates.slice(0, 45)) {
         const summary = date === today.date
           ? todayCoreSummary
           : await getDailyNote(dataRoot, date)
@@ -142,9 +159,14 @@ export function DashboardPage() {
         if (!summary) {
           continue
         }
+        dailySummaryByDate[date] = summary
 
         if (date !== today.date && previousDailySummary == null) {
           previousDailySummary = summary
+        }
+
+        if (lastCompletedDailyDate == null && isChecklistComplete(summary)) {
+          lastCompletedDailyDate = date
         }
 
         if (!dailyStreakActive) {
@@ -186,8 +208,9 @@ export function DashboardPage() {
       let weeklyStreak = 0
       let weeklyStreakActive = true
       let weeklyStreakAnchor = week.weekId
+      let lastCompletedWeekId: string | null = null
 
-      for (const weekId of orderedWeeklyIds.slice(0, 16)) {
+      for (const weekId of orderedWeeklyIds.slice(0, 24)) {
         const summary = weekId === week.weekId
           ? weekSummary
           : await getWeeklyNote(dataRoot, weekId)
@@ -196,6 +219,10 @@ export function DashboardPage() {
 
         if (!summary) {
           continue
+        }
+
+        if (lastCompletedWeekId == null && isChecklistComplete(summary)) {
+          lastCompletedWeekId = weekId
         }
 
         if (weekId !== week.weekId && previousWeekSummary == null) {
@@ -234,6 +261,48 @@ export function DashboardPage() {
         }
       }
 
+      const reminders: DashboardState['reminders'] = []
+      if (preferences.reminders.enabled) {
+        const dailyGap = lastCompletedDailyDate
+          ? diffIsoDateDays(today.date, lastCompletedDailyDate)
+          : null
+        if (dailyGap == null || dailyGap >= preferences.reminders.dailyGapDays) {
+          reminders.push({
+            kind: 'daily',
+            gap: dailyGap,
+            threshold: preferences.reminders.dailyGapDays,
+            anchor: lastCompletedDailyDate,
+          })
+        }
+
+        const weeklyGap = lastCompletedWeekId
+          ? diffWeekId(week.weekId, lastCompletedWeekId)
+          : null
+        if (weeklyGap == null || weeklyGap >= preferences.reminders.weeklyGapWeeks) {
+          reminders.push({
+            kind: 'weekly',
+            gap: weeklyGap,
+            threshold: preferences.reminders.weeklyGapWeeks,
+            anchor: lastCompletedWeekId,
+          })
+        }
+
+        const bodyGap = latestBody ? diffIsoDateDays(today.date, latestBody.date) : null
+        if (bodyGap == null || bodyGap >= preferences.reminders.bodyGapDays) {
+          reminders.push({
+            kind: 'body',
+            gap: bodyGap,
+            threshold: preferences.reminders.bodyGapDays,
+            anchor: latestBody?.date ?? null,
+          })
+        }
+      }
+
+      const dailyHeatmap = recentIsoDates(today.date, 28).map((date) => ({
+        date,
+        percent: dailySummaryByDate[date]?.percent ?? null,
+      }))
+
       const todayRemaining = Math.max(0, todayCoreSummary.total - todayCoreSummary.checked)
       const weakestSectionRemaining = weakestSection
         ? Math.max(0, weakestSection.summary.total - weakestSection.summary.checked)
@@ -261,6 +330,8 @@ export function DashboardPage() {
         weakestSection,
         nextAction,
         body: latestBody,
+        reminders,
+        dailyHeatmap,
         recentDaily: orderedDailyDates.slice(0, 5),
         recentWeekly: orderedWeeklyIds.slice(0, 5),
       })
@@ -411,6 +482,56 @@ export function DashboardPage() {
     }
   }
 
+  const reminderText = (item: DashboardState['reminders'][number]) => {
+    switch (item.kind) {
+      case 'daily':
+        if (item.gap == null || item.anchor == null) {
+          return t('dashboard.reminderDailyNoData', { threshold: item.threshold })
+        }
+        return t('dashboard.reminderDailyGap', {
+          gap: item.gap,
+          threshold: item.threshold,
+          date: item.anchor,
+        })
+      case 'weekly':
+        if (item.gap == null || item.anchor == null) {
+          return t('dashboard.reminderWeeklyNoData', { threshold: item.threshold })
+        }
+        return t('dashboard.reminderWeeklyGap', {
+          gap: item.gap,
+          threshold: item.threshold,
+          week: item.anchor,
+        })
+      case 'body':
+        if (item.gap == null || item.anchor == null) {
+          return t('dashboard.reminderBodyNoData', { threshold: item.threshold })
+        }
+        return t('dashboard.reminderBodyGap', {
+          gap: item.gap,
+          threshold: item.threshold,
+          date: item.anchor,
+        })
+      default:
+        return ''
+    }
+  }
+
+  const heatmapCellClass = (percent: number | null) => {
+    if (percent == null) {
+      return 'border border-slate-100 bg-slate-50'
+    }
+    if (percent >= 100) {
+      return 'border border-emerald-500 bg-emerald-500'
+    }
+    if (percent >= 70) {
+      return 'border border-emerald-300 bg-emerald-300'
+    }
+    if (percent >= 40) {
+      return 'border border-amber-300 bg-amber-200'
+    }
+    return 'border border-rose-200 bg-rose-100'
+  }
+
   return (
     <section className="dt-page">
       <PageHeader
@@ -504,7 +625,7 @@ export function DashboardPage() {
         </article>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3 md:gap-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 md:gap-4">
         <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.insights')}</h2>
           {state.weakestSection ? (
@@ -525,6 +646,23 @@ export function DashboardPage() {
               {t('dashboard.takeAction')}
             </Link>
           </div>
+        </article>
+
+        <article className="dt-panel p-3 sm:p-4">
+          <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.reminders')}</h2>
+          {!preferences.reminders.enabled ? (
+            <p className="text-xs text-slate-600">{t('dashboard.remindersDisabled')}</p>
+          ) : state.reminders.length > 0 ? (
+            <ul className="space-y-2 text-xs text-amber-800">
+              {state.reminders.map((item, index) => (
+                <li key={`${item.kind}-${index}`} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5">
+                  {reminderText(item)}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-emerald-700">{t('dashboard.remindersAllGood')}</p>
+          )}
         </article>
 
         <article className="dt-panel p-3 sm:p-4">
@@ -571,6 +709,47 @@ export function DashboardPage() {
           )}
         </article>
       </div>
+
+      <article className="dt-panel p-3 sm:p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.dailyHeatmap')}</h2>
+          <p className="text-xs text-slate-600">{t('dashboard.dailyHeatmapHint')}</p>
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {state.dailyHeatmap.map((cell) => (
+            <div
+              key={cell.date}
+              className={`h-4 rounded-sm ${heatmapCellClass(cell.percent)}`}
+              title={cell.percent == null
+                ? t('dashboard.heatmapNoEntry', { date: cell.date })
+                : t('dashboard.heatmapEntry', { date: cell.date, percent: cell.percent })}
+            />
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+          <span>{t('dashboard.heatmapLegend')}</span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm border border-slate-100 bg-slate-50" />
+            {t('dashboard.heatmapNone')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm border border-rose-200 bg-rose-100" />
+            {t('dashboard.heatmapLow')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm border border-amber-300 bg-amber-200" />
+            {t('dashboard.heatmapMid')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm border border-emerald-300 bg-emerald-300" />
+            {t('dashboard.heatmapHigh')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm border border-emerald-500 bg-emerald-500" />
+            {t('dashboard.heatmapFull')}
+          </span>
+        </div>
+      </article>
     </section>
   )
 }

@@ -2,14 +2,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
-import { summarizeChecklist, type ProgressSummary } from '../features/dashboard/dashboard.service'
+import {
+  diffWeekId,
+  summarizeChecklist,
+  type ProgressSummary,
+} from '../features/dashboard/dashboard.service'
 import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getWeeklyNote, listWeeklyIds } from '../features/weekly/weekly.service'
+import { currentWeekId } from '../lib/date/week'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 
 type CompletionFilter = 'all' | 'completed' | 'pending'
+type RecencyFilter = 'all' | '4w' | '12w' | '24w'
+type DetailFilter = 'all' | 'hasReflection'
+
+type WeeklyListMeta = {
+  summary: ProgressSummary
+  reflectionText: string
+}
 
 function extractWeekFromPath(path?: string): string | null {
   if (!path) {
@@ -26,7 +38,9 @@ export function WeeklyListPage() {
   const [weeks, setWeeks] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all')
-  const [summaries, setSummaries] = useState<Record<string, ProgressSummary>>({})
+  const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all')
+  const [detailFilter, setDetailFilter] = useState<DetailFilter>('all')
+  const [metadata, setMetadata] = useState<Record<string, WeeklyListMeta>>({})
   const [error, setError] = useState('')
   const loadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
@@ -44,9 +58,15 @@ export function WeeklyListPage() {
     try {
       const note = await getWeeklyNote(dataRoot, week)
       const checklist = WEEKLY_SECTION_ORDER.flatMap((section) => note.sections[section])
-      setSummaries((prev) => ({
+      const reflectionText = [...note.reflection.goodThings, ...note.reflection.nextWeekTop3]
+        .join(' ')
+        .trim()
+      setMetadata((prev) => ({
         ...prev,
-        [week]: summarizeChecklist(checklist),
+        [week]: {
+          summary: summarizeChecklist(checklist),
+          reflectionText,
+        },
       }))
     } catch (error) {
       console.warn('[weekly-list] failed to refresh summary for week', week, error)
@@ -67,8 +87,8 @@ export function WeeklyListPage() {
     try {
       const next = await listWeeklyIds(dataRoot)
       setWeeks(next)
-      setSummaries((prev) => {
-        const kept: Record<string, ProgressSummary> = {}
+      setMetadata((prev) => {
+        const kept: Record<string, WeeklyListMeta> = {}
         for (const week of next) {
           if (prev[week]) {
             kept[week] = prev[week]
@@ -117,7 +137,7 @@ export function WeeklyListPage() {
       }
 
       if (detail.scope === 'profile' || detail.scope === 'all') {
-        setSummaries({})
+        setMetadata({})
         void loadWeeklyList()
       }
     })
@@ -137,8 +157,8 @@ export function WeeklyListPage() {
   }, [loadWeeklyList, refreshWeeklySummary])
 
   const missingSummaries = useMemo(
-    () => weeks.filter((week) => !summaries[week]),
-    [summaries, weeks],
+    () => weeks.filter((week) => !metadata[week]),
+    [metadata, weeks],
   )
 
   useEffect(() => {
@@ -158,7 +178,15 @@ export function WeeklyListPage() {
         targets.map(async (week) => {
           const note = await getWeeklyNote(dataRoot, week)
           const checklist = WEEKLY_SECTION_ORDER.flatMap((section) => note.sections[section])
-          return [week, summarizeChecklist(checklist)] as const
+          return [
+            week,
+            {
+              summary: summarizeChecklist(checklist),
+              reflectionText: [...note.reflection.goodThings, ...note.reflection.nextWeekTop3]
+                .join(' ')
+                .trim(),
+            },
+          ] as const
         }),
       )
 
@@ -166,12 +194,12 @@ export function WeeklyListPage() {
         return
       }
 
-      setSummaries((prev) => {
+      setMetadata((prev) => {
         const next = { ...prev }
         for (const item of settled) {
           if (item.status === 'fulfilled') {
-            const [week, summary] = item.value
-            next[week] = summary
+            const [week, value] = item.value
+            next[week] = value
           }
         }
         return next
@@ -185,19 +213,50 @@ export function WeeklyListPage() {
     }
   }, [dataRoot, missingSummaries])
 
-  const normalizedQuery = query.trim().toUpperCase()
+  const normalizedQuery = query.trim().toLowerCase()
+  const currentWeek = currentWeekId()
+  const recencyLimit = recencyFilter === '4w'
+    ? 4
+    : recencyFilter === '12w'
+      ? 12
+      : recencyFilter === '24w'
+        ? 24
+        : null
   const filtered = weeks
-    .filter((week) => week.includes(normalizedQuery))
+    .filter((week) => {
+      if (!normalizedQuery) {
+        return true
+      }
+      const searchable = `${week} ${metadata[week]?.reflectionText ?? ''}`.toLowerCase()
+      return searchable.includes(normalizedQuery)
+    })
     .filter((week) => {
       if (completionFilter === 'all') {
         return true
       }
-      const summary = summaries[week]
+      const summary = metadata[week]?.summary
       if (!summary) {
         return true
       }
       const completed = summary.total > 0 && summary.checked === summary.total
       return completionFilter === 'completed' ? completed : !completed
+    })
+    .filter((week) => {
+      if (recencyLimit == null) {
+        return true
+      }
+      const gap = diffWeekId(currentWeek, week)
+      return gap != null && gap >= 0 && gap < recencyLimit
+    })
+    .filter((week) => {
+      if (detailFilter === 'all') {
+        return true
+      }
+      const meta = metadata[week]
+      if (!meta) {
+        return true
+      }
+      return meta.reflectionText.trim().length > 0
     })
 
   const firstMatch = filtered[0]
@@ -239,6 +298,30 @@ export function WeeklyListPage() {
               <option value="pending">{t('weeklyList.statusPending')}</option>
             </select>
           </label>
+          <label className="dt-badge gap-2">
+            <span>{t('weeklyList.recencyFilter')}</span>
+            <select
+              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+              value={recencyFilter}
+              onChange={(event) => setRecencyFilter(event.target.value as RecencyFilter)}
+            >
+              <option value="all">{t('weeklyList.recencyAll')}</option>
+              <option value="4w">{t('weeklyList.recency4w')}</option>
+              <option value="12w">{t('weeklyList.recency12w')}</option>
+              <option value="24w">{t('weeklyList.recency24w')}</option>
+            </select>
+          </label>
+          <label className="dt-badge gap-2">
+            <span>{t('weeklyList.detailFilter')}</span>
+            <select
+              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+              value={detailFilter}
+              onChange={(event) => setDetailFilter(event.target.value as DetailFilter)}
+            >
+              <option value="all">{t('weeklyList.detailAll')}</option>
+              <option value="hasReflection">{t('weeklyList.detailHasReflection')}</option>
+            </select>
+          </label>
           <span className="text-xs text-slate-600">
             {t('weeklyList.itemsCount', { count: filtered.length, total: weeks.length })}
           </span>
@@ -262,27 +345,34 @@ export function WeeklyListPage() {
       ) : (
         <ul className="space-y-2">
           {filtered.map((week) => {
-            const summary = summaries[week]
+            const summary = metadata[week]?.summary
             const summaryComplete = summary ? summary.total > 0 && summary.checked === summary.total : false
             return (
               <li key={week} className="dt-panel px-3 py-2">
-                <Link className="flex items-center justify-between gap-3" to={`/weekly/${week}`}>
-                  <span className="dt-link">{week}</span>
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${
-                      summaryComplete
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-slate-200 bg-slate-50 text-slate-600'
-                    }`}
-                  >
-                    {summary
-                      ? t('weeklyList.completionBadge', {
-                        checked: summary.checked,
-                        total: summary.total,
-                        percent: summary.percent,
-                      })
-                      : t('common.loading')}
-                  </span>
+                <Link className="block space-y-1" to={`/weekly/${week}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="dt-link">{week}</span>
+                    <span
+                      className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${
+                        summaryComplete
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      {summary
+                        ? t('weeklyList.completionBadge', {
+                          checked: summary.checked,
+                          total: summary.total,
+                          percent: summary.percent,
+                        })
+                        : t('common.loading')}
+                    </span>
+                  </div>
+                  {metadata[week]?.reflectionText ? (
+                    <p className="truncate text-xs text-slate-600">
+                      {t('weeklyList.reflectionPreview')}: {metadata[week]?.reflectionText}
+                    </p>
+                  ) : null}
                 </Link>
               </li>
             )

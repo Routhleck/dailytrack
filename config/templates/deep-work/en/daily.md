@@ -10,5 +10,9 @@
 - [ ] Read one technical paper section
 - [ ] Capture one implementation insight
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

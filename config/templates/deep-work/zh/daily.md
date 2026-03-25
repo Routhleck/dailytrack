@@ -10,5 +10,9 @@
 - [ ] 阅读一段技术资料
 - [ ] 记录一个实现洞察
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

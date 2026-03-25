@@ -10,5 +10,9 @@
 - [ ] 10-minute breathing or meditation
 - [ ] Journal one emotional check-in
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

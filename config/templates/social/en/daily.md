@@ -10,5 +10,9 @@
 - [ ] Plan one meetup/activity
 - [ ] Practice one communication skill
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

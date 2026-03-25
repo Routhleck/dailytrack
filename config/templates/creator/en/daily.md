@@ -10,5 +10,9 @@
 - [ ] Capture 3 idea bullets
 - [ ] Review audience feedback
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

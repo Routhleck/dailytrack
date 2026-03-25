@@ -10,5 +10,9 @@
 - [ ] Spaced repetition review
 - [ ] Teach-back in one paragraph
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

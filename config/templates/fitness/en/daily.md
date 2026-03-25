@@ -10,5 +10,9 @@
 - [ ] Mobility or stretching
 - [ ] Outdoor walk
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

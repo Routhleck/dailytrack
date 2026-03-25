@@ -120,6 +120,36 @@ export function PreferencesPage() {
     })
   }
 
+  function updateReminderEnabled(enabled: boolean) {
+    void update({
+      ...draft,
+      reminders: {
+        ...draft.reminders,
+        enabled,
+      },
+    })
+  }
+
+  function updateReminderThreshold(
+    key: 'dailyGapDays' | 'weeklyGapWeeks' | 'bodyGapDays',
+    rawValue: string,
+    min: number,
+    max: number,
+  ) {
+    const parsed = Number.parseInt(rawValue, 10)
+    if (!Number.isFinite(parsed)) {
+      return
+    }
+    const normalized = Math.max(min, Math.min(max, parsed))
+    void update({
+      ...draft,
+      reminders: {
+        ...draft.reminders,
+        [key]: normalized,
+      },
+    })
+  }
+
   if (loading) {
     return (
       <section>
@@ -268,6 +298,54 @@ export function PreferencesPage() {
           />
           {t('preferences.mobileSyncBanner')}
         </label>
+      </article>
+
+      <article className="dt-panel space-y-3 p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('preferences.reminders')}</h2>
+        <p className="text-xs text-slate-500">{t('preferences.remindersHint')}</p>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.reminders.enabled}
+            onChange={(event) => updateReminderEnabled(event.target.checked)}
+          />
+          {t('preferences.remindersEnabled')}
+        </label>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <label className="space-y-1 text-sm text-slate-700">
+            <span className="text-xs text-slate-600">{t('preferences.reminderDailyGap')}</span>
+            <input
+              className="dt-input px-2 py-1 text-xs"
+              type="number"
+              min={1}
+              max={30}
+              value={draft.reminders.dailyGapDays}
+              onChange={(event) => updateReminderThreshold('dailyGapDays', event.target.value, 1, 30)}
+            />
+          </label>
+          <label className="space-y-1 text-sm text-slate-700">
+            <span className="text-xs text-slate-600">{t('preferences.reminderWeeklyGap')}</span>
+            <input
+              className="dt-input px-2 py-1 text-xs"
+              type="number"
+              min={1}
+              max={12}
+              value={draft.reminders.weeklyGapWeeks}
+              onChange={(event) => updateReminderThreshold('weeklyGapWeeks', event.target.value, 1, 12)}
+            />
+          </label>
+          <label className="space-y-1 text-sm text-slate-700">
+            <span className="text-xs text-slate-600">{t('preferences.reminderBodyGap')}</span>
+            <input
+              className="dt-input px-2 py-1 text-xs"
+              type="number"
+              min={1}
+              max={90}
+              value={draft.reminders.bodyGapDays}
+              onChange={(event) => updateReminderThreshold('bodyGapDays', event.target.value, 1, 90)}
+            />
+          </label>
+        </div>
       </article>
 
       <article className="dt-panel space-y-3 p-4">

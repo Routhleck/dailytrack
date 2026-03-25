@@ -6,7 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Added
+- Added configurable routine reminder strategy in Preferences:
+  - dashboard reminder enable/disable
+  - daily completion gap threshold (days)
+  - weekly completion gap threshold (weeks)
+  - body record gap threshold (days)
+- Added dashboard routine support cards:
+  - reminder panel with triggered inactivity hints
+  - 28-day daily completion heatmap with intensity legend
+- Added lightweight `Mood & Energy` tags to Daily notes:
+  - structured UI inputs
+  - markdown parser/serializer support (`## Mood & Energy`)
+  - backward-compatible parsing for existing notes without this section
+- Added stronger history filters for Daily/Weekly lists:
+  - recency windows
+  - detail-aware filters (one-line / mood-energy / reflection)
+  - keyword search now also matches lightweight content previews
+
+### Changed
+- Updated built-in and preset daily templates to include `Mood & Energy` section.
 
 ## [0.13.0] - 2026-03-25
 

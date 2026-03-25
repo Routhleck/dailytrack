@@ -10,5 +10,9 @@
 - [ ] 计划 1 次见面或活动
 - [ ] 练习 1 个沟通技巧
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -

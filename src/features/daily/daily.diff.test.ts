@@ -8,7 +8,7 @@ function parse(markdown: string) {
 }
 
 describe('daily template diff', () => {
-  test('detects checked-item and one-line changes', () => {
+  test('detects checked-item, mood/energy, and one-line changes', () => {
     const template = parse(`
 # 2026-03-22
 
@@ -18,6 +18,10 @@ describe('daily template diff', () => {
 
 ## Optional
 - [ ] Read
+
+## Mood & Energy
+- Mood: steady
+- Energy: medium
 
 ## One Line
 -
@@ -32,6 +36,10 @@ describe('daily template diff', () => {
 ## Optional
 - [ ] Read
 
+## Mood & Energy
+- Mood: low
+- Energy: high
+
 ## One Line
 Nice day
 `)
@@ -39,6 +47,8 @@ Nice day
     const diff = diffDailyAgainstTemplate(note, template)
     expect(diff.dailyCore.changedIds.size).toBe(1)
     expect(diff.optional.changedIds.size).toBe(0)
+    expect(diff.moodTagChanged).toBe(true)
+    expect(diff.energyTagChanged).toBe(true)
     expect(diff.oneLineChanged).toBe(true)
     expect(diff.hasAnyChange).toBe(true)
   })
@@ -54,6 +64,10 @@ Nice day
 ## Optional
 - [ ] Read
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -
 `)
@@ -66,6 +80,10 @@ Nice day
 ## Optional
 - [ ] Read
 
+## Mood & Energy
+- Mood: -
+- Energy: -
+
 ## One Line
 -
 `)
@@ -76,4 +94,3 @@ Nice day
     expect(diff.hasAnyChange).toBe(true)
   })
 })
-
