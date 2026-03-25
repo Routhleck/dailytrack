@@ -417,3 +417,7 @@ Current milestone sequence:
 - `v0.13.0`: insights and review
 - `v0.14.0`: retention and routine support
 - `v1.0.0`: reliability and trust
+- `v1.1.0`: search and navigation power
+- `v1.2.0`: data safety and history
+- `v1.3.0`: analytics and insights
+- `v2.0.0`: extensibility and custom tracking

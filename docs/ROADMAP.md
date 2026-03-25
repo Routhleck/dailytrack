@@ -1,7 +1,7 @@
 # Product Roadmap (Detailed Execution Plan)
 
 Last updated: 2026-03-25  
-Baseline: after `v0.11.0` release; `v0.12.0` changes are tracked in `Unreleased`.
+Baseline: after `v0.14.0` release; post-v1.0 milestones added from full codebase review.
 
 This roadmap is intentionally detailed so we can ship in small, traceable batches without scope drift.
 
@@ -63,6 +63,17 @@ Target:
 - better body trend analytics
 - stronger template and goal customization
 - long-term review/report and retention features
+
+## 5) Code Quality and Reliability
+
+Target:
+
+- split Rust backend monolith (`lib.rs` + `webdav.rs`) into feature modules
+- add Rust `#[cfg(test)]` coverage for path validation, file helpers, and profile logic
+- add React `ErrorBoundary` for graceful crash recovery
+- add at least one E2E smoke test (open → create note → verify file)
+- move blocking HTTP calls (`generate_llm_report`) to async
+- increase frontend test coverage beyond parsing (component + integration)
 
 ## Milestones
 
@@ -243,6 +254,66 @@ Acceptance focus:
 
 - Data-loss anxiety is minimized with clear recovery paths.
 
+## v1.1.0 - Search and Navigation Power
+
+Goal: make retrieval and navigation fast for power users.
+
+Outcomes:
+
+- Full-text search across all daily/weekly notes (in-memory index over markdown files).
+- Keyboard shortcuts for high-frequency navigation (`Ctrl+T` today, `Ctrl+W` this week, `Ctrl+/` search).
+- Year-view daily completion heatmap (extend 28-day heatmap to full GitHub-style year grid).
+- Quick-open command palette for jumping to any note by date or keyword.
+
+Acceptance focus:
+
+- User can find any past note within seconds without manual browsing.
+
+## v1.2.0 - Data Safety and History
+
+Goal: eliminate data-loss anxiety with local recovery options.
+
+Outcomes:
+
+- Per-file save history (keep last N snapshots on each write, stored under `.<filename>.history/`).
+- Simple undo buffer for structured editing (last 3 states in memory).
+- System tray quick-capture (one-click body log or toggle today's first unchecked item, desktop only).
+- CLI companion for terminal users (`dailytrack log --weight 72.5`, `dailytrack today --check "Train"`).
+
+Acceptance focus:
+
+- Accidental edits can always be recovered without WebDAV or manual backups.
+
+## v1.3.0 - Analytics and Insights
+
+Goal: turn accumulated data into actionable personal insights.
+
+Outcomes:
+
+- Per-item recurring goal tracking ("Exercise 4x/week" with automatic counting from checklist completions).
+- Cross-signal correlation hints (e.g. "productivity highest on exercise days") from local completion + body + mood data.
+- PDF/HTML export for weekly/monthly reports (render existing LLM + structured snapshots).
+- Photo/file attachments linked from daily notes (stored in `daily/attachments/`).
+
+Acceptance focus:
+
+- User gets periodic insights without needing to manually cross-reference notes.
+
+## v2.0.0 - Extensibility and Custom Tracking
+
+Goal: support tracking beyond the built-in daily/weekly/body dimensions.
+
+Outcomes:
+
+- User-defined custom tracker sections (arbitrary tracking dimensions as new file types under profile).
+- Calendar integration (iCal export of completion data, optional calendar event import).
+- Natural language quick-entry parsing ("worked out, ate well, 72kg" → structured fields).
+- Community template sharing (import/export template packs as portable bundles).
+
+Acceptance focus:
+
+- Power users can extend the tracker to fit personal workflows without forking the app.
+
 ## Prioritized Backlog (Rolling)
 
 ## P0 (Now -> Next 2 releases)
@@ -278,6 +349,18 @@ P0 progress snapshot:
 - Weekly goal system + monthly review helper.
 - Advanced trend correlation hints.
 - Export/report packaging improvements.
+- Full-text note search with in-memory index.
+- Per-file save history for local recovery.
+- Keyboard shortcuts and command palette.
+- CLI companion for terminal-based quick entry.
+- PDF/HTML report export.
+- Year-view completion heatmap.
+- Per-item recurring goal tracking.
+- Photo/file attachments for daily notes.
+- Cross-signal correlation insights.
+- Custom user-defined tracker sections.
+- Calendar integration (iCal export).
+- Natural language quick-entry parsing.
 
 ## Non-Goals (Unchanged)
 
