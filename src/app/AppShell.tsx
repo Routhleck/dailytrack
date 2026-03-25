@@ -108,9 +108,15 @@ export function AppShell() {
                 </div>
               ) : null}
 
-              <div key={location.pathname} className="dt-route-enter">
-                <Outlet />
-              </div>
+              {needsInitialTemplateSetup ? (
+                <div className="dt-panel p-4 text-sm text-slate-600">
+                  {t('onboarding.description')}
+                </div>
+              ) : (
+                <div key={location.pathname} className="dt-route-enter">
+                  <Outlet />
+                </div>
+              )}
             </main>
           </div>
         </div>

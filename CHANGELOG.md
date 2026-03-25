@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - failed auto-create of new-day Daily/Weekly notes
   - failed Sync diagnostics export writes.
 - Improved runtime error detail visibility for onboarding template apply, Dashboard/Daily load failures, and diagnostics export failures.
+- Fixed onboarding template language mismatch on first run by preventing route preloads during initial template setup and force-applying selected template content to current-day/current-week notes after onboarding apply.
 
 ## [0.11.0] - 2026-03-24
 

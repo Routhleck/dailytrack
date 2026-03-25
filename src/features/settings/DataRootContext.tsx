@@ -34,6 +34,8 @@ import { extractErrorMessage } from '../../lib/error'
 import { markTutorialPending, resetTutorialState } from '../tutorial/tutorial.store'
 import { saveTemplateMeta, type TemplateApplyMode } from './templateMeta.service'
 import type { TemplateLanguage } from './templateCatalog'
+import { todayDateString } from '../../lib/date/date'
+import { currentWeekId } from '../../lib/date/week'
 
 type ProfileCreateOptions = {
   dailyTemplate?: string
@@ -210,6 +212,22 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
           dataRoot,
           joinPath(dataRoot, 'templates', 'weekly.md'),
           normalizeTemplateContent(weeklyTemplate),
+        )
+
+        // Ensure the first opened Today/This Week notes match the selected onboarding template.
+        // This prevents default-template auto-created files (from pre-onboarding page loads)
+        // from overriding the user's explicit onboarding selection.
+        const today = todayDateString()
+        const weekId = currentWeekId()
+        await writeTextFile(
+          dataRoot,
+          joinPath(dataRoot, 'daily', `${today}.md`),
+          normalizeTemplateContent(dailyTemplate.replaceAll('{{date}}', today)),
+        )
+        await writeTextFile(
+          dataRoot,
+          joinPath(dataRoot, 'weekly', `${weekId}.md`),
+          normalizeTemplateContent(weeklyTemplate.replaceAll('{{week}}', weekId)),
         )
         if (templateMeta?.templatePresetId && templateMeta?.templateLanguage) {
           await saveTemplateMeta(dataRoot, {
