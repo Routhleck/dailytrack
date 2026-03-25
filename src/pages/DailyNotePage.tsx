@@ -18,6 +18,7 @@ import { extractErrorMessage } from '../lib/error'
 import { readTextFile } from '../lib/fs/fileApi'
 import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
+import { recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
 import type { DailyNote } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -69,6 +70,8 @@ export function DailyNotePage() {
     let cancelled = false
     setLoading(true)
     setMessage('')
+    const loadStartMs = performance.now()
+    let failed = false
 
     void getDailyNote(dataRoot, activeDate)
       .then((next) => {
@@ -80,12 +83,17 @@ export function DailyNotePage() {
         markSaved(next)
       })
       .catch((error) => {
+        failed = true
         if (cancelled) {
           return
         }
         setMessage(`${t('dailyNote.loadFailed')} ${extractErrorMessage(error, '')}`.trim())
       })
       .finally(() => {
+        recordRuntimePerfSeries('daily_note_load_ms', performance.now() - loadStartMs, {
+          failed,
+          date: activeDate,
+        })
         if (!cancelled) {
           setLoading(false)
         }

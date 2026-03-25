@@ -14,6 +14,7 @@ import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
 import { extractErrorMessage } from '../lib/error'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
+import { recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
 import type { BodyRecord } from '../types/tracker'
 
 const BODY_DASHBOARD_FIELDS: {
@@ -65,6 +66,8 @@ export function DashboardPage() {
     }
 
     loadingRef.current = true
+    const startMs = performance.now()
+    let failed = false
     try {
       const [todayResult, weekResult, bodyResult, dailyResult, weeklyResult] = await Promise.allSettled([
         getTodayNote(dataRoot),
@@ -102,10 +105,14 @@ export function DashboardPage() {
       })
       setError('')
     } catch (error) {
+      failed = true
       console.warn('[dashboard] failed to load dashboard data', error)
       const details = extractErrorMessage(error, '')
       setError(`${t('dashboard.loadFailed')} ${details}`.trim())
     } finally {
+      recordRuntimePerfSeries('dashboard_load_ms', performance.now() - startMs, {
+        failed,
+      })
       loadingRef.current = false
       if (pendingReloadRef.current) {
         pendingReloadRef.current = false

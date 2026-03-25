@@ -11,6 +11,7 @@ import { useDataRoot } from '../features/settings/DataRootContext'
 import { TutorialGuide } from '../features/tutorial/TutorialGuide'
 import { useUpdater } from '../features/updater/UpdaterContext'
 import { MobileSyncBanner } from '../features/webdav/MobileSyncBanner'
+import { markRuntimePerf, recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
 
 export function AppShell() {
   const { t, language, setLanguage } = useI18n()
@@ -23,8 +24,38 @@ export function AppShell() {
   const [deferredOverlayReady, setDeferredOverlayReady] = useState(false)
 
   useEffect(() => {
+    markRuntimePerf('shell_mounted')
+    const startMs = performance.now()
+    const frameId = window.requestAnimationFrame(() => {
+      recordRuntimePerfSeries('shell_mount_to_first_frame_ms', performance.now() - startMs)
+      markRuntimePerf('shell_first_frame')
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [])
+
+  useEffect(() => {
+    markRuntimePerf('route_change')
+    const startMs = performance.now()
+    const frameId = window.requestAnimationFrame(() => {
+      recordRuntimePerfSeries('route_switch_to_frame_ms', performance.now() - startMs, {
+        path: location.pathname,
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    const startMs = performance.now()
     const timer = window.setTimeout(() => {
       setDeferredOverlayReady(true)
+      recordRuntimePerfSeries('startup_to_overlay_ready_ms', performance.now() - startMs)
+      markRuntimePerf('overlay_ready')
     }, 1800)
 
     return () => {

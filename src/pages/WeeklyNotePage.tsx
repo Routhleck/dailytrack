@@ -22,6 +22,7 @@ import { currentWeekId } from '../lib/date/week'
 import { readTextFile } from '../lib/fs/fileApi'
 import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
+import { recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
 import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
@@ -72,6 +73,8 @@ export function WeeklyNotePage() {
     let cancelled = false
     setLoading(true)
     setMessage('')
+    const loadStartMs = performance.now()
+    let failed = false
 
     void getWeeklyNote(dataRoot, activeWeekId)
       .then((next) => {
@@ -83,11 +86,16 @@ export function WeeklyNotePage() {
         markSaved(next)
       })
       .catch(() => {
+        failed = true
         if (!cancelled) {
           setMessage(t('weeklyNote.loadFailed'))
         }
       })
       .finally(() => {
+        recordRuntimePerfSeries('weekly_note_load_ms', performance.now() - loadStartMs, {
+          failed,
+          weekId: activeWeekId,
+        })
         if (!cancelled) {
           setLoading(false)
         }

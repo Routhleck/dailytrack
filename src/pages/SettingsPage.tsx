@@ -20,6 +20,7 @@ import {
   type CopySummary,
   type WebdavConfig,
   type WebdavSnapshot,
+  writeTextFile,
   writeBinaryFile,
 } from '../lib/fs/fileApi'
 import {
@@ -37,6 +38,7 @@ import {
   normalizeWebdavConfig,
 } from '../features/webdav/webdav.service'
 import { joinPath } from '../lib/fs/pathApi'
+import { captureRuntimePerfSnapshot } from '../lib/perf/runtimePerf'
 
 function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -81,6 +83,10 @@ function formatCopySummary(
     skipped: summary.skippedFiles,
     dirs: summary.createdDirs,
   })
+}
+
+function perfDiagnosticFileName() {
+  return `perf-diagnostic-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
 }
 
 type WebdavNumericField =
@@ -162,6 +168,8 @@ export function SettingsPage() {
   const [resetConfirmText, setResetConfirmText] = useState('')
   const [resetMessage, setResetMessage] = useState('')
   const [resetBusy, setResetBusy] = useState(false)
+  const [perfExportBusy, setPerfExportBusy] = useState(false)
+  const [perfExportMessage, setPerfExportMessage] = useState('')
 
   const [webdavConfig, setWebdavConfig] = useState<WebdavConfig>(defaultWebdavConfig())
   const [webdavSnapshots, setWebdavSnapshots] = useState<WebdavSnapshot[]>([])
@@ -776,6 +784,49 @@ export function SettingsPage() {
     }
   }
 
+  async function handleExportPerfDiagnostics() {
+    const diagnosticsRoot = baseDataRoot ?? dataRoot
+    if (!diagnosticsRoot || !dataRoot) {
+      const text = t('settings.dataRootNotReady')
+      setPerfExportMessage(text)
+      pushError(text)
+      return
+    }
+
+    setPerfExportBusy(true)
+    setPerfExportMessage('')
+    try {
+      const path = joinPath(diagnosticsRoot, 'perf-diagnostics', perfDiagnosticFileName())
+      const snapshot = captureRuntimePerfSnapshot()
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: {
+          version: currentVersion,
+          profile: activeProfile,
+          baseDataRoot: diagnosticsRoot,
+          profileRoot: dataRoot,
+        },
+        runtime: {
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+          platform: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',
+          visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+        },
+        perf: snapshot,
+      }
+
+      await writeTextFile(dataRoot, path, `${JSON.stringify(payload, null, 2)}\n`)
+      const text = t('settings.perfDiagnosticExported', { path })
+      setPerfExportMessage(text)
+      pushSuccess(text)
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.perfDiagnosticExportFailed')
+      setPerfExportMessage(text)
+      pushError(text)
+    } finally {
+      setPerfExportBusy(false)
+    }
+  }
+
   return (
     <section className="dt-page">
       <PageHeader
@@ -800,6 +851,21 @@ export function SettingsPage() {
           {t('settings.activeProfileRoot')}: <span className="font-medium break-all">{dataRoot || '-'}</span>
         </p>
         <p className="mt-1 text-xs text-slate-500">{t('settings.migrateOnlyHint')}</p>
+        <div className="mt-4 border-t border-slate-200 pt-3">
+          <p className="text-sm font-medium text-slate-900">{t('settings.performanceDiagnostics')}</p>
+          <p className="mt-1 text-sm text-slate-600">{t('settings.performanceDiagnosticsDescription')}</p>
+          <button
+            type="button"
+            className="dt-btn dt-btn-secondary mt-3"
+            onClick={() => void handleExportPerfDiagnostics()}
+            disabled={perfExportBusy || loading || !dataRoot}
+          >
+            {perfExportBusy ? t('settings.exportingPerfDiagnostics') : t('settings.exportPerfDiagnostics')}
+          </button>
+          {perfExportMessage ? (
+            <p className="mt-2 break-all text-sm text-slate-600">{perfExportMessage}</p>
+          ) : null}
+        </div>
         <div className="mt-4 border-t border-slate-200 pt-3">
           <p className="text-sm font-medium text-slate-900">{t('settings.tutorial')}</p>
           <p className="mt-1 text-sm text-slate-600">{t('settings.tutorialDescription')}</p>
