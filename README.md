@@ -67,6 +67,10 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 ## Core Features
 
+- First-run onboarding:
+  - step 1: pick UI language
+  - step 2: choose user type (`New User` / `Existing User`)
+  - existing-user path can complete setup in onboarding directly (local import or WebDAV pull), no Settings detour
 - Dashboard:
   - Today and This Week progress summary
   - latest body metrics snapshot

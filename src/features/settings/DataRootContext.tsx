@@ -69,6 +69,7 @@ type DataRootContextValue = {
     weeklyTemplate: string,
     templateMeta?: Pick<ProfileCreateOptions, 'templatePresetId' | 'templateLanguage' | 'templateApplyMode'>,
   ) => Promise<void>
+  finishInitialTemplateSetup: (options?: { runTutorial?: boolean }) => Promise<void>
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
   deleteProfile: (profileName: string) => Promise<void>
@@ -240,6 +241,14 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
 
         clearPendingInitialTemplateRoot()
         markTutorialPending()
+        setNeedsInitialTemplateSetup(false)
+        emitDataChanged({ scope: 'all' })
+      },
+      finishInitialTemplateSetup: async (options) => {
+        clearPendingInitialTemplateRoot()
+        if (options?.runTutorial) {
+          markTutorialPending()
+        }
         setNeedsInitialTemplateSetup(false)
         emitDataChanged({ scope: 'all' })
       },
