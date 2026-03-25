@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Changed
+- Improved tab/page switch loading experience:
+  - replaced abrupt plain-text `Loading...` fallback with a skeleton-style loading card.
+  - added a short delayed-display threshold to avoid flicker on fast route transitions.
+  - added motion-reduced fallback behavior for accessibility-friendly transitions.
 
 ### Fixed
 - Fixed performance diagnostics export path on Settings:

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { createHashRouter } from 'react-router-dom'
 
 import { useI18n } from '../features/i18n/I18nContext'
@@ -70,7 +70,29 @@ export function preloadRoutePages() {
 
 function RouteFallback() {
   const { t } = useI18n()
-  return <div className="text-sm text-slate-500">{t('common.loadingPage')}</div>
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setVisible(true)
+    }, 140)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [])
+
+  if (!visible) {
+    return <div className="h-20" aria-hidden />
+  }
+
+  return (
+    <div className="dt-route-loading" role="status" aria-live="polite">
+      <div className="dt-route-loading-line dt-route-loading-line-title" />
+      <div className="dt-route-loading-line dt-route-loading-line-content" />
+      <p className="dt-route-loading-label">{t('common.loadingPage')}</p>
+    </div>
+  )
 }
 
 function withSuspense(node: ReactNode) {
