@@ -86,6 +86,8 @@ export const enMessages = {
   'onboarding.pathPickFailed': 'Failed to open file/folder picker.',
   'onboarding.webdavTitle': 'WebDAV Sync',
   'onboarding.webdavDescription': 'Configure WebDAV now and pull latest snapshot to continue.',
+  'onboarding.webdavSyncStartsAfterSetup':
+    'Realtime WebDAV sync starts only after onboarding is completed.',
   'onboarding.webdavBaseUrl': 'Remote base URL',
   'onboarding.webdavUsername': 'Username',
   'onboarding.webdavPassword': 'Password / App Password',
@@ -934,6 +936,7 @@ export const zhMessages: Record<MessageKey, string> = {
   'onboarding.pathPickFailed': '打开文件/目录选择器失败。',
   'onboarding.webdavTitle': 'WebDAV 同步',
   'onboarding.webdavDescription': '现在配置 WebDAV 并拉取最新快照后继续。',
+  'onboarding.webdavSyncStartsAfterSetup': '实时 WebDAV 同步会在引导完成后才启动。',
   'onboarding.webdavBaseUrl': '远端基础 URL',
   'onboarding.webdavUsername': '用户名',
   'onboarding.webdavPassword': '密码 / 应用专用密码',
