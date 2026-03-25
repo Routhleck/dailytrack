@@ -11,6 +11,8 @@ use notify::{
 use serde::Serialize;
 use tauri::Emitter;
 use tauri::Manager;
+use zip::write::FileOptions;
+use zip::CompressionMethod;
 mod webdav;
 
 const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
@@ -554,6 +556,60 @@ fn validate_bundle_root(path: &Path) -> Result<(), String> {
   Ok(())
 }
 
+fn build_export_zip(source_root: &Path, zip_path: &Path) -> Result<CopySummary, String> {
+  let zip_file = fs::File::create(zip_path)
+    .map_err(|err| format!("Failed to create export zip {}: {err}", zip_path.display()))?;
+  let mut writer = zip::ZipWriter::new(zip_file);
+  let mut summary = CopySummary::default();
+  let file_options = FileOptions::default()
+    .compression_method(CompressionMethod::Deflated)
+    .unix_permissions(0o644);
+  let dir_options = FileOptions::default()
+    .compression_method(CompressionMethod::Deflated)
+    .unix_permissions(0o755);
+
+  for entry in walkdir::WalkDir::new(source_root).min_depth(1).into_iter() {
+    let entry = entry.map_err(|err| format!("Failed to walk source {}: {err}", source_root.display()))?;
+    let path = entry.path();
+    let relative = path.strip_prefix(source_root).map_err(|err| {
+      format!(
+        "Failed to resolve export relative path {} from {}: {err}",
+        path.display(),
+        source_root.display()
+      )
+    })?;
+    let normalized = relative.to_string_lossy().replace('\\', "/");
+    if normalized.is_empty() {
+      continue;
+    }
+
+    if entry.file_type().is_dir() {
+      writer
+        .add_directory(format!("{normalized}/"), dir_options)
+        .map_err(|err| format!("Failed to add directory {normalized} to zip: {err}"))?;
+      summary.created_dirs += 1;
+      continue;
+    }
+
+    if entry.file_type().is_file() {
+      writer
+        .start_file(normalized.as_str(), file_options)
+        .map_err(|err| format!("Failed to add file {normalized} to zip: {err}"))?;
+      let mut input = fs::File::open(path)
+        .map_err(|err| format!("Failed to read export file {}: {err}", path.display()))?;
+      std::io::copy(&mut input, &mut writer)
+        .map_err(|err| format!("Failed to write file {normalized} to zip: {err}"))?;
+      summary.copied_files += 1;
+    }
+  }
+
+  writer
+    .finish()
+    .map_err(|err| format!("Failed to finalize export zip {}: {err}", zip_path.display()))?;
+
+  Ok(summary)
+}
+
 fn import_bundle_from_directory(
   source_root: &Path,
   data_root: &Path,
@@ -1080,10 +1136,10 @@ fn export_data_bundle(
     .map_err(|err| format!("Failed to get current time: {err}"))?
     .as_secs();
 
-  let mut bundle_path = destination_base.join(format!("dailytrack-export-{timestamp}"));
+  let mut bundle_path = destination_base.join(format!("dailytrack-export-{timestamp}.zip"));
   let mut suffix = 1;
   while bundle_path.exists() {
-    bundle_path = destination_base.join(format!("dailytrack-export-{timestamp}-{suffix}"));
+    bundle_path = destination_base.join(format!("dailytrack-export-{timestamp}-{suffix}.zip"));
     suffix += 1;
   }
 
@@ -1095,7 +1151,7 @@ fn export_data_bundle(
     ));
   }
 
-  let summary = copy_dir_recursive(source_root.as_path(), bundle_path.as_path(), false)?;
+  let summary = build_export_zip(source_root.as_path(), bundle_path.as_path())?;
   Ok(ExportDataBundleResult {
     bundle_path: bundle_path.to_string_lossy().to_string(),
     summary,

@@ -114,9 +114,12 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - mobile sync status banner toggle
 - Settings:
   - diagnostics section (init/profile/root runtime state)
-  - data root migration (copy + switch)
-  - export/import (import supports folder or `.zip` bundle path)
-  - native folder-picker buttons for migration/export/import paths (manual typing fallback kept)
+  - data root migration (copy + switch, desktop)
+  - export/import:
+    - export always generates a single `.zip` bundle
+    - import supports folder or `.zip` on desktop
+    - Android import is `.zip`-first
+  - Android: fixed local data root (migration disabled), fixed export directory, post-export `Share zip` / `Save zip as...`
   - WebDAV snapshot backup controls
   - updater controls (auto-check, manual check, install+restart)
   - tutorial replay

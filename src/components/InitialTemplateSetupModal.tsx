@@ -79,6 +79,10 @@ export function InitialTemplateSetupModal() {
   const [busy, setBusy] = useState(false)
   const [testingWebdav, setTestingWebdav] = useState(false)
   const [message, setMessage] = useState('')
+  const isAndroidRuntime = useMemo(
+    () => typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent),
+    [],
+  )
 
   const selectedPreset = useMemo(() => getTemplatePresetById(presetId), [presetId])
   const selectedVariant = useMemo(
@@ -174,6 +178,18 @@ export function InitialTemplateSetupModal() {
   }
 
   async function handlePickImportSource() {
+    if (isAndroidRuntime) {
+      try {
+        const pickedFile = await pickFile(importSource || undefined)
+        if (pickedFile) {
+          setImportSource(pickedFile)
+        }
+      } catch (error) {
+        setMessage(extractErrorMessage(error, t('onboarding.pathPickFailed')))
+      }
+      return
+    }
+
     try {
       const picked = await pickDirectory(importSource || undefined)
       if (picked) {
@@ -463,14 +479,20 @@ export function InitialTemplateSetupModal() {
                 <label className="block text-sm font-medium text-slate-700" htmlFor="onboarding-import-source">
                   {t('onboarding.importSource')}
                 </label>
+                {isAndroidRuntime ? (
+                  <p className="text-xs text-slate-500">{t('onboarding.importZipOnlyHint')}</p>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     id="onboarding-import-source"
                     className="dt-input min-w-56 flex-1"
                     value={importSource}
                     onChange={(event) => setImportSource(event.target.value)}
-                    placeholder={t('onboarding.importSourcePlaceholder')}
+                    placeholder={
+                      isAndroidRuntime ? t('onboarding.importSourcePlaceholderMobile') : t('onboarding.importSourcePlaceholder')
+                    }
                     disabled={busy || testingWebdav}
+                    readOnly={isAndroidRuntime}
                   />
                   <button
                     type="button"

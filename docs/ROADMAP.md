@@ -1,7 +1,7 @@
 # Product Roadmap (Detailed Execution Plan)
 
-Last updated: 2026-03-24  
-Baseline: after `v0.8.1` release; `v0.8.2` in progress.
+Last updated: 2026-03-25  
+Baseline: after `v0.11.0` release; `v0.12.0` changes are tracked in `Unreleased`.
 
 This roadmap is intentionally detailed so we can ship in small, traceable batches without scope drift.
 
@@ -66,7 +66,7 @@ Target:
 
 ## Milestones
 
-## v0.8.2 - Mobile Polish and Readability (In Progress)
+## v0.8.2 - Mobile Polish and Readability
 
 Goal: remove mobile friction and improve baseline readability.
 
@@ -83,7 +83,7 @@ Progress snapshot:
 - Done: tutorial mobile alignment.
 - Done: typography scale preference.
 - Done: keyboard-safe nav/sheet behavior.
-- In progress: Android interaction QA pass.
+- Done: Android interaction QA pass.
 - Done: roadmap/docs wording alignment.
 
 ## v0.9.0 - UX Foundation Upgrade
@@ -104,7 +104,7 @@ Acceptance focus:
 - New users can understand “what to do next” from empty states.
 - Sync page can be understood without reading raw diagnostics.
 
-## v0.10.0 - Daily and History Efficiency (In Progress)
+## v0.10.0 - Daily and History Efficiency
 
 Goal: reduce interaction cost on high-frequency workflows.
 
@@ -174,7 +174,8 @@ Progress snapshot:
 - Done: structured template editor now supports checklist item reordering (`move up / move down`) for both create-profile and current-profile template flows.
 - Done: daily template required semantics via section switching (`Daily Core` <-> `Optional`).
 - Done: weekly template category semantics via per-item section reassignment.
-- In progress: deeper template customization (advanced required/category semantics and richer rules).
+- Done: personalization baseline shipped (required/category/order semantics + safer apply loop).
+- Deferred: richer rule-engine style template semantics moved to `v0.13+` to keep current model readable and markdown-compatible.
 
 ## v0.13.0 - Insights and Review
 
@@ -228,18 +229,18 @@ Acceptance focus:
 
 ## P0 (Now -> Next 2 releases)
 
-- Android safe-area + keyboard regression QA closure.
-- Sync summary-first layout + diagnostics fold.
-- Feedback toasts for core write/sync operations.
-- Daily row-click toggle + progress nudge.
-- Empty-state CTA coverage for Body and Sync.
+- Dashboard streak/trend comparisons (today/week vs previous period).
+- Weakest-area guidance and next-action hints.
+- Weekly/monthly report output quality (structured + export-friendly markdown).
+- Sync reliability polish for mobile background/foreground resume.
+- Android import/export onboarding polish (zip-first flow copy + diagnostics clarity).
 
 ## P1 (After P0)
 
-- History search/filter/completion metadata.
-- Body chart range + delta chips + goal line.
-- Structured/raw mode guidance polish.
-- “Only show changes” explanatory banners.
+- Reminder strategy and schedule controls (daily/weekly/body inactivity).
+- Calendar/heatmap visibility for completion streak.
+- History search/filter expansion (keywords + tags + completion combined filters).
+- Lightweight mood/energy tags and weekly review integration.
 
 ## P2 (Strategic)
 

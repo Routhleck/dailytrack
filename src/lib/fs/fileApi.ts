@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { readFile } from '@tauri-apps/plugin-fs'
+import { readFile, writeFile } from '@tauri-apps/plugin-fs'
 
 export type EnsureDataRootInfo = {
   root: string
@@ -254,6 +254,14 @@ export async function importDataBundleSmart(
     return importDataBundleZip(bytes, dataRoot, overwrite)
   }
   return importDataBundle(normalized, dataRoot, overwrite)
+}
+
+export async function readBinaryFile(path: string): Promise<Uint8Array> {
+  return readFile(path)
+}
+
+export async function writeBinaryFile(path: string, bytes: Uint8Array): Promise<void> {
+  return writeFile(path, bytes)
 }
 
 export async function migrateDataRoot(

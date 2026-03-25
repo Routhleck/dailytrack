@@ -1,4 +1,4 @@
-import { open } from '@tauri-apps/plugin-dialog'
+import { open, save } from '@tauri-apps/plugin-dialog'
 
 type DialogResult = string | string[] | null
 
@@ -62,6 +62,13 @@ export async function pickFile(defaultPath?: string): Promise<string | null> {
     pickerMode: 'document',
   })
   return normalizeDialogResult(result)
+}
+
+export async function pickSaveFile(defaultPath?: string): Promise<string | null> {
+  const resolvedDefaultPath = defaultPath && defaultPath.trim() ? defaultPath : undefined
+  return save({
+    defaultPath: resolvedDefaultPath,
+  })
 }
 
 export function isMobileDirectoryPickerError(error: unknown): boolean {

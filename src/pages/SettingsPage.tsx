@@ -14,17 +14,20 @@ import {
   listWebdavSnapshots,
   pullWebdavSnapshot,
   pushWebdavSnapshot,
+  readBinaryFile,
   saveWebdavConfig,
   testWebdavConnection,
   type CopySummary,
   type WebdavConfig,
   type WebdavSnapshot,
+  writeBinaryFile,
 } from '../lib/fs/fileApi'
 import {
   isMobileDirectoryPickerError,
   pickDirectory,
   pickDirectoryOrParentFromFile,
   pickFile,
+  pickSaveFile,
 } from '../lib/fs/dialogApi'
 import { emitDataChanged } from '../lib/liveSync'
 import {
@@ -33,6 +36,7 @@ import {
   formatSnapshotTime,
   normalizeWebdavConfig,
 } from '../features/webdav/webdav.service'
+import { joinPath } from '../lib/fs/pathApi'
 
 function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -46,6 +50,15 @@ function parentPath(path: string): string {
 
 function normalizePath(path: string): string {
   return path.replace(/\\/g, '/').replace(/\/+$/, '')
+}
+
+function baseName(path: string): string {
+  const normalized = path.replace(/\\/g, '/')
+  const index = normalized.lastIndexOf('/')
+  if (index < 0) {
+    return normalized
+  }
+  return normalized.slice(index + 1)
 }
 
 function isNestedPath(parent: string, child: string): boolean {
@@ -110,17 +123,32 @@ export function SettingsPage() {
     loading,
     error: dataRootError,
   } = useDataRoot()
+  const isAndroidRuntime = useMemo(
+    () => typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent),
+    [],
+  )
 
   const defaultExportDir = useMemo(() => {
+    if (baseDataRoot) {
+      return baseDataRoot
+    }
     if (!dataRoot) {
       return ''
     }
     return parentPath(dataRoot)
-  }, [dataRoot])
+  }, [baseDataRoot, dataRoot])
+  const fixedMobileExportDir = useMemo(() => {
+    if (!isAndroidRuntime || !baseDataRoot) {
+      return ''
+    }
+    return joinPath(baseDataRoot, 'exports')
+  }, [baseDataRoot, isAndroidRuntime])
 
   const [exportDir, setExportDir] = useState(defaultExportDir)
   const [exportMessage, setExportMessage] = useState('')
   const [exportBusy, setExportBusy] = useState(false)
+  const [lastExportZipPath, setLastExportZipPath] = useState('')
+  const [mobileExportActionBusy, setMobileExportActionBusy] = useState(false)
 
   const [importSource, setImportSource] = useState('')
   const [overwriteImport, setOverwriteImport] = useState(true)
@@ -171,19 +199,25 @@ export function SettingsPage() {
   }, [normalizedBaseRoot, normalizedMigrateTarget, t])
 
   useEffect(() => {
+    if (isAndroidRuntime) {
+      if (fixedMobileExportDir && exportDir !== fixedMobileExportDir) {
+        setExportDir(fixedMobileExportDir)
+      }
+      return
+    }
     if (!exportDir) {
       setExportDir(defaultExportDir)
     }
-  }, [defaultExportDir, exportDir])
+  }, [defaultExportDir, exportDir, fixedMobileExportDir, isAndroidRuntime])
 
   useEffect(() => {
-    if (!baseDataRoot || migrateTarget) {
+    if (isAndroidRuntime || !baseDataRoot || migrateTarget) {
       return
     }
 
     const suggested = baseDataRoot.replace(/life-tracker-data$/, 'dailytrack-data')
     setMigrateTarget(suggested === baseDataRoot ? `${baseDataRoot}-migrated` : suggested)
-  }, [baseDataRoot, migrateTarget])
+  }, [baseDataRoot, isAndroidRuntime, migrateTarget])
 
   function clearWebdavSaveTimer() {
     if (webdavSaveTimerRef.current != null) {
@@ -459,7 +493,7 @@ export function SettingsPage() {
       return
     }
 
-    const destination = exportDir.trim()
+    const destination = isAndroidRuntime ? fixedMobileExportDir : exportDir.trim()
     if (!destination) {
       const text = t('settings.exportDestinationRequired')
       setExportMessage(text)
@@ -469,11 +503,13 @@ export function SettingsPage() {
 
     setExportBusy(true)
     setExportMessage('')
+    setLastExportZipPath('')
 
     try {
       const result = await exportDataBundle(dataRoot, destination)
       const text = `${t('settings.exportCompleted', { path: result.bundlePath })} ${formatCopySummary(result.summary, t)}`
       setExportMessage(text)
+      setLastExportZipPath(result.bundlePath)
       pushSuccess(text)
     } catch (error) {
       const text = error instanceof Error ? error.message : t('settings.exportFailed')
@@ -485,6 +521,9 @@ export function SettingsPage() {
   }
 
   async function handlePickMigrateTarget() {
+    if (isAndroidRuntime) {
+      return
+    }
     try {
       const picked = await pickDirectoryOrParentFromFile(migrateTarget || baseDataRoot || undefined)
       if (picked) {
@@ -498,6 +537,9 @@ export function SettingsPage() {
   }
 
   async function handlePickExportDir() {
+    if (isAndroidRuntime) {
+      return
+    }
     try {
       const picked = await pickDirectoryOrParentFromFile(exportDir || defaultExportDir || undefined)
       if (picked) {
@@ -511,6 +553,20 @@ export function SettingsPage() {
   }
 
   async function handlePickImportSource() {
+    if (isAndroidRuntime) {
+      try {
+        const pickedFile = await pickFile(importSource || undefined)
+        if (pickedFile) {
+          setImportSource(pickedFile)
+        }
+      } catch (error) {
+        const text = error instanceof Error ? error.message : t('settings.pathPickFailed')
+        setImportMessage(text)
+        pushError(text)
+      }
+      return
+    }
+
     try {
       const picked = await pickDirectory(importSource || exportDir || defaultExportDir || undefined)
       if (picked) {
@@ -537,8 +593,80 @@ export function SettingsPage() {
     }
   }
 
+  async function handleShareExportZip() {
+    if (!lastExportZipPath) {
+      return
+    }
+    if (!navigator.share) {
+      const text = t('settings.mobileShareUnsupported')
+      setExportMessage(text)
+      pushError(text)
+      return
+    }
+
+    setMobileExportActionBusy(true)
+    try {
+      const bytes = await readBinaryFile(lastExportZipPath)
+      const fileName = baseName(lastExportZipPath) || 'dailytrack-export.zip'
+      const shareBuffer = new ArrayBuffer(bytes.byteLength)
+      new Uint8Array(shareBuffer).set(bytes)
+      const file = new File([shareBuffer], fileName, { type: 'application/zip' })
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        const text = t('settings.mobileShareUnsupported')
+        setExportMessage(text)
+        pushError(text)
+        return
+      }
+      await navigator.share({
+        title: 'dailytrack export',
+        text: fileName,
+        files: [file],
+      })
+      pushSuccess(t('settings.mobileShareDone'))
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.mobileShareFailed')
+      setExportMessage(text)
+      pushError(text)
+    } finally {
+      setMobileExportActionBusy(false)
+    }
+  }
+
+  async function handleSaveExportZipAs() {
+    if (!lastExportZipPath) {
+      return
+    }
+
+    setMobileExportActionBusy(true)
+    try {
+      const defaultName = baseName(lastExportZipPath) || 'dailytrack-export.zip'
+      const destination = await pickSaveFile(defaultName)
+      if (!destination) {
+        return
+      }
+      const bytes = await readBinaryFile(lastExportZipPath)
+      await writeBinaryFile(destination, bytes)
+      const text = t('settings.mobileSaveAsDone', { path: destination })
+      setExportMessage(text)
+      pushSuccess(text)
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.mobileSaveAsFailed')
+      setExportMessage(text)
+      pushError(text)
+    } finally {
+      setMobileExportActionBusy(false)
+    }
+  }
+
   async function handleMigrate(event: FormEvent) {
     event.preventDefault()
+
+    if (isAndroidRuntime) {
+      const text = t('settings.mobileMigrateDisabled')
+      setMigrateMessage(text)
+      pushError(text)
+      return
+    }
 
     if (!baseDataRoot) {
       const text = t('settings.dataRootNotReady')
@@ -995,6 +1123,7 @@ export function SettingsPage() {
         {webdavMessage ? <p className="break-all text-sm text-slate-600">{webdavMessage}</p> : null}
       </section>
 
+      {!isAndroidRuntime ? (
       <form onSubmit={handleMigrate} className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
         <p className="text-sm text-slate-600">
@@ -1040,33 +1169,47 @@ export function SettingsPage() {
         {migrateValidationMessage ? <p className="text-sm text-rose-700">{migrateValidationMessage}</p> : null}
         {migrateMessage ? <p className="break-all text-sm text-slate-600">{migrateMessage}</p> : null}
       </form>
+      ) : (
+      <section className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
+        <h2 className="text-base font-semibold text-slate-900">{t('settings.migrateDataRoot')}</h2>
+        <p className="text-sm text-slate-600">{t('settings.mobileMigrateDisabled')}</p>
+      </section>
+      )}
 
       <form onSubmit={handleExport} className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.exportData')}</h2>
         <p className="text-sm text-slate-600">
           {t('settings.exportDescription')}
         </p>
-        <label className="block text-sm font-medium text-slate-700" htmlFor="export-dir">
-          {t('settings.exportDestination')}
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            id="export-dir"
-            className="dt-input min-w-56 flex-1"
-            value={exportDir}
-            onChange={(event) => setExportDir(event.target.value)}
-            placeholder="/Users/you/Desktop"
-            disabled={loading || exportBusy}
-          />
-          <button
-            type="button"
-            className="dt-btn dt-btn-secondary"
-            disabled={loading || exportBusy}
-            onClick={() => void handlePickExportDir()}
-          >
-            {t('common.browse')}
-          </button>
-        </div>
+        {isAndroidRuntime ? (
+          <p className="text-sm text-slate-700">
+            {t('settings.mobileFixedExportPath', { path: fixedMobileExportDir || '-' })}
+          </p>
+        ) : (
+          <>
+            <label className="block text-sm font-medium text-slate-700" htmlFor="export-dir">
+              {t('settings.exportDestination')}
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                id="export-dir"
+                className="dt-input min-w-56 flex-1"
+                value={exportDir}
+                onChange={(event) => setExportDir(event.target.value)}
+                placeholder="/Users/you/Desktop"
+                disabled={loading || exportBusy}
+              />
+              <button
+                type="button"
+                className="dt-btn dt-btn-secondary"
+                disabled={loading || exportBusy}
+                onClick={() => void handlePickExportDir()}
+              >
+                {t('common.browse')}
+              </button>
+            </div>
+          </>
+        )}
         <button
           type="submit"
           disabled={loading || exportBusy}
@@ -1074,6 +1217,26 @@ export function SettingsPage() {
         >
           {exportBusy ? t('settings.exporting') : t('settings.export')}
         </button>
+        {isAndroidRuntime && lastExportZipPath ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="dt-btn dt-btn-secondary"
+              disabled={mobileExportActionBusy}
+              onClick={() => void handleShareExportZip()}
+            >
+              {mobileExportActionBusy ? t('common.loading') : t('settings.mobileShareZip')}
+            </button>
+            <button
+              type="button"
+              className="dt-btn dt-btn-secondary"
+              disabled={mobileExportActionBusy}
+              onClick={() => void handleSaveExportZipAs()}
+            >
+              {mobileExportActionBusy ? t('common.loading') : t('settings.mobileSaveZipAs')}
+            </button>
+          </div>
+        ) : null}
         {exportMessage ? <p className="break-all text-sm text-slate-600">{exportMessage}</p> : null}
       </form>
 
@@ -1082,6 +1245,9 @@ export function SettingsPage() {
         <p className="text-sm text-slate-600">
           {t('settings.importDescription')}
         </p>
+        {isAndroidRuntime ? (
+          <p className="text-xs text-slate-500">{t('settings.mobileImportZipOnlyHint')}</p>
+        ) : null}
         <label className="block text-sm font-medium text-slate-700" htmlFor="import-source">
           {t('settings.importSource')}
         </label>
@@ -1091,8 +1257,13 @@ export function SettingsPage() {
             className="dt-input min-w-56 flex-1"
             value={importSource}
             onChange={(event) => setImportSource(event.target.value)}
-            placeholder="/Users/you/Desktop/dailytrack-export-123456789 or /Users/you/Desktop/export.zip"
-            disabled={loading || importBusy}
+            placeholder={
+              isAndroidRuntime
+                ? '/storage/emulated/0/Download/dailytrack-export.zip'
+                : '/Users/you/Desktop/dailytrack-export-123456789 or /Users/you/Desktop/export.zip'
+            }
+            disabled={loading || importBusy || isAndroidRuntime}
+            readOnly={isAndroidRuntime}
           />
           <button
             type="button"

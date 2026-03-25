@@ -27,6 +27,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
 - English locale labels now use English wording for language selectors (`English / Chinese`) instead of mixed Chinese terms.
+- Export behavior is now zip-first across platforms:
+  - `export_data_bundle` produces `dailytrack-export-<timestamp>.zip` instead of a copied folder tree.
+- Android settings behavior is now mobile-optimized:
+  - migration is disabled (fixed local data root)
+  - export target directory is fixed under local root
+  - import flow is zip-file-first on mobile.
 
 ### Fixed
 - Fixed Android writable-path validation when storage paths resolve through alias roots (for example `/data/data/...` vs `/data/user/0/...`), which could cause:
@@ -39,6 +45,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - when folder picker is unavailable on mobile, the app now asks to pick any file and derives its parent directory automatically.
 - Fixed Android old-user import usability by switching import flow to mobile-compatible strategy:
   - when directory picker is unsupported, users can pick a file (for example export zip) and complete import in-app.
+- Fixed Android export handoff friction by adding post-export actions:
+  - one-tap system share for exported zip
+  - save-as flow to choose destination for the generated zip.
 
 ## [0.11.0] - 2026-03-24
 
