@@ -172,7 +172,9 @@ Progress snapshot:
 - Done: overwrite-mode explicit risk acknowledgment before apply.
 - Done: weekly lightweight goals and progress indicators.
 - Done: structured template editor now supports checklist item reordering (`move up / move down`) for both create-profile and current-profile template flows.
-- In progress: deeper template customization (category/required semantics).
+- Done: daily template required semantics via section switching (`Daily Core` <-> `Optional`).
+- Done: weekly template category semantics via per-item section reassignment.
+- In progress: deeper template customization (advanced required/category semantics and richer rules).
 
 ## v0.13.0 - Insights and Review
 

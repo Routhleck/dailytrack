@@ -96,6 +96,9 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - create/switch/delete profiles
   - template presets loaded from repo config (`config/template-presets.json`)
   - current template editing (structured by default, raw mode available)
+  - structured template controls for item reordering and semantics:
+    - daily required semantics via moving items between `Daily Core` and `Optional`
+    - weekly category semantics via per-item section reassignment
   - template update flow (`merge` recommended, `overwrite` optional) with impact preview and overwrite risk acknowledgment
   - template source metadata tracking per profile
   - one-click apply template to today/this week (overwrite)

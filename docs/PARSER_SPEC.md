@@ -11,6 +11,10 @@ Target sections:
 - `## Optional`
 - `## One Line`
 
+Section semantics:
+- `Daily Core` is treated as required-item template scope.
+- `Optional` is treated as optional-item template scope.
+
 Checkbox rule:
 - Regex: `^- \[( |x|X)\] (.*)$`
 - Checked when marker is `x` or `X`
@@ -40,6 +44,9 @@ Target sections:
 - `## Reflection`
   - `### 3 good things this week`
   - `### 3 most important things next week`
+
+Section semantics:
+- Section headings (`Body/Research/Life/Output/Social`) are category buckets for weekly checklist items.
 
 Checklist rule:
 - Same regex as daily
