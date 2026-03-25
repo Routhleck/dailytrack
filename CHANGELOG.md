@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No user-visible changes yet.
+
+## [0.14.1] - 2026-03-25
+
 ### Changed
 - Reduced input lag on Daily and Weekly note editors:
   - eliminated per-keystroke markdown re-serialization that was used only for dirty checking.
@@ -15,7 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Made `generate_llm_report` Tauri command async so LLM calls no longer block the main thread.
 - Extracted default daily/weekly fallback templates from inline Rust strings to separate `.md` files via `include_str!`.
 - Filled in `Cargo.toml` package metadata (name, version, license, repository).
-- Added post-v1.0 milestones to roadmap (`v1.1.0` search/nav, `v1.2.0` data safety, `v1.3.0` analytics, `v2.0.0` extensibility) and code quality workstream.
 
 ## [0.14.0] - 2026-03-25
 
