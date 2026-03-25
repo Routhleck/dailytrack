@@ -12,9 +12,15 @@ import { WebdavSyncBridge } from './features/webdav/WebdavSyncBridge'
 
 function App() {
   useEffect(() => {
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    const isMobileRuntime = /android|iphone|ipad|ipod/i.test(userAgent)
+    if (isMobileRuntime) {
+      return
+    }
+
     const preloadTimer = window.setTimeout(() => {
       void preloadRoutePages()
-    }, 350)
+    }, 1200)
 
     return () => {
       window.clearTimeout(preloadTimer)

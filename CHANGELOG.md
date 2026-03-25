@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Changed
+- Reduced startup jank by making route-page preload less aggressive:
+  - desktop preload now starts later
+  - mobile skips preload entirely
+  - preload runs incrementally instead of loading all route chunks at once.
+- Auto update checks now start with delayed background scheduling instead of running immediately on app startup.
+- GitHub Actions workflows were upgraded to Node 24 compatible action versions and now force JavaScript actions to run on Node 24.
 
 ## [0.12.0] - 2026-03-25
 

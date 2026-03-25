@@ -48,9 +48,22 @@ const routePageLoaders = [
 
 let routePreloadPromise: Promise<void> | null = null
 
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+async function preloadRoutePagesIncrementally() {
+  for (const load of routePageLoaders) {
+    await load()
+    await sleep(140)
+  }
+}
+
 export function preloadRoutePages() {
   if (!routePreloadPromise) {
-    routePreloadPromise = Promise.all(routePageLoaders.map((load) => load())).then(() => undefined)
+    routePreloadPromise = preloadRoutePagesIncrementally().then(() => undefined, () => undefined)
   }
   return routePreloadPromise
 }

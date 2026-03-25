@@ -229,6 +229,10 @@ Acceptance focus:
 
 ## P0 (Now -> Next 2 releases)
 
+- Startup/resume smoothness hardening:
+  - keep first paint and first interaction unblocked
+  - move sync/update/background checks off the critical interaction path
+  - reduce main-thread work during app resume (desktop + Android).
 - Dashboard streak/trend comparisons (today/week vs previous period).
 - Weakest-area guidance and next-action hints.
 - Weekly/monthly report output quality (structured + export-friendly markdown).

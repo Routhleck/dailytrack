@@ -180,7 +180,13 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    void checkForUpdates(false)
+    const timer = window.setTimeout(() => {
+      void checkForUpdates(false)
+    }, 4000)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
   }, [autoCheckEnabled, checkForUpdates, configured, resolved])
 
   const setAutoCheckEnabled = useCallback((enabled: boolean) => {
