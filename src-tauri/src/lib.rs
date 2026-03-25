@@ -15,9 +15,9 @@ use zip::write::FileOptions;
 use zip::CompressionMethod;
 mod webdav;
 
-const DEFAULT_DAILY_TEMPLATE: &str = "# {{date}}\n\n## Daily Core\n- [ ] Train / move body\n- [ ] Eat well / protein target\n- [ ] Finish the most important research task\n- [ ] Walk outside / get sunlight\n- [ ] Record one small win / good moment\n\n## Optional\n- [ ] Read / learn something\n- [ ] Tidy room / desk\n- [ ] Social interaction\n- [ ] Capture life note / photo / thought\n\n## One Line\n-\n";
+const DEFAULT_DAILY_TEMPLATE: &str = include_str!("templates/daily_default.md");
 
-const DEFAULT_WEEKLY_TEMPLATE: &str = "# {{week}}\n\n## Body\n- [ ] 4-5 strength sessions\n- [ ] 2-3 cardio sessions\n- [ ] 3 core sessions\n- [ ] Record weight / waist / progress photo\n- [ ] Eat well >= 5 days\n\n## Research\n- [ ] 3 deep work sessions\n- [ ] Push one key project forward\n- [ ] Plan next week\n\n## Life\n- [ ] 1 outdoor activity\n- [ ] 1 small life-enhancing activity\n- [ ] 1 environment reset / cleanup\n\n## Output\n- [ ] Publish 1 piece of content\n- [ ] Save 3 ideas / materials\n\n## Social\n- [ ] Join 1 social activity / meetup\n- [ ] Reach out to 1 friend\n\n## Reflection\n### 3 good things this week\n1.\n2.\n3.\n\n### 3 most important things next week\n1.\n2.\n3.\n";
+const DEFAULT_WEEKLY_TEMPLATE: &str = include_str!("templates/weekly_default.md");
 
 const DEFAULT_PROFILE_NAME: &str = "default";
 const DEFAULT_DATA_ROOT_DIR: &str = "dailytrack-data";
@@ -1038,7 +1038,7 @@ fn resolve_chat_completions_endpoint(base_url: &str) -> String {
 }
 
 #[tauri::command]
-fn generate_llm_report(
+async fn generate_llm_report(
   base_url: String,
   api_key: String,
   model: String,
@@ -1071,7 +1071,7 @@ fn generate_llm_report(
     }
   }
 
-  let client = reqwest::blocking::Client::builder()
+  let client = reqwest::Client::builder()
     .timeout(std::time::Duration::from_secs(90))
     .build()
     .map_err(|err| format!("Failed to build HTTP client: {err}"))?;
@@ -1082,18 +1082,21 @@ fn generate_llm_report(
     .header(reqwest::header::CONTENT_TYPE, "application/json")
     .json(&payload)
     .send()
+    .await
     .map_err(|err| format!("Failed to call LLM provider: {err}"))?;
 
   if !response.status().is_success() {
     let status = response.status();
     let body = response
       .text()
+      .await
       .unwrap_or_else(|_| "Failed to read error response body".to_string());
     return Err(format!("LLM provider returned {status}: {body}"));
   }
 
   let body: serde_json::Value = response
     .json()
+    .await
     .map_err(|err| format!("Failed to parse provider response: {err}"))?;
   let content = body
     .get("choices")

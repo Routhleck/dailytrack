@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 
 import { preloadRoutePages, router } from './app/router'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider, ToastViewport } from './features/feedback/ToastContext'
 import { I18nProvider } from './features/i18n/I18nContext'
 import { PreferencesProvider } from './features/preferences/PreferencesContext'
@@ -74,20 +75,22 @@ function App() {
   }, [])
 
   return (
-    <I18nProvider>
-      <UpdaterProvider>
-        <DataRootProvider>
-          <PreferencesProvider>
-            <ToastProvider>
-              {bridgesReady ? <FilesystemWatchBridge /> : null}
-              {bridgesReady ? <WebdavSyncBridge /> : null}
-              <RouterProvider router={router} />
-              <ToastViewport />
-            </ToastProvider>
-          </PreferencesProvider>
-        </DataRootProvider>
-      </UpdaterProvider>
-    </I18nProvider>
+    <ErrorBoundary>
+      <I18nProvider>
+        <UpdaterProvider>
+          <DataRootProvider>
+            <PreferencesProvider>
+              <ToastProvider>
+                {bridgesReady ? <FilesystemWatchBridge /> : null}
+                {bridgesReady ? <WebdavSyncBridge /> : null}
+                <RouterProvider router={router} />
+                <ToastViewport />
+              </ToastProvider>
+            </PreferencesProvider>
+          </DataRootProvider>
+        </UpdaterProvider>
+      </I18nProvider>
+    </ErrorBoundary>
   )
 }
 
