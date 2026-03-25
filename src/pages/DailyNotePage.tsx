@@ -8,7 +8,6 @@ import { TaskCheckbox } from '../components/TaskCheckbox'
 import { diffDailyAgainstTemplate } from '../features/daily/daily.diff'
 import { parseDailyMarkdown } from '../features/daily/daily.parser'
 import { getDailyNote, saveDailyRaw, saveDailyStructured } from '../features/daily/daily.service'
-import { serializeDailyMarkdown } from '../features/daily/daily.serializer'
 import { summarizeChecklist } from '../features/dashboard/dashboard.service'
 import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
@@ -40,25 +39,28 @@ export function DailyNotePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  const savedStructuredRef = useRef('')
   const savedRawRef = useRef('')
   const pollBusyRef = useRef(false)
   const resumePollAfterRef = useRef(0)
+  const noteRef = useRef<DailyNote | null>(null)
+  noteRef.current = note
+  const rawDraftRef = useRef('')
+  rawDraftRef.current = rawDraft
+  const savingRef = useRef(false)
+  savingRef.current = saving
+  const dirtyRef = useRef(false)
+  const saveTimerRef = useRef<number | null>(null)
+  const debounceDelayRef = useRef(1200)
+  debounceDelayRef.current = mode === 'structured' ? 1200 : 1500
 
-  const structuredDraft = useMemo(
-    () => (note ? serializeDailyMarkdown(note) : ''),
-    [note],
-  )
   const templateDiff = useMemo(
     () => (note && templateNote ? diffDailyAgainstTemplate(note, templateNote) : null),
     [note, templateNote],
   )
   const showOnlyChanges = preferences.ui.showOnlyChanges.daily
-  const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
-  const rawDirty = rawDraft !== savedRawRef.current
+  const noteLoaded = note !== null
 
   const markSaved = useCallback((savedNote: DailyNote) => {
-    savedStructuredRef.current = serializeDailyMarkdown(savedNote)
     savedRawRef.current = savedNote.raw
   }, [])
 
@@ -130,7 +132,8 @@ export function DailyNotePage() {
 
   const performSave = useCallback(
     async () => {
-      if (!dataRoot || !note || saving) {
+      const currentNote = noteRef.current
+      if (!dataRoot || !currentNote || savingRef.current) {
         return
       }
 
@@ -139,11 +142,12 @@ export function DailyNotePage() {
       try {
         const saved =
           mode === 'raw'
-            ? await saveDailyRaw(dataRoot, activeDate, rawDraft)
-            : await saveDailyStructured(dataRoot, note)
+            ? await saveDailyRaw(dataRoot, activeDate, rawDraftRef.current)
+            : await saveDailyStructured(dataRoot, currentNote)
         setNote(saved)
         setRawDraft(saved.raw)
         markSaved(saved)
+        dirtyRef.current = false
         setMessage(t('dailyNote.autosaved'))
         emitDataChanged({ scope: 'daily', path: saved.date })
     } catch {
@@ -152,27 +156,38 @@ export function DailyNotePage() {
       setSaving(false)
     }
     },
-    [activeDate, dataRoot, markSaved, mode, note, rawDraft, saving, t],
+    [activeDate, dataRoot, markSaved, mode, t],
   )
 
+  const performSaveRef = useRef(performSave)
+  performSaveRef.current = performSave
+
+  const scheduleAutosave = useCallback(() => {
+    dirtyRef.current = true
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null
+      void performSaveRef.current()
+    }, debounceDelayRef.current)
+  }, [])
+
   useEffect(() => {
-    if (!dataRoot || !note || loading || saving) {
-      return
-    }
-
-    const dirty = mode === 'structured' ? structuredDirty : rawDirty
-    if (!dirty) {
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      void performSave()
-    }, mode === 'structured' ? 1200 : 1500)
-
     return () => {
-      window.clearTimeout(timer)
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+      }
     }
-  }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
+  }, [])
+
+  useEffect(() => {
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    dirtyRef.current = false
+  }, [mode])
 
   useEffect(() => {
     resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
@@ -190,7 +205,7 @@ export function DailyNotePage() {
   }, [])
 
   useEffect(() => {
-    if (!dataRoot || !note) {
+    if (!dataRoot || !noteLoaded) {
       return
     }
 
@@ -206,12 +221,7 @@ export function DailyNotePage() {
       if (pollBusyRef.current) {
         return
       }
-      if (saving) {
-        return
-      }
-
-      const dirty = mode === 'structured' ? structuredDirty : rawDirty
-      if (dirty) {
+      if (savingRef.current || dirtyRef.current) {
         return
       }
 
@@ -239,7 +249,7 @@ export function DailyNotePage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeDate, dataRoot, markSaved, mode, note, preferences.sync.mode, rawDirty, saving, structuredDirty, t])
+  }, [activeDate, dataRoot, markSaved, noteLoaded, preferences.sync.mode, t])
 
   function updateChecklist(
     section: DailySection,
@@ -268,6 +278,7 @@ export function DailyNotePage() {
       return
     }
     updateChecklist(section, index, { checked })
+    scheduleAutosave()
   }
 
   if (rootLoading || preferencesLoading || loading) {
@@ -413,6 +424,7 @@ export function DailyNotePage() {
                     onChange={(event) => {
                       const index = note.dailyCore.findIndex((candidate) => candidate.id === item.id)
                       updateChecklist('dailyCore', index, { text: event.target.value })
+                      scheduleAutosave()
                     }}
                   />
                 </div>
@@ -451,6 +463,7 @@ export function DailyNotePage() {
                       onChange={(event) => {
                         const index = note.optional.findIndex((candidate) => candidate.id === item.id)
                         updateChecklist('optional', index, { text: event.target.value })
+                        scheduleAutosave()
                       }}
                     />
                   </div>
@@ -470,6 +483,7 @@ export function DailyNotePage() {
                     value={note.moodTag}
                     onChange={(event) => {
                       setNote((prev) => (prev ? { ...prev, moodTag: event.target.value } : prev))
+                      scheduleAutosave()
                     }}
                     placeholder={t('dailyNote.moodPlaceholder')}
                   />
@@ -481,6 +495,7 @@ export function DailyNotePage() {
                     value={note.energyTag}
                     onChange={(event) => {
                       setNote((prev) => (prev ? { ...prev, energyTag: event.target.value } : prev))
+                      scheduleAutosave()
                     }}
                     placeholder={t('dailyNote.energyPlaceholder')}
                   />
@@ -497,6 +512,7 @@ export function DailyNotePage() {
                 value={note.oneLine}
                 onChange={(event) => {
                   setNote((prev) => (prev ? { ...prev, oneLine: event.target.value } : prev))
+                  scheduleAutosave()
                 }}
                 placeholder={t('dailyNote.oneLinePlaceholder')}
               />
@@ -504,7 +520,10 @@ export function DailyNotePage() {
           ) : null}
         </div>
       ) : (
-        <MarkdownEditor value={rawDraft} onChange={setRawDraft} />
+        <MarkdownEditor value={rawDraft} onChange={(next) => {
+          setRawDraft(next)
+          scheduleAutosave()
+        }} />
       )}
     </section>
   )

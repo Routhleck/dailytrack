@@ -12,7 +12,6 @@ import { useDataRoot } from '../features/settings/DataRootContext'
 import { diffWeeklyAgainstTemplate } from '../features/weekly/weekly.diff'
 import { parseWeeklyMarkdown } from '../features/weekly/weekly.parser'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
-import { serializeWeeklyMarkdown } from '../features/weekly/weekly.serializer'
 import {
   getWeeklyNote,
   saveWeeklyRaw,
@@ -43,25 +42,28 @@ export function WeeklyNotePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  const savedStructuredRef = useRef('')
   const savedRawRef = useRef('')
   const pollBusyRef = useRef(false)
   const resumePollAfterRef = useRef(0)
+  const noteRef = useRef<WeeklyNote | null>(null)
+  noteRef.current = note
+  const rawDraftRef = useRef('')
+  rawDraftRef.current = rawDraft
+  const savingRef = useRef(false)
+  savingRef.current = saving
+  const dirtyRef = useRef(false)
+  const saveTimerRef = useRef<number | null>(null)
+  const debounceDelayRef = useRef(1200)
+  debounceDelayRef.current = mode === 'structured' ? 1200 : 1500
 
-  const structuredDraft = useMemo(
-    () => (note ? serializeWeeklyMarkdown(note) : ''),
-    [note],
-  )
   const templateDiff = useMemo(
     () => (note && templateNote ? diffWeeklyAgainstTemplate(note, templateNote) : null),
     [note, templateNote],
   )
   const showOnlyChanges = preferences.ui.showOnlyChanges.weekly
-  const structuredDirty = Boolean(note && structuredDraft !== savedStructuredRef.current)
-  const rawDirty = rawDraft !== savedRawRef.current
+  const noteLoaded = note !== null
 
   const markSaved = useCallback((savedNote: WeeklyNote) => {
-    savedStructuredRef.current = serializeWeeklyMarkdown(savedNote)
     savedRawRef.current = savedNote.raw
   }, [])
 
@@ -132,7 +134,8 @@ export function WeeklyNotePage() {
 
   const performSave = useCallback(
     async () => {
-      if (!dataRoot || !note || saving) {
+      const currentNote = noteRef.current
+      if (!dataRoot || !currentNote || savingRef.current) {
         return
       }
 
@@ -141,11 +144,12 @@ export function WeeklyNotePage() {
       try {
         const saved =
           mode === 'raw'
-            ? await saveWeeklyRaw(dataRoot, activeWeekId, rawDraft)
-            : await saveWeeklyStructured(dataRoot, note)
+            ? await saveWeeklyRaw(dataRoot, activeWeekId, rawDraftRef.current)
+            : await saveWeeklyStructured(dataRoot, currentNote)
         setNote(saved)
         setRawDraft(saved.raw)
         markSaved(saved)
+        dirtyRef.current = false
         setMessage(t('weeklyNote.autosaved'))
         emitDataChanged({ scope: 'weekly', path: saved.weekId })
       } catch {
@@ -154,27 +158,38 @@ export function WeeklyNotePage() {
         setSaving(false)
       }
     },
-    [activeWeekId, dataRoot, markSaved, mode, note, rawDraft, saving, t],
+    [activeWeekId, dataRoot, markSaved, mode, t],
   )
 
+  const performSaveRef = useRef(performSave)
+  performSaveRef.current = performSave
+
+  const scheduleAutosave = useCallback(() => {
+    dirtyRef.current = true
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null
+      void performSaveRef.current()
+    }, debounceDelayRef.current)
+  }, [])
+
   useEffect(() => {
-    if (!dataRoot || !note || loading || saving) {
-      return
-    }
-
-    const dirty = mode === 'structured' ? structuredDirty : rawDirty
-    if (!dirty) {
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      void performSave()
-    }, mode === 'structured' ? 1200 : 1500)
-
     return () => {
-      window.clearTimeout(timer)
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+      }
     }
-  }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
+  }, [])
+
+  useEffect(() => {
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    dirtyRef.current = false
+  }, [mode])
 
   useEffect(() => {
     resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
@@ -192,7 +207,7 @@ export function WeeklyNotePage() {
   }, [])
 
   useEffect(() => {
-    if (!dataRoot || !note) {
+    if (!dataRoot || !noteLoaded) {
       return
     }
 
@@ -208,12 +223,7 @@ export function WeeklyNotePage() {
       if (pollBusyRef.current) {
         return
       }
-      if (saving) {
-        return
-      }
-
-      const dirty = mode === 'structured' ? structuredDirty : rawDirty
-      if (dirty) {
+      if (savingRef.current || dirtyRef.current) {
         return
       }
 
@@ -241,7 +251,7 @@ export function WeeklyNotePage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeWeekId, dataRoot, markSaved, mode, note, preferences.sync.mode, rawDirty, saving, structuredDirty, t])
+  }, [activeWeekId, dataRoot, markSaved, noteLoaded, preferences.sync.mode, t])
 
   function updateChecklist(
     section: WeeklySectionKey,
@@ -268,6 +278,7 @@ export function WeeklyNotePage() {
         },
       }
     })
+    scheduleAutosave()
   }
 
   function updateReflection(key: 'goodThings' | 'nextWeekTop3', index: number, value: string) {
@@ -286,6 +297,7 @@ export function WeeklyNotePage() {
         },
       }
     })
+    scheduleAutosave()
   }
 
   if (rootLoading || preferencesLoading || loading) {
@@ -543,7 +555,10 @@ export function WeeklyNotePage() {
           </div>
         </div>
       ) : (
-        <MarkdownEditor value={rawDraft} onChange={setRawDraft} />
+        <MarkdownEditor value={rawDraft} onChange={(next) => {
+          setRawDraft(next)
+          scheduleAutosave()
+        }} />
       )}
     </section>
   )

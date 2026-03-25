@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Changed
+- Reduced input lag on Daily and Weekly note editors:
+  - eliminated per-keystroke markdown re-serialization that was used only for dirty checking.
+  - stabilized autosave debounce using imperative timer refs instead of effect-driven cleanup/setup churn.
+  - stabilized poll interval lifecycle so file-change polling is no longer torn down and recreated on every keystroke.
+- Added React `ErrorBoundary` wrapping the entire app for graceful crash recovery ("Reload App" / "Try to Continue").
+- Made `generate_llm_report` Tauri command async so LLM calls no longer block the main thread.
+- Extracted default daily/weekly fallback templates from inline Rust strings to separate `.md` files via `include_str!`.
+- Filled in `Cargo.toml` package metadata (name, version, license, repository).
+- Added post-v1.0 milestones to roadmap (`v1.1.0` search/nav, `v1.2.0` data safety, `v1.3.0` analytics, `v2.0.0` extensibility) and code quality workstream.
 
 ## [0.14.0] - 2026-03-25
 
