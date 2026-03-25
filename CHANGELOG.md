@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No user-visible changes yet.
+
+## [0.12.2] - 2026-03-25
+
 ### Changed
 - Improved tab/page switch loading experience:
   - replaced abrupt plain-text `Loading...` fallback with a skeleton-style loading card.
