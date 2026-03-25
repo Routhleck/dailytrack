@@ -186,12 +186,13 @@ fn validate_existing_dir_under_root(root: &Path, path: &str) -> Result<PathBuf, 
   Ok(canonical)
 }
 
-fn canonicalize_nearest_existing_ancestor(path: &Path) -> Result<PathBuf, String> {
+fn canonicalize_nearest_existing_ancestor(path: &Path) -> Result<(PathBuf, PathBuf), String> {
   let mut cursor = Some(path);
   while let Some(current) = cursor {
     if current.exists() {
-      return fs::canonicalize(current)
-        .map_err(|err| format!("Failed to resolve existing path {}: {err}", current.display()));
+      let canonical = fs::canonicalize(current)
+        .map_err(|err| format!("Failed to resolve existing path {}: {err}", current.display()))?;
+      return Ok((current.to_path_buf(), canonical));
     }
     cursor = current.parent();
   }
@@ -226,15 +227,19 @@ fn validate_writable_file_under_root(root: &Path, path: &str) -> Result<PathBuf,
   let parent = raw
     .parent()
     .ok_or_else(|| format!("Path {} has no parent directory", raw.display()))?;
-  let canonical_ancestor = canonicalize_nearest_existing_ancestor(parent)?;
+  let (existing_ancestor_raw, canonical_ancestor) = canonicalize_nearest_existing_ancestor(parent)?;
   ensure_path_within_root(root, canonical_ancestor.as_path())?;
 
+  // Keep relative computation based on the original (possibly symlinked) ancestor path.
+  // On Android, `/data/data/...` and `/data/user/0/...` can refer to the same location,
+  // and mixing canonical + raw prefixes would incorrectly reject writable in-root paths.
   let relative_target = raw
-    .strip_prefix(canonical_ancestor.as_path())
+    .strip_prefix(existing_ancestor_raw.as_path())
     .map_err(|err| {
       format!(
-        "Path {} is not under writable ancestor {}: {err}",
+        "Path {} is not under writable ancestor {} (canonical {}): {err}",
         raw.display(),
+        existing_ancestor_raw.display(),
         canonical_ancestor.display()
       )
     })?;
