@@ -25,6 +25,7 @@ import {
   serializeDailyTemplateMarkdown,
   serializeWeeklyTemplateMarkdown,
 } from '../features/settings/templateSchema'
+import { moveItemBetweenLists } from '../features/settings/templateMove'
 import { reorderByOffset } from '../features/settings/templateReorder'
 import { todayDateString } from '../lib/date/date'
 import { currentWeekId } from '../lib/date/week'
@@ -36,6 +37,8 @@ import type { DailyNote, WeeklyNote, WeeklySectionKey } from '../types/tracker'
 function safeName(name: string): string {
   return name.trim().replace(/\s+/g, '-')
 }
+
+type DailyTemplateSection = 'dailyCore' | 'optional'
 
 export function ProfilesPage() {
   const { t, language } = useI18n()
@@ -196,11 +199,7 @@ export function ProfilesPage() {
     setCreateTemplateEditMode(mode)
   }
 
-  function updateNewDailyItem(
-    section: 'dailyCore' | 'optional',
-    index: number,
-    text: string,
-  ) {
+  function updateNewDailyItem(section: DailyTemplateSection, index: number, text: string) {
     setNewDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -220,7 +219,7 @@ export function ProfilesPage() {
     })
   }
 
-  function removeNewDailyItem(section: 'dailyCore' | 'optional', index: number) {
+  function removeNewDailyItem(section: DailyTemplateSection, index: number) {
     setNewDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -234,7 +233,7 @@ export function ProfilesPage() {
     })
   }
 
-  function moveNewDailyItem(section: 'dailyCore' | 'optional', index: number, offset: -1 | 1) {
+  function moveNewDailyItem(section: DailyTemplateSection, index: number, offset: -1 | 1) {
     setNewDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -252,7 +251,29 @@ export function ProfilesPage() {
     })
   }
 
-  function addNewDailyItem(section: 'dailyCore' | 'optional') {
+  function moveNewDailyItemToSection(section: DailyTemplateSection, index: number, target: DailyTemplateSection) {
+    if (section === target) {
+      return
+    }
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const moved = moveItemBetweenLists(prev[section], prev[target], index)
+      if (!moved.moved) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: moved.source,
+        [target]: moved.target,
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function addNewDailyItem(section: DailyTemplateSection) {
     setNewDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -327,6 +348,31 @@ export function ProfilesPage() {
         sections: {
           ...prev.sections,
           [section]: reordered,
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function moveNewWeeklyItemToSection(section: WeeklySectionKey, index: number, target: WeeklySectionKey) {
+    if (section === target) {
+      return
+    }
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const moved = moveItemBetweenLists(prev.sections[section], prev.sections[target], index)
+      if (!moved.moved) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: moved.source,
+          [target]: moved.target,
         },
       }
       setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -416,11 +462,7 @@ export function ProfilesPage() {
     setTemplateEditMode(mode)
   }
 
-  function updateDailyItem(
-    section: 'dailyCore' | 'optional',
-    index: number,
-    text: string,
-  ) {
+  function updateDailyItem(section: DailyTemplateSection, index: number, text: string) {
     setCurrentDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -440,7 +482,7 @@ export function ProfilesPage() {
     })
   }
 
-  function removeDailyItem(section: 'dailyCore' | 'optional', index: number) {
+  function removeDailyItem(section: DailyTemplateSection, index: number) {
     setCurrentDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -454,7 +496,7 @@ export function ProfilesPage() {
     })
   }
 
-  function moveDailyItem(section: 'dailyCore' | 'optional', index: number, offset: -1 | 1) {
+  function moveDailyItem(section: DailyTemplateSection, index: number, offset: -1 | 1) {
     setCurrentDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -472,7 +514,29 @@ export function ProfilesPage() {
     })
   }
 
-  function addDailyItem(section: 'dailyCore' | 'optional') {
+  function moveDailyItemToSection(section: DailyTemplateSection, index: number, target: DailyTemplateSection) {
+    if (section === target) {
+      return
+    }
+    setCurrentDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const moved = moveItemBetweenLists(prev[section], prev[target], index)
+      if (!moved.moved) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: moved.source,
+        [target]: moved.target,
+      }
+      setCurrentDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function addDailyItem(section: DailyTemplateSection) {
     setCurrentDailyStructured((prev) => {
       if (!prev) {
         return prev
@@ -547,6 +611,31 @@ export function ProfilesPage() {
         sections: {
           ...prev.sections,
           [section]: reordered,
+        },
+      }
+      setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function moveWeeklyItemToSection(section: WeeklySectionKey, index: number, target: WeeklySectionKey) {
+    if (section === target) {
+      return
+    }
+    setCurrentWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const moved = moveItemBetweenLists(prev.sections[section], prev.sections[target], index)
+      if (!moved.moved) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: moved.source,
+          [target]: moved.target,
         },
       }
       setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -896,6 +985,7 @@ export function ProfilesPage() {
             <article className="rounded-md border border-slate-200 p-3">
               <h3 className="text-sm font-semibold text-slate-900">{t('profiles.dailyTemplateEditable')}</h3>
               <p className="mt-1 text-xs text-slate-500">{t('profiles.dailyTemplateStructuredHint')}</p>
+              <p className="mt-1 text-xs text-slate-500">{t('profiles.dailyRequiredHint')}</p>
 
               <div className="mt-3 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.dailyCore')}</p>
@@ -923,6 +1013,14 @@ export function ProfilesPage() {
                         disabled={createBusy || index >= (newDailyStructured.dailyCore.length - 1)}
                       >
                         {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs text-indigo-700"
+                        onClick={() => moveNewDailyItemToSection('dailyCore', index, 'optional')}
+                        disabled={createBusy}
+                      >
+                        {t('profiles.moveToOptional')}
                       </button>
                       <button
                         type="button"
@@ -971,6 +1069,14 @@ export function ProfilesPage() {
                         disabled={createBusy || index >= (newDailyStructured.optional.length - 1)}
                       >
                         {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs text-indigo-700"
+                        onClick={() => moveNewDailyItemToSection('optional', index, 'dailyCore')}
+                        disabled={createBusy}
+                      >
+                        {t('profiles.moveToDailyCore')}
                       </button>
                       <button
                         type="button"
@@ -1026,6 +1132,22 @@ export function ProfilesPage() {
                         >
                           {t('profiles.moveDown')}
                         </button>
+                        <label className="text-xs text-slate-600">
+                          {t('profiles.category')}
+                          <select
+                            className="ml-1 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                            value={section}
+                            onChange={(event) =>
+                              moveNewWeeklyItemToSection(section, index, event.target.value as WeeklySectionKey)}
+                            disabled={createBusy}
+                          >
+                            {WEEKLY_SECTION_ORDER.map((sectionKey) => (
+                              <option key={sectionKey} value={sectionKey}>
+                                {t(`section.${sectionKey}`)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                         <button
                           type="button"
                           className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"
@@ -1304,6 +1426,7 @@ export function ProfilesPage() {
             <article className="rounded-md border border-slate-200 p-3">
               <h3 className="text-sm font-semibold text-slate-900">{t('profiles.dailyTemplate')}</h3>
               <p className="mt-1 text-xs text-slate-500">{t('profiles.dailyTemplateStructuredHint')}</p>
+              <p className="mt-1 text-xs text-slate-500">{t('profiles.dailyRequiredHint')}</p>
 
               <div className="mt-3 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.dailyCore')}</p>
@@ -1331,6 +1454,14 @@ export function ProfilesPage() {
                         disabled={templateBusy || !dataRoot || index >= (currentDailyStructured.dailyCore.length - 1)}
                       >
                         {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs text-indigo-700"
+                        onClick={() => moveDailyItemToSection('dailyCore', index, 'optional')}
+                        disabled={templateBusy || !dataRoot}
+                      >
+                        {t('profiles.moveToOptional')}
                       </button>
                       <button
                         type="button"
@@ -1379,6 +1510,14 @@ export function ProfilesPage() {
                         disabled={templateBusy || !dataRoot || index >= (currentDailyStructured.optional.length - 1)}
                       >
                         {t('profiles.moveDown')}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs text-indigo-700"
+                        onClick={() => moveDailyItemToSection('optional', index, 'dailyCore')}
+                        disabled={templateBusy || !dataRoot}
+                      >
+                        {t('profiles.moveToDailyCore')}
                       </button>
                       <button
                         type="button"
@@ -1434,6 +1573,22 @@ export function ProfilesPage() {
                         >
                           {t('profiles.moveDown')}
                         </button>
+                        <label className="text-xs text-slate-600">
+                          {t('profiles.category')}
+                          <select
+                            className="ml-1 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                            value={section}
+                            onChange={(event) =>
+                              moveWeeklyItemToSection(section, index, event.target.value as WeeklySectionKey)}
+                            disabled={templateBusy || !dataRoot}
+                          >
+                            {WEEKLY_SECTION_ORDER.map((sectionKey) => (
+                              <option key={sectionKey} value={sectionKey}>
+                                {t(`section.${sectionKey}`)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                         <button
                           type="button"
                           className="rounded-md border border-rose-300 bg-rose-50 px-3 text-xs text-rose-700"

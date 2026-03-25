@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Added weekly lightweight goal-progress panel (sections completed count + weakest section hint + per-section badges).
 - Added structured template checklist reordering controls (`move up / move down`) in Profiles for both create-profile and current-profile template editors (daily + weekly sections).
+- Added template item category switching in Profiles structured editor:
+  - Daily items can move between `Daily Core` and `Optional` (required semantics).
+  - Weekly items can change section category (`Body/Research/Life/Output/Social`) per item.
 
 ### Changed
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
