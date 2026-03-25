@@ -31,6 +31,30 @@ function extractWeekFromPath(path?: string): string | null {
   return match ? match[0].toUpperCase() : null
 }
 
+function yearFromWeekId(weekId: string): number | null {
+  const matched = weekId.match(/^(\d{4})-W\d{2}$/)
+  if (!matched) {
+    return null
+  }
+  const year = Number.parseInt(matched[1], 10)
+  return Number.isFinite(year) ? year : null
+}
+
+function isoWeeksInYear(year: number): number {
+  const marker = currentWeekId(new Date(Date.UTC(year, 11, 28)))
+  const matched = marker.match(/-W(\d{2})$/)
+  if (!matched) {
+    return 52
+  }
+  const count = Number.parseInt(matched[1], 10)
+  return Number.isFinite(count) && count >= 52 ? count : 52
+}
+
+function weekIdsForYear(year: number): string[] {
+  const count = isoWeeksInYear(year)
+  return Array.from({ length: count }, (_, index) => `${year}-W${String(index + 1).padStart(2, '0')}`)
+}
+
 export function WeeklyListPage() {
   const { t } = useI18n()
   const { dataRoot } = useDataRoot()
@@ -41,6 +65,7 @@ export function WeeklyListPage() {
   const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all')
   const [detailFilter, setDetailFilter] = useState<DetailFilter>('all')
   const [metadata, setMetadata] = useState<Record<string, WeeklyListMeta>>({})
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getUTCFullYear())
   const [error, setError] = useState('')
   const loadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
@@ -48,6 +73,21 @@ export function WeeklyListPage() {
 
   useEffect(() => {
     weeksRef.current = weeks
+  }, [weeks])
+
+  useEffect(() => {
+    if (weeks.length === 0) {
+      return
+    }
+    const latest = [...weeks].sort((left, right) => right.localeCompare(left))[0]
+    const latestYear = latest ? yearFromWeekId(latest) : null
+    if (latestYear == null) {
+      return
+    }
+    setCalendarYear((prev) => {
+      const hasCurrentYearData = weeks.some((week) => week.startsWith(`${prev}-W`))
+      return hasCurrentYearData ? prev : latestYear
+    })
   }, [weeks])
 
   const refreshWeeklySummary = useCallback(async (week: string) => {
@@ -268,9 +308,69 @@ export function WeeklyListPage() {
     navigate(`/weekly/${firstMatch}`)
   }
 
+  const yearWeekCells = useMemo(() => weekIdsForYear(calendarYear), [calendarYear])
+
+  const completionCellClass = (percent: number | null) => {
+    if (percent == null) {
+      return 'border border-slate-200 bg-white text-slate-500'
+    }
+    if (percent >= 100) {
+      return 'border border-emerald-500 bg-emerald-500 text-white'
+    }
+    if (percent >= 70) {
+      return 'border border-emerald-300 bg-emerald-200 text-emerald-900'
+    }
+    if (percent >= 40) {
+      return 'border border-amber-300 bg-amber-100 text-amber-900'
+    }
+    return 'border border-rose-200 bg-rose-100 text-rose-800'
+  }
+
   return (
     <section className="dt-page">
       <PageHeader title={t('weeklyList.title')} description={t('weeklyList.description')} />
+
+      <article className="dt-panel space-y-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('weeklyList.calendarTitle')}</h2>
+          <div className="flex items-center gap-2">
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => setCalendarYear((prev) => prev - 1)}
+            >
+              {t('weeklyList.calendarPrev')}
+            </button>
+            <span className="text-xs font-medium text-slate-700">{calendarYear}</span>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => setCalendarYear((prev) => prev + 1)}
+            >
+              {t('weeklyList.calendarNext')}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-slate-600">{t('weeklyList.calendarHint')}</p>
+        <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(13, minmax(0, 1fr))' }}>
+          {yearWeekCells.map((weekId) => {
+            const percent = metadata[weekId]?.summary.percent ?? null
+            const shortWeek = weekId.slice(-3)
+            return (
+              <Link
+                key={weekId}
+                className={`flex h-8 items-center justify-center rounded-md text-[11px] font-medium transition hover:brightness-95 ${completionCellClass(percent)}`}
+                to={`/weekly/${weekId}`}
+                title={percent == null
+                  ? t('weeklyList.calendarNoEntry', { week: weekId })
+                  : t('weeklyList.calendarEntry', { week: weekId, percent })}
+              >
+                {shortWeek}
+              </Link>
+            )
+          })}
+        </div>
+      </article>
 
       <div className="dt-panel-soft space-y-3 p-4">
         <input

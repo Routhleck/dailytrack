@@ -221,6 +221,7 @@ Progress snapshot:
 
 - Done: configurable reminder strategy shipped in Preferences (`daily/weekly/body` inactivity thresholds with dashboard reminders).
 - Done: dashboard now includes a 28-day daily-completion heatmap for quick streak visibility.
+- Done: history pages now include calendar-style navigation (`Daily` monthly calendar + `Weekly` yearly week grid).
 - Done: daily notes now support lightweight `Mood & Energy` tags in structured mode and markdown schema.
 - Done: history lists now support stronger combined filtering (keyword + status + recency + detail signals).
 

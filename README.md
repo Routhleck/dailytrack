@@ -80,6 +80,10 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - 28-day daily completion heatmap
   - latest body metrics snapshot
   - recent files list
+- Daily/Weekly history:
+  - Daily list monthly calendar view (click day to open/create note)
+  - Weekly list yearly week-grid view (click week to open/create note)
+  - combined filters (keyword + status + recency + detail signals)
 - Daily note:
   - structured checklist editing
   - lightweight mood/energy tags

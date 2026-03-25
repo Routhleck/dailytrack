@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added dashboard routine support cards:
   - reminder panel with triggered inactivity hints
   - 28-day daily completion heatmap with intensity legend
+- Added calendar-like history navigation:
+  - Daily Notes now includes a monthly calendar view (click day to open/create note)
+  - Weekly Notes now includes a yearly ISO week grid (click week to open/create note)
 - Added lightweight `Mood & Energy` tags to Daily notes:
   - structured UI inputs
   - markdown parser/serializer support (`## Mood & Energy`)

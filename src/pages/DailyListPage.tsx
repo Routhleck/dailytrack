@@ -32,6 +32,56 @@ function extractDateFromPath(path?: string): string | null {
   return match ? match[0] : null
 }
 
+function isIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+function monthIdFromIsoDate(isoDate: string): string {
+  return isIsoDate(isoDate) ? isoDate.slice(0, 7) : todayDateString().slice(0, 7)
+}
+
+function shiftMonth(monthId: string, delta: number): string {
+  const matched = monthId.match(/^(\d{4})-(\d{2})$/)
+  if (!matched) {
+    return monthId
+  }
+  const year = Number.parseInt(matched[1], 10)
+  const month = Number.parseInt(matched[2], 10)
+  if (!Number.isFinite(year) || !Number.isFinite(month)) {
+    return monthId
+  }
+  const shifted = new Date(Date.UTC(year, month - 1 + delta, 1))
+  const nextYear = shifted.getUTCFullYear()
+  const nextMonth = String(shifted.getUTCMonth() + 1).padStart(2, '0')
+  return `${nextYear}-${nextMonth}`
+}
+
+function buildMonthCells(monthId: string): Array<string | null> {
+  const matched = monthId.match(/^(\d{4})-(\d{2})$/)
+  if (!matched) {
+    return []
+  }
+  const year = Number.parseInt(matched[1], 10)
+  const month = Number.parseInt(matched[2], 10)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+    return []
+  }
+
+  const firstDay = new Date(Date.UTC(year, month - 1, 1))
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  const startOffset = firstDay.getUTCDay()
+  const cells: Array<string | null> = Array.from({ length: startOffset }, () => null)
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push(`${monthId}-${String(day).padStart(2, '0')}`)
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null)
+  }
+  return cells
+}
+
 export function DailyListPage() {
   const { t } = useI18n()
   const { dataRoot } = useDataRoot()
@@ -42,6 +92,7 @@ export function DailyListPage() {
   const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all')
   const [detailFilter, setDetailFilter] = useState<DetailFilter>('all')
   const [metadata, setMetadata] = useState<Record<string, DailyListMeta>>({})
+  const [calendarMonth, setCalendarMonth] = useState(() => todayDateString().slice(0, 7))
   const [error, setError] = useState('')
   const loadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
@@ -49,6 +100,18 @@ export function DailyListPage() {
 
   useEffect(() => {
     datesRef.current = dates
+  }, [dates])
+
+  useEffect(() => {
+    if (dates.length === 0) {
+      return
+    }
+    const latest = [...dates].sort((left, right) => right.localeCompare(left))[0]
+    if (!latest) {
+      return
+    }
+    const nextMonth = monthIdFromIsoDate(latest)
+    setCalendarMonth((prev) => (prev ? prev : nextMonth))
   }, [dates])
 
   const refreshDailySummary = useCallback(async (date: string) => {
@@ -270,9 +333,81 @@ export function DailyListPage() {
     navigate(`/daily/${firstMatch}`)
   }
 
+  const monthCells = useMemo(() => buildMonthCells(calendarMonth), [calendarMonth])
+
+  const completionCellClass = (percent: number | null) => {
+    if (percent == null) {
+      return 'border border-slate-200 bg-white text-slate-400'
+    }
+    if (percent >= 100) {
+      return 'border border-emerald-500 bg-emerald-500 text-white'
+    }
+    if (percent >= 70) {
+      return 'border border-emerald-300 bg-emerald-200 text-emerald-900'
+    }
+    if (percent >= 40) {
+      return 'border border-amber-300 bg-amber-100 text-amber-900'
+    }
+    return 'border border-rose-200 bg-rose-100 text-rose-800'
+  }
+
   return (
     <section className="dt-page">
       <PageHeader title={t('dailyList.title')} description={t('dailyList.description')} />
+
+      <article className="dt-panel space-y-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('dailyList.calendarTitle')}</h2>
+          <div className="flex items-center gap-2">
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => setCalendarMonth((prev) => shiftMonth(prev, -1))}
+            >
+              {t('dailyList.calendarPrev')}
+            </button>
+            <span className="text-xs font-medium text-slate-700">{calendarMonth}</span>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => setCalendarMonth((prev) => shiftMonth(prev, 1))}
+            >
+              {t('dailyList.calendarNext')}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-slate-600">{t('dailyList.calendarHint')}</p>
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-slate-500">
+          <span>{t('dailyList.weekdaySun')}</span>
+          <span>{t('dailyList.weekdayMon')}</span>
+          <span>{t('dailyList.weekdayTue')}</span>
+          <span>{t('dailyList.weekdayWed')}</span>
+          <span>{t('dailyList.weekdayThu')}</span>
+          <span>{t('dailyList.weekdayFri')}</span>
+          <span>{t('dailyList.weekdaySat')}</span>
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {monthCells.map((date, index) => {
+            if (!date) {
+              return <div key={`empty-${index}`} className="h-10 rounded-md bg-slate-50/70" />
+            }
+            const percent = metadata[date]?.summary.percent ?? null
+            const dayText = date.slice(-2)
+            return (
+              <Link
+                key={date}
+                className={`flex h-10 items-center justify-center rounded-md text-xs font-medium transition hover:brightness-95 ${completionCellClass(percent)}`}
+                to={`/daily/${date}`}
+                title={percent == null
+                  ? t('dailyList.calendarNoEntry', { date })
+                  : t('dailyList.calendarEntry', { date, percent })}
+              >
+                {dayText}
+              </Link>
+            )
+          })}
+        </div>
+      </article>
 
       <div className="dt-panel-soft space-y-3 p-4">
         <input
