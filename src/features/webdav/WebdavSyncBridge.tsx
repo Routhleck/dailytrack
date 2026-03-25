@@ -5,9 +5,9 @@ import { emitDataChanged, onDataChanged } from '../../lib/liveSync'
 import { useDataRoot } from '../settings/DataRootContext'
 
 const DEFAULT_AUTO_PULL_INTERVAL_MS = 30_000
-const INITIAL_SYNC_DELAY_MS = 1_200
-const VISIBILITY_SYNC_DELAY_MS = 900
-const MIN_SYNC_GAP_MS = 2_500
+const INITIAL_SYNC_DELAY_MS = 3_500
+const VISIBILITY_SYNC_DELAY_MS = 2_600
+const MIN_SYNC_GAP_MS = 3_500
 
 export function WebdavSyncBridge() {
   const { baseDataRoot } = useDataRoot()

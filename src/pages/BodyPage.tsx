@@ -294,6 +294,9 @@ export function BodyPage() {
     const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
 
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
       if (editingIndexRef.current != null || syncingRef.current || isFormInteracting()) {
         return
       }

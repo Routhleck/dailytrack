@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
@@ -6,9 +6,17 @@ import { summarizeChecklist, type ProgressSummary } from '../features/dashboard/
 import { useI18n } from '../features/i18n/I18nContext'
 import { getDailyNote, listDailyDates } from '../features/daily/daily.service'
 import { useDataRoot } from '../features/settings/DataRootContext'
-import { onDataChanged } from '../lib/liveSync'
+import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 
 type CompletionFilter = 'all' | 'completed' | 'pending'
+
+function extractDateFromPath(path?: string): string | null {
+  if (!path) {
+    return null
+  }
+  const match = path.match(/\d{4}-\d{2}-\d{2}/)
+  return match ? match[0] : null
+}
 
 export function DailyListPage() {
   const { t } = useI18n()
@@ -19,12 +27,41 @@ export function DailyListPage() {
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all')
   const [summaries, setSummaries] = useState<Record<string, ProgressSummary>>({})
   const [error, setError] = useState('')
+  const loadingRef = useRef(false)
+  const pendingReloadRef = useRef(false)
+  const datesRef = useRef<string[]>([])
+
+  useEffect(() => {
+    datesRef.current = dates
+  }, [dates])
+
+  const refreshDailySummary = useCallback(async (date: string) => {
+    if (!dataRoot) {
+      return
+    }
+
+    try {
+      const note = await getDailyNote(dataRoot, date)
+      setSummaries((prev) => ({
+        ...prev,
+        [date]: summarizeChecklist(note.dailyCore),
+      }))
+    } catch (error) {
+      console.warn('[daily-list] failed to refresh summary for date', date, error)
+    }
+  }, [dataRoot])
 
   const loadDailyList = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
+    if (loadingRef.current) {
+      pendingReloadRef.current = true
+      return
+    }
+
+    loadingRef.current = true
     try {
       const next = await listDailyDates(dataRoot)
       setDates(next)
@@ -40,6 +77,12 @@ export function DailyListPage() {
       setError('')
     } catch {
       setError(t('dailyList.loadFailed'))
+    } finally {
+      loadingRef.current = false
+      if (pendingReloadRef.current) {
+        pendingReloadRef.current = false
+        void loadDailyList()
+      }
     }
   }, [dataRoot, t])
 
@@ -55,21 +98,41 @@ export function DailyListPage() {
 
   useEffect(() => {
     const unlisten = onDataChanged((detail) => {
-      if (detail.scope === 'daily' || detail.scope === 'profile' || detail.scope === 'all') {
+      if (detail.scope === 'daily') {
+        const nextDate = extractDateFromPath(detail.path)
+        if (!nextDate) {
+          void loadDailyList()
+          return
+        }
+
+        if (!datesRef.current.includes(nextDate)) {
+          void loadDailyList()
+          return
+        }
+
+        void refreshDailySummary(nextDate)
+        return
+      }
+
+      if (detail.scope === 'profile' || detail.scope === 'all') {
         setSummaries({})
         void loadDailyList()
       }
     })
 
+    const intervalMs = fallbackPollIntervalMs('watch')
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
       void loadDailyList()
-    }, 10000)
+    }, intervalMs)
 
     return () => {
       unlisten()
       window.clearInterval(interval)
     }
-  }, [loadDailyList])
+  }, [loadDailyList, refreshDailySummary])
 
   const missingSummaries = useMemo(
     () => dates.filter((date) => !summaries[date]),
@@ -84,8 +147,13 @@ export function DailyListPage() {
         return
       }
 
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+
+      const targets = missingSummaries.slice(0, 12)
       const settled = await Promise.allSettled(
-        missingSummaries.map(async (date) => {
+        targets.map(async (date) => {
           const note = await getDailyNote(dataRoot, date)
           return [date, summarizeChecklist(note.dailyCore)] as const
         }),

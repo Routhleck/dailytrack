@@ -25,6 +25,7 @@ import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
 import type { WeeklyNote, WeeklySectionKey } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
+const RESUME_POLL_GRACE_MS = 1800
 
 export function WeeklyNotePage() {
   const { t } = useI18n()
@@ -43,6 +44,8 @@ export function WeeklyNotePage() {
 
   const savedStructuredRef = useRef('')
   const savedRawRef = useRef('')
+  const pollBusyRef = useRef(false)
+  const resumePollAfterRef = useRef(0)
 
   const structuredDraft = useMemo(
     () => (note ? serializeWeeklyMarkdown(note) : ''),
@@ -166,6 +169,21 @@ export function WeeklyNotePage() {
   }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
 
   useEffect(() => {
+    resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!dataRoot || !note) {
       return
     }
@@ -173,6 +191,15 @@ export function WeeklyNotePage() {
     const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
 
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+      if (Date.now() < resumePollAfterRef.current) {
+        return
+      }
+      if (pollBusyRef.current) {
+        return
+      }
       if (saving) {
         return
       }
@@ -182,6 +209,7 @@ export function WeeklyNotePage() {
         return
       }
 
+      pollBusyRef.current = true
       void getWeeklyNote(dataRoot, activeWeekId)
         .then((remote) => {
           if (remote.raw === savedRawRef.current) {
@@ -196,6 +224,9 @@ export function WeeklyNotePage() {
         })
         .catch((error) => {
           console.warn('[weekly] failed to poll note changes from disk', error)
+        })
+        .finally(() => {
+          pollBusyRef.current = false
         })
     }, intervalMs)
 

@@ -22,6 +22,7 @@ import type { DailyNote } from '../types/tracker'
 
 type Mode = 'structured' | 'raw'
 type DailySection = 'dailyCore' | 'optional'
+const RESUME_POLL_GRACE_MS = 1800
 
 export function DailyNotePage() {
   const { t } = useI18n()
@@ -40,6 +41,8 @@ export function DailyNotePage() {
 
   const savedStructuredRef = useRef('')
   const savedRawRef = useRef('')
+  const pollBusyRef = useRef(false)
+  const resumePollAfterRef = useRef(0)
 
   const structuredDraft = useMemo(
     () => (note ? serializeDailyMarkdown(note) : ''),
@@ -164,6 +167,21 @@ export function DailyNotePage() {
   }, [dataRoot, loading, mode, note, performSave, rawDirty, saving, structuredDirty])
 
   useEffect(() => {
+    resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!dataRoot || !note) {
       return
     }
@@ -171,6 +189,15 @@ export function DailyNotePage() {
     const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
 
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+      if (Date.now() < resumePollAfterRef.current) {
+        return
+      }
+      if (pollBusyRef.current) {
+        return
+      }
       if (saving) {
         return
       }
@@ -180,6 +207,7 @@ export function DailyNotePage() {
         return
       }
 
+      pollBusyRef.current = true
       void getDailyNote(dataRoot, activeDate)
         .then((remote) => {
           if (remote.raw === savedRawRef.current) {
@@ -194,6 +222,9 @@ export function DailyNotePage() {
         })
         .catch((error) => {
           console.warn('[daily] failed to poll note changes from disk', error)
+        })
+        .finally(() => {
+          pollBusyRef.current = false
         })
     }, intervalMs)
 

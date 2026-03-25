@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
@@ -50,12 +50,21 @@ export function DashboardPage() {
   const { preferences, loading: preferencesLoading } = usePreferences()
   const [state, setState] = useState<DashboardState | null>(null)
   const [error, setError] = useState('')
+  const loadingRef = useRef(false)
+  const pendingReloadRef = useRef(false)
+  const scheduledReloadRef = useRef<number | null>(null)
 
   const loadDashboard = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
+    if (loadingRef.current) {
+      pendingReloadRef.current = true
+      return
+    }
+
+    loadingRef.current = true
     try {
       const [todayResult, weekResult, bodyResult, dailyResult, weeklyResult] = await Promise.allSettled([
         getTodayNote(dataRoot),
@@ -96,41 +105,75 @@ export function DashboardPage() {
       console.warn('[dashboard] failed to load dashboard data', error)
       const details = extractErrorMessage(error, '')
       setError(`${t('dashboard.loadFailed')} ${details}`.trim())
+    } finally {
+      loadingRef.current = false
+      if (pendingReloadRef.current) {
+        pendingReloadRef.current = false
+        void loadDashboard()
+      }
     }
   }, [dataRoot, preferences, t])
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void loadDashboard()
-    }, 0)
-
-    return () => {
-      window.clearTimeout(timeout)
+  const scheduleDashboardLoad = useCallback((delayMs = 0) => {
+    if (scheduledReloadRef.current != null) {
+      window.clearTimeout(scheduledReloadRef.current)
     }
+
+    scheduledReloadRef.current = window.setTimeout(() => {
+      scheduledReloadRef.current = null
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+      void loadDashboard()
+    }, Math.max(0, delayMs))
   }, [loadDashboard])
 
   useEffect(() => {
+    return () => {
+      if (scheduledReloadRef.current != null) {
+        window.clearTimeout(scheduledReloadRef.current)
+        scheduledReloadRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    scheduleDashboardLoad(220)
+  }, [scheduleDashboardLoad])
+
+  useEffect(() => {
     const unlisten = onDataChanged(() => {
-      void loadDashboard()
+      scheduleDashboardLoad(280)
     })
 
     const intervalMs = fallbackPollIntervalMs(preferences.sync.mode)
     const interval = window.setInterval(() => {
-      void loadDashboard()
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+      scheduleDashboardLoad(0)
     }, intervalMs)
 
     const onFocus = () => {
-      void loadDashboard()
+      scheduleDashboardLoad(650)
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        scheduleDashboardLoad(650)
+      }
     }
 
     window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     return () => {
       unlisten()
       window.clearInterval(interval)
       window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [loadDashboard, preferences.sync.mode])
+  }, [preferences.sync.mode, scheduleDashboardLoad])
 
   if (preferencesLoading || !state) {
     return (

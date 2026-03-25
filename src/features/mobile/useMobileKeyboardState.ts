@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 const KEYBOARD_OPEN_DELTA_PX = 120
@@ -24,6 +24,12 @@ function getKeyboardOpenState(): boolean {
 
 export function useMobileKeyboardState(): { isKeyboardOpen: boolean } {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(() => getKeyboardOpenState())
+  const frameRef = useRef<number | null>(null)
+  const stateRef = useRef(isKeyboardOpen)
+
+  useEffect(() => {
+    stateRef.current = isKeyboardOpen
+  }, [isKeyboardOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -32,7 +38,17 @@ export function useMobileKeyboardState(): { isKeyboardOpen: boolean } {
 
     const viewport = window.visualViewport
     const updateKeyboardState = () => {
-      setIsKeyboardOpen(getKeyboardOpenState())
+      if (frameRef.current != null) {
+        window.cancelAnimationFrame(frameRef.current)
+      }
+
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null
+        const next = getKeyboardOpenState()
+        if (next !== stateRef.current) {
+          setIsKeyboardOpen(next)
+        }
+      })
     }
 
     updateKeyboardState()
@@ -50,6 +66,10 @@ export function useMobileKeyboardState(): { isKeyboardOpen: boolean } {
       if (viewport) {
         viewport.removeEventListener('resize', updateKeyboardState)
         viewport.removeEventListener('scroll', updateKeyboardState)
+      }
+      if (frameRef.current != null) {
+        window.cancelAnimationFrame(frameRef.current)
+        frameRef.current = null
       }
     }
   }, [])

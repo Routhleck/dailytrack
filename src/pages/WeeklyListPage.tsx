@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { PageHeader } from '../components/PageHeader'
@@ -7,9 +7,17 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getWeeklyNote, listWeeklyIds } from '../features/weekly/weekly.service'
-import { onDataChanged } from '../lib/liveSync'
+import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 
 type CompletionFilter = 'all' | 'completed' | 'pending'
+
+function extractWeekFromPath(path?: string): string | null {
+  if (!path) {
+    return null
+  }
+  const match = path.match(/\d{4}-W\d{2}/i)
+  return match ? match[0].toUpperCase() : null
+}
 
 export function WeeklyListPage() {
   const { t } = useI18n()
@@ -20,12 +28,42 @@ export function WeeklyListPage() {
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all')
   const [summaries, setSummaries] = useState<Record<string, ProgressSummary>>({})
   const [error, setError] = useState('')
+  const loadingRef = useRef(false)
+  const pendingReloadRef = useRef(false)
+  const weeksRef = useRef<string[]>([])
+
+  useEffect(() => {
+    weeksRef.current = weeks
+  }, [weeks])
+
+  const refreshWeeklySummary = useCallback(async (week: string) => {
+    if (!dataRoot) {
+      return
+    }
+
+    try {
+      const note = await getWeeklyNote(dataRoot, week)
+      const checklist = WEEKLY_SECTION_ORDER.flatMap((section) => note.sections[section])
+      setSummaries((prev) => ({
+        ...prev,
+        [week]: summarizeChecklist(checklist),
+      }))
+    } catch (error) {
+      console.warn('[weekly-list] failed to refresh summary for week', week, error)
+    }
+  }, [dataRoot])
 
   const loadWeeklyList = useCallback(async () => {
     if (!dataRoot) {
       return
     }
 
+    if (loadingRef.current) {
+      pendingReloadRef.current = true
+      return
+    }
+
+    loadingRef.current = true
     try {
       const next = await listWeeklyIds(dataRoot)
       setWeeks(next)
@@ -41,6 +79,12 @@ export function WeeklyListPage() {
       setError('')
     } catch {
       setError(t('weeklyList.loadFailed'))
+    } finally {
+      loadingRef.current = false
+      if (pendingReloadRef.current) {
+        pendingReloadRef.current = false
+        void loadWeeklyList()
+      }
     }
   }, [dataRoot, t])
 
@@ -56,21 +100,41 @@ export function WeeklyListPage() {
 
   useEffect(() => {
     const unlisten = onDataChanged((detail) => {
-      if (detail.scope === 'weekly' || detail.scope === 'profile' || detail.scope === 'all') {
+      if (detail.scope === 'weekly') {
+        const nextWeek = extractWeekFromPath(detail.path)
+        if (!nextWeek) {
+          void loadWeeklyList()
+          return
+        }
+
+        if (!weeksRef.current.includes(nextWeek)) {
+          void loadWeeklyList()
+          return
+        }
+
+        void refreshWeeklySummary(nextWeek)
+        return
+      }
+
+      if (detail.scope === 'profile' || detail.scope === 'all') {
         setSummaries({})
         void loadWeeklyList()
       }
     })
 
+    const intervalMs = fallbackPollIntervalMs('watch')
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
       void loadWeeklyList()
-    }, 10000)
+    }, intervalMs)
 
     return () => {
       unlisten()
       window.clearInterval(interval)
     }
-  }, [loadWeeklyList])
+  }, [loadWeeklyList, refreshWeeklySummary])
 
   const missingSummaries = useMemo(
     () => weeks.filter((week) => !summaries[week]),
@@ -85,8 +149,13 @@ export function WeeklyListPage() {
         return
       }
 
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+
+      const targets = missingSummaries.slice(0, 12)
       const settled = await Promise.allSettled(
-        missingSummaries.map(async (week) => {
+        targets.map(async (week) => {
           const note = await getWeeklyNote(dataRoot, week)
           const checklist = WEEKLY_SECTION_ORDER.flatMap((section) => note.sections[section])
           return [week, summarizeChecklist(checklist)] as const

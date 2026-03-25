@@ -4,6 +4,8 @@ import { getWebdavConfig, type RealtimeSyncStatus, type WebdavConfig, webdavReal
 import { useDataRoot } from '../settings/DataRootContext'
 
 const REFRESH_INTERVAL_MS = 10_000
+const COUNTDOWN_TICK_MS = 5_000
+const VISIBILITY_REFRESH_DELAY_MS = 1_400
 
 export type SyncStatusSnapshot = {
   loading: boolean
@@ -73,7 +75,13 @@ export function useSyncStatus(): SyncStatusSnapshot {
   }, [baseDataRoot])
 
   useEffect(() => {
-    void refresh()
+    const timerId = window.setTimeout(() => {
+      void refresh()
+    }, 280)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [refresh])
 
   useEffect(() => {
@@ -83,20 +91,39 @@ export function useSyncStatus(): SyncStatusSnapshot {
       }
     }, REFRESH_INTERVAL_MS)
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+      window.setTimeout(() => {
+        void refresh()
+      }, VISIBILITY_REFRESH_DELAY_MS)
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
     return () => {
       window.clearInterval(timerId)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [refresh])
 
   useEffect(() => {
+    if (!config?.enabled || !config.autoPullEnabled) {
+      return
+    }
+
     const timerId = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
       setNowMs(Date.now())
-    }, 1000)
+    }, COUNTDOWN_TICK_MS)
 
     return () => {
       window.clearInterval(timerId)
     }
-  }, [])
+  }, [config?.autoPullEnabled, config?.enabled])
 
   useEffect(() => {
     const onOnline = () => setOnline(true)
