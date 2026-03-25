@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
 - English locale labels now use English wording for language selectors (`English / Chinese`) instead of mixed Chinese terms.
 
+### Fixed
+- Fixed Android writable-path validation when storage paths resolve through alias roots (for example `/data/data/...` vs `/data/user/0/...`), which could cause:
+  - initial template apply failures
+  - failed auto-create of new-day Daily/Weekly notes
+  - failed Sync diagnostics export writes.
+- Improved runtime error detail visibility for onboarding template apply, Dashboard/Daily load failures, and diagnostics export failures.
+
 ## [0.11.0] - 2026-03-24
 
 ### Added

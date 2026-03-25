@@ -12,6 +12,7 @@ import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
+import { extractErrorMessage } from '../lib/error'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 import type { BodyRecord } from '../types/tracker'
 
@@ -93,7 +94,8 @@ export function DashboardPage() {
       setError('')
     } catch (error) {
       console.warn('[dashboard] failed to load dashboard data', error)
-      setError(t('dashboard.loadFailed'))
+      const details = extractErrorMessage(error, '')
+      setError(`${t('dashboard.loadFailed')} ${details}`.trim())
     }
   }, [dataRoot, preferences, t])
 

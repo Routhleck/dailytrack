@@ -18,6 +18,7 @@ import {
   webdavRealtimeSyncNow,
 } from '../lib/fs/fileApi'
 import { buildLineDiffRows, type LineDiffRow } from '../lib/diff/lineDiff'
+import { extractErrorMessage } from '../lib/error'
 import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged } from '../lib/liveSync'
 
@@ -568,7 +569,7 @@ export function SyncPage() {
       await writeTextFile(baseDataRoot, path, JSON.stringify(payload, null, 2))
       pushSuccess(t('sync.diagnosticExported', { path }))
     } catch (error) {
-      const details = error instanceof Error ? error.message : t('sync.diagnosticExportFailed')
+      const details = extractErrorMessage(error, t('sync.diagnosticExportFailed'))
       pushError(`${t('sync.diagnosticExportFailed')} ${details}`)
     } finally {
       setExportingDiagnostics(false)

@@ -14,6 +14,7 @@ import { useI18n } from '../features/i18n/I18nContext'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { todayDateString } from '../lib/date/date'
+import { extractErrorMessage } from '../lib/error'
 import { readTextFile } from '../lib/fs/fileApi'
 import { joinPath } from '../lib/fs/pathApi'
 import { emitDataChanged, fallbackPollIntervalMs } from '../lib/liveSync'
@@ -75,10 +76,11 @@ export function DailyNotePage() {
         setRawDraft(next.raw)
         markSaved(next)
       })
-      .catch(() => {
-        if (!cancelled) {
-          setMessage(t('dailyNote.loadFailed'))
+      .catch((error) => {
+        if (cancelled) {
+          return
         }
+        setMessage(`${t('dailyNote.loadFailed')} ${extractErrorMessage(error, '')}`.trim())
       })
       .finally(() => {
         if (!cancelled) {
@@ -133,11 +135,11 @@ export function DailyNotePage() {
         markSaved(saved)
         setMessage(t('dailyNote.autosaved'))
         emitDataChanged({ scope: 'daily', path: saved.date })
-      } catch {
-        setMessage(t('dailyNote.autosaveFailed'))
-      } finally {
-        setSaving(false)
-      }
+    } catch {
+      setMessage(t('dailyNote.autosaveFailed'))
+    } finally {
+      setSaving(false)
+    }
     },
     [activeDate, dataRoot, markSaved, mode, note, rawDraft, saving, t],
   )

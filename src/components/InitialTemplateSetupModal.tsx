@@ -9,6 +9,7 @@ import {
   resolvePreferredTemplateLanguage,
   type TemplateLanguage,
 } from '../features/settings/templatePresets'
+import { extractErrorMessage } from '../lib/error'
 
 export function InitialTemplateSetupModal() {
   const { t, language, setLanguage } = useI18n()
@@ -44,7 +45,7 @@ export function InitialTemplateSetupModal() {
         },
       )
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('onboarding.applyFailed'))
+      setMessage(extractErrorMessage(error, t('onboarding.applyFailed')))
     } finally {
       setBusy(false)
     }

@@ -30,6 +30,7 @@ import {
 } from './settings.store'
 import { emitDataChanged } from '../../lib/liveSync'
 import { joinPath } from '../../lib/fs/pathApi'
+import { extractErrorMessage } from '../../lib/error'
 import { markTutorialPending, resetTutorialState } from '../tutorial/tutorial.store'
 import { saveTemplateMeta, type TemplateApplyMode } from './templateMeta.service'
 import type { TemplateLanguage } from './templateCatalog'
@@ -141,7 +142,7 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to initialize data root')
+      setError(extractErrorMessage(err, 'Failed to initialize data root'))
       setNeedsInitialTemplateSetup(false)
     } finally {
       setLoading(false)
