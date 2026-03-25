@@ -18,6 +18,7 @@ import {
   testWebdavConnection,
   type WebdavConfig,
 } from '../lib/fs/fileApi'
+import { pickDirectory } from '../lib/fs/dialogApi'
 
 type OnboardingStep = 'language' | 'userType' | 'template' | 'existing'
 type ExistingMode = 'import' | 'webdav'
@@ -169,6 +170,17 @@ export function InitialTemplateSetupModal() {
       setMessage(extractErrorMessage(error, t('onboarding.importFailed')))
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function handlePickImportSource() {
+    try {
+      const picked = await pickDirectory(importSource || undefined)
+      if (picked) {
+        setImportSource(picked)
+      }
+    } catch (error) {
+      setMessage(extractErrorMessage(error, t('onboarding.pathPickFailed')))
     }
   }
 
@@ -439,14 +451,24 @@ export function InitialTemplateSetupModal() {
                 <label className="block text-sm font-medium text-slate-700" htmlFor="onboarding-import-source">
                   {t('onboarding.importSource')}
                 </label>
-                <input
-                  id="onboarding-import-source"
-                  className="dt-input"
-                  value={importSource}
-                  onChange={(event) => setImportSource(event.target.value)}
-                  placeholder={t('onboarding.importSourcePlaceholder')}
-                  disabled={busy || testingWebdav}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    id="onboarding-import-source"
+                    className="dt-input min-w-56 flex-1"
+                    value={importSource}
+                    onChange={(event) => setImportSource(event.target.value)}
+                    placeholder={t('onboarding.importSourcePlaceholder')}
+                    disabled={busy || testingWebdav}
+                  />
+                  <button
+                    type="button"
+                    className="dt-btn dt-btn-secondary"
+                    onClick={() => void handlePickImportSource()}
+                    disabled={busy || testingWebdav}
+                  >
+                    {t('common.browse')}
+                  </button>
+                </div>
                 <label className="flex items-center gap-2 text-sm text-slate-700">
                   <input
                     type="checkbox"

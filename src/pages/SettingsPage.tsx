@@ -20,6 +20,7 @@ import {
   type WebdavConfig,
   type WebdavSnapshot,
 } from '../lib/fs/fileApi'
+import { pickDirectory } from '../lib/fs/dialogApi'
 import { emitDataChanged } from '../lib/liveSync'
 import {
   defaultWebdavConfig,
@@ -475,6 +476,45 @@ export function SettingsPage() {
       pushError(text)
     } finally {
       setExportBusy(false)
+    }
+  }
+
+  async function handlePickMigrateTarget() {
+    try {
+      const picked = await pickDirectory(migrateTarget || baseDataRoot || undefined)
+      if (picked) {
+        setMigrateTarget(picked)
+      }
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.pathPickFailed')
+      setMigrateMessage(text)
+      pushError(text)
+    }
+  }
+
+  async function handlePickExportDir() {
+    try {
+      const picked = await pickDirectory(exportDir || defaultExportDir || undefined)
+      if (picked) {
+        setExportDir(picked)
+      }
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.pathPickFailed')
+      setExportMessage(text)
+      pushError(text)
+    }
+  }
+
+  async function handlePickImportSource() {
+    try {
+      const picked = await pickDirectory(importSource || exportDir || defaultExportDir || undefined)
+      if (picked) {
+        setImportSource(picked)
+      }
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.pathPickFailed')
+      setImportMessage(text)
+      pushError(text)
     }
   }
 
@@ -944,14 +984,24 @@ export function SettingsPage() {
         <label className="block text-sm font-medium text-slate-700" htmlFor="migrate-target">
           {t('settings.migrateDestination')}
         </label>
-        <input
-          id="migrate-target"
-          className="dt-input"
-          value={migrateTarget}
-          onChange={(event) => setMigrateTarget(event.target.value)}
-          placeholder="/Users/you/dailytrack-data"
-          disabled={loading || migrateBusy}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id="migrate-target"
+            className="dt-input min-w-56 flex-1"
+            value={migrateTarget}
+            onChange={(event) => setMigrateTarget(event.target.value)}
+            placeholder="/Users/you/dailytrack-data"
+            disabled={loading || migrateBusy}
+          />
+          <button
+            type="button"
+            className="dt-btn dt-btn-secondary"
+            disabled={loading || migrateBusy}
+            onClick={() => void handlePickMigrateTarget()}
+          >
+            {t('common.browse')}
+          </button>
+        </div>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
@@ -980,14 +1030,24 @@ export function SettingsPage() {
         <label className="block text-sm font-medium text-slate-700" htmlFor="export-dir">
           {t('settings.exportDestination')}
         </label>
-        <input
-          id="export-dir"
-          className="dt-input"
-          value={exportDir}
-          onChange={(event) => setExportDir(event.target.value)}
-          placeholder="/Users/you/Desktop"
-          disabled={loading || exportBusy}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id="export-dir"
+            className="dt-input min-w-56 flex-1"
+            value={exportDir}
+            onChange={(event) => setExportDir(event.target.value)}
+            placeholder="/Users/you/Desktop"
+            disabled={loading || exportBusy}
+          />
+          <button
+            type="button"
+            className="dt-btn dt-btn-secondary"
+            disabled={loading || exportBusy}
+            onClick={() => void handlePickExportDir()}
+          >
+            {t('common.browse')}
+          </button>
+        </div>
         <button
           type="submit"
           disabled={loading || exportBusy}
@@ -1006,14 +1066,24 @@ export function SettingsPage() {
         <label className="block text-sm font-medium text-slate-700" htmlFor="import-source">
           {t('settings.importSource')}
         </label>
-        <input
-          id="import-source"
-          className="dt-input"
-          value={importSource}
-          onChange={(event) => setImportSource(event.target.value)}
-          placeholder="/Users/you/Desktop/dailytrack-export-123456789"
-          disabled={loading || importBusy}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id="import-source"
+            className="dt-input min-w-56 flex-1"
+            value={importSource}
+            onChange={(event) => setImportSource(event.target.value)}
+            placeholder="/Users/you/Desktop/dailytrack-export-123456789"
+            disabled={loading || importBusy}
+          />
+          <button
+            type="button"
+            className="dt-btn dt-btn-secondary"
+            disabled={loading || importBusy}
+            onClick={() => void handlePickImportSource()}
+          >
+            {t('common.browse')}
+          </button>
+        </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input

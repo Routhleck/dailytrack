@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - local export-folder import
   - WebDAV config + connection test + pull latest snapshot
   - skip for now (finish onboarding without entering Settings).
+- Added native folder picker support (Tauri dialog plugin) for path-heavy flows:
+  - onboarding existing-user import source path
+  - Settings migrate destination / export destination / import source.
 
 ### Changed
 - Profile template update flow now shows clearer impact preview copy and requires explicit risk acknowledgment before overwrite apply.
