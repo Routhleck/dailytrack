@@ -244,6 +244,7 @@ P0 progress snapshot:
 - Done: startup background task deferral (route preload + updater delayed checks).
 - Done: visibility-aware refresh and reload coalescing for dashboard/list/note polling.
 - Done: deferred non-critical bridge/overlay mounting (filesystem watch, webdav bridge, tutorial, mobile sync banner).
+- Done: lightweight runtime performance telemetry + diagnostics export baseline.
 - In progress: targeted Android resume black-screen elimination and first-input latency hardening.
 
 ## P1 (After P0)

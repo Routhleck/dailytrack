@@ -22,6 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Shell overlays now mount later (mobile sync banner and tutorial guide), reducing startup-side reactive work.
 - Updater capability probing (`getVersion` / support/config checks) now starts later in background instead of immediately on app mount.
 - Desktop route preload now also uses idle scheduling fallback, reducing contention with initial foreground interactions.
+- Added lightweight runtime performance telemetry sampling:
+  - startup and shell marks
+  - resume-to-first-frame samples
+  - route-switch-to-frame samples
+  - dashboard/daily/weekly load-duration samples
+  - browser paint/input/long-task snapshots when supported by runtime.
+- Settings diagnostics now support exporting performance diagnostics JSON to local data root (`perf-diagnostics/`).
 
 ## [0.12.0] - 2026-03-25
 

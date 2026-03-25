@@ -114,6 +114,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - mobile sync status banner toggle
 - Settings:
   - diagnostics section (init/profile/root runtime state)
+  - performance diagnostics export (`perf-diagnostics/*.json`) for startup/resume/input/perf troubleshooting
   - data root migration (copy + switch, desktop)
   - export/import:
     - export always generates a single `.zip` bundle
