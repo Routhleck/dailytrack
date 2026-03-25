@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Dashboard/list refresh now coalesces bursty updates and avoids overlapping disk reads.
 - Daily/Weekly/Body polling now respects visibility/resume grace windows and skips redundant overlapping reloads.
 - Mobile keyboard detection now batches viewport events with `requestAnimationFrame` to reduce input/render jitter while typing.
+- Startup now defers non-critical background bridges (`FilesystemWatchBridge` / `WebdavSyncBridge`) to keep first interaction smoother.
+- Shell overlays now mount later (mobile sync banner and tutorial guide), reducing startup-side reactive work.
+- Updater capability probing (`getVersion` / support/config checks) now starts later in background instead of immediately on app mount.
+- Desktop route preload now also uses idle scheduling fallback, reducing contention with initial foreground interactions.
 
 ## [0.12.0] - 2026-03-25
 
