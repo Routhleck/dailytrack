@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - failed Sync diagnostics export writes.
 - Improved runtime error detail visibility for onboarding template apply, Dashboard/Daily load failures, and diagnostics export failures.
 - Fixed onboarding template language mismatch on first run by preventing route preloads during initial template setup and force-applying selected template content to current-day/current-week notes after onboarding apply.
+- Fixed Android path picker regression by adding mobile fallback for directory picking:
+  - when folder picker is unavailable on mobile, the app now asks to pick any file and derives its parent directory automatically.
 
 ## [0.11.0] - 2026-03-24
 
