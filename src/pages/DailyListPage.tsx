@@ -362,6 +362,20 @@ export function DailyListPage() {
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
+              onClick={() => setCalendarMonth(monthIdFromIsoDate(today))}
+            >
+              {t('dailyList.calendarJumpTodayMonth')}
+            </button>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => navigate(`/daily/${today}`)}
+            >
+              {t('dailyList.calendarOpenToday')}
+            </button>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
               onClick={() => setCalendarMonth((prev) => shiftMonth(prev, -1))}
             >
               {t('dailyList.calendarPrev')}
@@ -393,10 +407,11 @@ export function DailyListPage() {
             }
             const percent = metadata[date]?.summary.percent ?? null
             const dayText = date.slice(-2)
+            const isToday = date === today
             return (
               <Link
                 key={date}
-                className={`flex h-10 items-center justify-center rounded-md text-xs font-medium transition hover:brightness-95 ${completionCellClass(percent)}`}
+                className={`flex h-10 items-center justify-center rounded-md text-xs font-medium transition hover:brightness-95 ${completionCellClass(percent)} ${isToday ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}
                 to={`/daily/${date}`}
                 title={percent == null
                   ? t('dailyList.calendarNoEntry', { date })

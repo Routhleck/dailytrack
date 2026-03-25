@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added calendar-like history navigation:
   - Daily Notes now includes a monthly calendar view (click day to open/create note)
   - Weekly Notes now includes a yearly ISO week grid (click week to open/create note)
+  - Daily/Weekly calendar views now include quick-jump actions for today/current-week and current period highlighting.
 - Added lightweight `Mood & Energy` tags to Daily notes:
   - structured UI inputs
   - markdown parser/serializer support (`## Mood & Energy`)

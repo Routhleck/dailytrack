@@ -337,6 +337,20 @@ export function WeeklyListPage() {
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
+              onClick={() => setCalendarYear(new Date().getUTCFullYear())}
+            >
+              {t('weeklyList.calendarJumpCurrentYear')}
+            </button>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
+              onClick={() => navigate(`/weekly/${currentWeek}`)}
+            >
+              {t('weeklyList.calendarOpenCurrentWeek')}
+            </button>
+            <button
+              className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+              type="button"
               onClick={() => setCalendarYear((prev) => prev - 1)}
             >
               {t('weeklyList.calendarPrev')}
@@ -356,10 +370,11 @@ export function WeeklyListPage() {
           {yearWeekCells.map((weekId) => {
             const percent = metadata[weekId]?.summary.percent ?? null
             const shortWeek = weekId.slice(-3)
+            const isCurrentWeek = weekId === currentWeek
             return (
               <Link
                 key={weekId}
-                className={`flex h-8 items-center justify-center rounded-md text-[11px] font-medium transition hover:brightness-95 ${completionCellClass(percent)}`}
+                className={`flex h-8 items-center justify-center rounded-md text-[11px] font-medium transition hover:brightness-95 ${completionCellClass(percent)} ${isCurrentWeek ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}
                 to={`/weekly/${weekId}`}
                 title={percent == null
                   ? t('weeklyList.calendarNoEntry', { week: weekId })
