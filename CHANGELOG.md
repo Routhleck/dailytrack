@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - preload runs incrementally instead of loading all route chunks at once.
 - Auto update checks now start with delayed background scheduling instead of running immediately on app startup.
 - GitHub Actions workflows were upgraded to Node 24 compatible action versions and now force JavaScript actions to run on Node 24.
+- Reduced foreground resume load spikes by delaying WebDAV bridge startup/resume sync windows.
+- Reduced background refresh pressure on mobile sync status by using slower countdown ticks and visibility-aware refresh.
+- Dashboard/list refresh now coalesces bursty updates and avoids overlapping disk reads.
+- Daily/Weekly/Body polling now respects visibility/resume grace windows and skips redundant overlapping reloads.
+- Mobile keyboard detection now batches viewport events with `requestAnimationFrame` to reduce input/render jitter while typing.
 
 ## [0.12.0] - 2026-03-25
 

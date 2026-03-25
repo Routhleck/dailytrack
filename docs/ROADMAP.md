@@ -239,6 +239,12 @@ Acceptance focus:
 - Sync reliability polish for mobile background/foreground resume.
 - Android import/export onboarding polish (zip-first flow copy + diagnostics clarity).
 
+P0 progress snapshot:
+
+- Done: startup background task deferral (route preload + updater delayed checks).
+- Done: visibility-aware refresh and reload coalescing for dashboard/list/note polling.
+- In progress: targeted Android resume black-screen elimination and first-input latency hardening.
+
 ## P1 (After P0)
 
 - Reminder strategy and schedule controls (daily/weekly/body inactivity).
