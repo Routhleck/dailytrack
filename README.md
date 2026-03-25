@@ -71,6 +71,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - step 1: pick UI language
   - step 2: choose user type (`New User` / `Existing User`)
   - existing-user path can complete setup in onboarding directly (local import or WebDAV pull), no Settings detour
+  - during onboarding, realtime WebDAV auto-sync is paused until setup is finished to avoid premature conflict churn
 - Dashboard:
   - Today and This Week progress summary
   - period-over-period comparison (`today` and `this week` vs previous tracked period)

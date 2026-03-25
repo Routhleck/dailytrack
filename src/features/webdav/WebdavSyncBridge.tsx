@@ -10,7 +10,7 @@ const VISIBILITY_SYNC_DELAY_MS = 2_600
 const MIN_SYNC_GAP_MS = 3_500
 
 export function WebdavSyncBridge() {
-  const { baseDataRoot } = useDataRoot()
+  const { baseDataRoot, needsInitialTemplateSetup } = useDataRoot()
   const [reloadToken, setReloadToken] = useState(0)
   const busyRef = useRef(false)
   const lastSyncRequestedAtRef = useRef(0)
@@ -26,6 +26,9 @@ export function WebdavSyncBridge() {
   }, [])
 
   useEffect(() => {
+    if (needsInitialTemplateSetup) {
+      return
+    }
     if (!baseDataRoot) {
       return
     }
@@ -159,7 +162,7 @@ export function WebdavSyncBridge() {
       }
       timerIds.clear()
     }
-  }, [baseDataRoot, reloadToken])
+  }, [baseDataRoot, needsInitialTemplateSetup, reloadToken])
 
   return null
 }

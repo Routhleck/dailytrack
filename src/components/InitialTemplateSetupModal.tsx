@@ -48,6 +48,7 @@ const DEFAULT_WEBDAV_CONFIG: WebdavConfig = {
 export function InitialTemplateSetupModal() {
   const { t, language, setLanguage } = useI18n()
   const {
+    baseDataRoot,
     dataRoot,
     completeInitialTemplateSetup,
     finishInitialTemplateSetup,
@@ -230,7 +231,8 @@ export function InitialTemplateSetupModal() {
   }
 
   async function handleWebdavPullAndContinue() {
-    if (!dataRoot) {
+    const syncRoot = baseDataRoot ?? dataRoot
+    if (!syncRoot) {
       setMessage(t('onboarding.webdavPullFailed'))
       return
     }
@@ -241,7 +243,7 @@ export function InitialTemplateSetupModal() {
       const config = buildWebdavConfig()
       const saved = await saveWebdavConfig(config)
       setLoadedWebdavConfig(saved)
-      await pullWebdavSnapshot(dataRoot, undefined, true, true)
+      await pullWebdavSnapshot(syncRoot, undefined, true, true)
       await finishInitialTemplateSetup({ runTutorial: false })
     } catch (error) {
       setMessage(extractErrorMessage(error, t('onboarding.webdavPullFailed')))

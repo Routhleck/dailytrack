@@ -30,6 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Updated built-in and preset daily templates to include `Mood & Energy` section.
 
+### Fixed
+- Fixed existing-user onboarding WebDAV pull scope:
+  - onboarding now pulls snapshots into base data root (same scope as Settings WebDAV), avoiding nested profile-root restore mistakes.
+- Fixed onboarding-time WebDAV race:
+  - realtime WebDAV bridge is now paused while initial onboarding is unfinished, preventing premature auto-sync/conflict churn before user completes import/pull.
+
 ## [0.13.0] - 2026-03-25
 
 ### Added
