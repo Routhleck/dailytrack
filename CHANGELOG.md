@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+No user-visible changes yet.
+
+## [0.14.0] - 2026-03-25
+
 ### Added
 - Added configurable routine reminder strategy in Preferences:
   - dashboard reminder enable/disable
@@ -36,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - onboarding now pulls snapshots into base data root (same scope as Settings WebDAV), avoiding nested profile-root restore mistakes.
 - Fixed onboarding-time WebDAV race:
   - realtime WebDAV bridge is now paused while initial onboarding is unfinished, preventing premature auto-sync/conflict churn before user completes import/pull.
-- Added explicit onboarding WebDAV hint copy that realtime sync starts only after onboarding completes.
+- Clarified onboarding WebDAV timing with explicit hint copy that realtime sync starts only after onboarding completes.
 
 ## [0.13.0] - 2026-03-25
 
