@@ -785,8 +785,7 @@ export function SettingsPage() {
   }
 
   async function handleExportPerfDiagnostics() {
-    const diagnosticsRoot = baseDataRoot ?? dataRoot
-    if (!diagnosticsRoot || !dataRoot) {
+    if (!dataRoot) {
       const text = t('settings.dataRootNotReady')
       setPerfExportMessage(text)
       pushError(text)
@@ -796,14 +795,14 @@ export function SettingsPage() {
     setPerfExportBusy(true)
     setPerfExportMessage('')
     try {
-      const path = joinPath(diagnosticsRoot, 'perf-diagnostics', perfDiagnosticFileName())
+      const path = joinPath(dataRoot, 'perf-diagnostics', perfDiagnosticFileName())
       const snapshot = captureRuntimePerfSnapshot()
       const payload = {
         exportedAt: new Date().toISOString(),
         app: {
           version: currentVersion,
           profile: activeProfile,
-          baseDataRoot: diagnosticsRoot,
+          baseDataRoot,
           profileRoot: dataRoot,
         },
         runtime: {

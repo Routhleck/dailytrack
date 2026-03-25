@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 No user-visible changes yet.
 
+### Fixed
+- Fixed performance diagnostics export path on Settings:
+  - export now writes under current profile root (`<profile-root>/perf-diagnostics`) to satisfy local write-scope validation and avoid export failures.
+
 ## [0.12.1] - 2026-03-25
 
 ### Added
