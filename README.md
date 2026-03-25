@@ -73,6 +73,9 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - existing-user path can complete setup in onboarding directly (local import or WebDAV pull), no Settings detour
 - Dashboard:
   - Today and This Week progress summary
+  - period-over-period comparison (`today` and `this week` vs previous tracked period)
+  - daily/weekly completion streak signals
+  - weakest weekly section hint + local rule-based `Next Best Action`
   - latest body metrics snapshot
   - recent files list
 - Daily note:
@@ -130,6 +133,12 @@ cargo check --manifest-path src-tauri/Cargo.toml
   - push/pull/both actions
   - unresolved conflict list + resolve actions
   - local/remote text preview for conflict inspection
+- Reports:
+  - AI weekly/monthly markdown generation
+  - deterministic `Structured Snapshot` block for export-friendly review data
+  - built-in previous-period comparison deltas in structured snapshot
+  - local rule-based `Local Recommendations` block (model-independent baseline guidance)
+  - report output language follows current UI language (`English` / `中文`)
 
 ## Data Ownership and Storage
 

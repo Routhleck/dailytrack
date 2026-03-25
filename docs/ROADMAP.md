@@ -192,6 +192,15 @@ Acceptance focus:
 
 - Dashboard/report provides guidance, not only raw data.
 
+Progress snapshot:
+
+- Done: Dashboard period-over-period comparison baseline (`today` and `this week` vs previous tracked period).
+- Done: Dashboard streak signals (daily + weekly consecutive completion).
+- Done: Dashboard weakest-area guidance + local rule-based next-best-action card.
+- Done: report markdown now includes deterministic `Structured Snapshot` section for export-friendly review output.
+- Done: report markdown now includes local rule-based `Local Recommendations` section plus snapshot/recommendation unit-test coverage.
+- Done: report structured snapshot now includes previous-period comparison deltas and follows current UI language (`en/zh`) for exported review readability.
+
 ## v0.14.0 - Retention and Routine Support
 
 Goal: increase long-term consistency for personal use.

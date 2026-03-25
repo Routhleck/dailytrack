@@ -14,7 +14,7 @@ import { listFiles, readTextFile } from '../lib/fs/fileApi'
 import { joinPath } from '../lib/fs/pathApi'
 
 export function ReportsPage() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { dataRoot } = useDataRoot()
   const [config, setConfig] = useState<ReportProviderConfig>(defaultReportProviderConfig())
   const [savingConfig, setSavingConfig] = useState(false)
@@ -110,6 +110,7 @@ export function ReportsPage() {
       const result = await buildAndSaveAiReport(dataRoot, config, {
         period,
         targetId: targetId.trim(),
+        language,
       })
       setPreview(result.reportMarkdown)
       setMessage(t('reports.generatedAtPath', { path: result.reportPath }))

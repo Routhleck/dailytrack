@@ -6,7 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Added
+- Added Dashboard insight layer for v0.13.0 kickoff:
+  - period-over-period comparison (`today` and `this week` vs previous tracked period),
+  - daily/weekly completion streak indicators,
+  - weakest-section hint and rule-based `Next Best Action` recommendation card.
+- Added deterministic `Structured Snapshot` section to generated weekly/monthly reports for export-friendly review output.
+- Added deterministic `Local Recommendations` section to generated reports, derived from local completion/body signals (model-independent baseline guidance).
+- Added report snapshot/recommendation unit tests for structured report output consistency.
+- Added previous-period comparison lines in report structured snapshot (`current target` vs `previous target`) for completion/body count deltas.
+- Added report-language aware markdown rendering:
+  - report generation now follows current UI language (`en`/`zh`) for section headings and local recommendations.
+
+### Changed
+- Dashboard recent daily/weekly lists now use normalized latest-first ordering before rendering.
 
 ## [0.12.2] - 2026-03-25
 

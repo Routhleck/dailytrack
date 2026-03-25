@@ -6,16 +6,28 @@ import { ProgressBar } from '../components/ProgressBar'
 import { formatBodyMetricValue, metricLabelWithUnit } from '../features/body/body.format'
 import { useI18n } from '../features/i18n/I18nContext'
 import { getBodyRecords } from '../features/body/body.service'
-import { getTodayNote, listDailyDates } from '../features/daily/daily.service'
-import { latestBodyRecord, summarizeChecklist } from '../features/dashboard/dashboard.service'
+import { getDailyNote, getTodayNote, listDailyDates } from '../features/daily/daily.service'
+import {
+  compareProgress,
+  findWeakestSection,
+  isChecklistComplete,
+  isPreviousIsoDate,
+  isPreviousWeekId,
+  latestBodyRecord,
+  summarizeChecklist,
+  type ProgressComparison,
+  type ProgressSummary,
+  type SectionProgressSummary,
+} from '../features/dashboard/dashboard.service'
 import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
-import { getCurrentWeekNote, listWeeklyIds } from '../features/weekly/weekly.service'
+import { getCurrentWeekNote, getWeeklyNote, listWeeklyIds } from '../features/weekly/weekly.service'
+import { compareIsoDateDesc } from '../lib/date/date'
 import { extractErrorMessage } from '../lib/error'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
 import { recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
-import type { BodyRecord } from '../types/tracker'
+import type { BodyRecord, WeeklySectionKey } from '../types/tracker'
 
 const BODY_DASHBOARD_FIELDS: {
   key: keyof Omit<BodyRecord, 'date' | 'note'>
@@ -40,6 +52,16 @@ type DashboardState = {
   todayCore: { checked: number; total: number; percent: number }
   todayOneLine: string
   weekSummary: { checked: number; total: number; percent: number }
+  todayComparison: ProgressComparison
+  weekComparison: ProgressComparison
+  dailyStreak: number
+  weeklyStreak: number
+  weakestSection: SectionProgressSummary | null
+  nextAction:
+    | { kind: 'completeToday'; remaining: number }
+    | { kind: 'focusWeakestSection'; section: WeeklySectionKey; remaining: number }
+    | { kind: 'addBodyRecord' }
+    | { kind: 'reviewWeek' }
   body: BodyRecord | null
   recentDaily: string[]
   recentWeekly: string[]
@@ -90,18 +112,157 @@ export function DashboardPage() {
       const dailyDates = dailyResult.status === 'fulfilled' ? dailyResult.value : []
       const weeklyIds = weeklyResult.status === 'fulfilled' ? weeklyResult.value : []
 
-      const weeklyItems = WEEKLY_SECTION_ORDER.flatMap((section) =>
-        preferences.weekly.sections[section] ? week.sections[section] : [],
-      )
+      const enabledWeeklySections = WEEKLY_SECTION_ORDER.filter((section) => preferences.weekly.sections[section])
+      const summarizeWeeklyNote = (targetWeek: typeof week): ProgressSummary => {
+        const enabledItems = enabledWeeklySections.flatMap((section) => targetWeek.sections[section])
+        return summarizeChecklist(enabledItems)
+      }
+      const todayCoreSummary = summarizeChecklist(today.dailyCore)
+      const weekSummary = summarizeWeeklyNote(week)
+      const sectionGoalStats = enabledWeeklySections.map((section) => ({
+        section,
+        summary: summarizeChecklist(week.sections[section]),
+      }))
+      const weakestSection = findWeakestSection(sectionGoalStats)
       const latestBody = latestBodyRecord(bodyRecords)
 
+      const orderedDailyDates = Array.from(new Set([today.date, ...dailyDates])).sort(compareIsoDateDesc)
+      let previousDailySummary: ProgressSummary | null = null
+      let dailyStreak = 0
+      let dailyStreakActive = true
+      let dailyStreakAnchor = today.date
+
+      for (const date of orderedDailyDates.slice(0, 30)) {
+        const summary = date === today.date
+          ? todayCoreSummary
+          : await getDailyNote(dataRoot, date)
+            .then((note) => summarizeChecklist(note.dailyCore))
+            .catch(() => null)
+
+        if (!summary) {
+          continue
+        }
+
+        if (date !== today.date && previousDailySummary == null) {
+          previousDailySummary = summary
+        }
+
+        if (!dailyStreakActive) {
+          if (previousDailySummary) {
+            break
+          }
+          continue
+        }
+
+        if (date === today.date) {
+          if (isChecklistComplete(summary)) {
+            dailyStreak = 1
+          } else {
+            dailyStreakActive = false
+          }
+          continue
+        }
+
+        if (
+          dailyStreak > 0
+          && isPreviousIsoDate(dailyStreakAnchor, date)
+          && isChecklistComplete(summary)
+        ) {
+          dailyStreak += 1
+          dailyStreakAnchor = date
+        } else {
+          dailyStreakActive = false
+        }
+
+        if (previousDailySummary && !dailyStreakActive) {
+          break
+        }
+      }
+
+      const orderedWeeklyIds = Array.from(new Set([week.weekId, ...weeklyIds])).sort((left, right) =>
+        right.localeCompare(left),
+      )
+      let previousWeekSummary: ProgressSummary | null = null
+      let weeklyStreak = 0
+      let weeklyStreakActive = true
+      let weeklyStreakAnchor = week.weekId
+
+      for (const weekId of orderedWeeklyIds.slice(0, 16)) {
+        const summary = weekId === week.weekId
+          ? weekSummary
+          : await getWeeklyNote(dataRoot, weekId)
+            .then((note) => summarizeWeeklyNote(note))
+            .catch(() => null)
+
+        if (!summary) {
+          continue
+        }
+
+        if (weekId !== week.weekId && previousWeekSummary == null) {
+          previousWeekSummary = summary
+        }
+
+        if (!weeklyStreakActive) {
+          if (previousWeekSummary) {
+            break
+          }
+          continue
+        }
+
+        if (weekId === week.weekId) {
+          if (isChecklistComplete(summary)) {
+            weeklyStreak = 1
+          } else {
+            weeklyStreakActive = false
+          }
+          continue
+        }
+
+        if (
+          weeklyStreak > 0
+          && isPreviousWeekId(weeklyStreakAnchor, weekId)
+          && isChecklistComplete(summary)
+        ) {
+          weeklyStreak += 1
+          weeklyStreakAnchor = weekId
+        } else {
+          weeklyStreakActive = false
+        }
+
+        if (previousWeekSummary && !weeklyStreakActive) {
+          break
+        }
+      }
+
+      const todayRemaining = Math.max(0, todayCoreSummary.total - todayCoreSummary.checked)
+      const weakestSectionRemaining = weakestSection
+        ? Math.max(0, weakestSection.summary.total - weakestSection.summary.checked)
+        : 0
+      const nextAction = todayRemaining > 0
+        ? { kind: 'completeToday', remaining: todayRemaining } as const
+        : weakestSection && weakestSection.summary.percent < 100
+          ? {
+              kind: 'focusWeakestSection',
+              section: weakestSection.section,
+              remaining: weakestSectionRemaining,
+            } as const
+          : !latestBody
+            ? { kind: 'addBodyRecord' } as const
+            : { kind: 'reviewWeek' } as const
+
       setState({
-        todayCore: summarizeChecklist(today.dailyCore),
+        todayCore: todayCoreSummary,
         todayOneLine: today.oneLine,
-        weekSummary: summarizeChecklist(weeklyItems),
+        weekSummary,
+        todayComparison: compareProgress(todayCoreSummary, previousDailySummary),
+        weekComparison: compareProgress(weekSummary, previousWeekSummary),
+        dailyStreak,
+        weeklyStreak,
+        weakestSection,
+        nextAction,
         body: latestBody,
-        recentDaily: dailyDates.slice(0, 5),
-        recentWeekly: weeklyIds.slice(0, 5),
+        recentDaily: orderedDailyDates.slice(0, 5),
+        recentWeekly: orderedWeeklyIds.slice(0, 5),
       })
       setError('')
     } catch (error) {
@@ -194,6 +355,61 @@ export function DashboardPage() {
   const body = state.body
   const todayRemaining = Math.max(0, state.todayCore.total - state.todayCore.checked)
   const weekRemaining = Math.max(0, state.weekSummary.total - state.weekSummary.checked)
+  const comparisonText = (comparison: ProgressComparison): string => {
+    if (
+      comparison.previousPercent == null
+      || comparison.deltaPercent == null
+      || comparison.trend === 'na'
+    ) {
+      return t('dashboard.comparisonNoPrevious')
+    }
+
+    if (comparison.trend === 'flat') {
+      return t('dashboard.comparisonFlat', { previous: comparison.previousPercent })
+    }
+
+    return comparison.trend === 'up'
+      ? t('dashboard.comparisonUp', {
+          previous: comparison.previousPercent,
+          delta: Math.abs(comparison.deltaPercent),
+        })
+      : t('dashboard.comparisonDown', {
+          previous: comparison.previousPercent,
+          delta: Math.abs(comparison.deltaPercent),
+        })
+  }
+
+  const nextActionText = () => {
+    switch (state.nextAction.kind) {
+      case 'completeToday':
+        return t('dashboard.nextActionCompleteToday', { count: state.nextAction.remaining })
+      case 'focusWeakestSection':
+        return t('dashboard.nextActionFocusWeakest', {
+          section: t(`section.${state.nextAction.section}` as 'section.Body'),
+          count: state.nextAction.remaining,
+        })
+      case 'addBodyRecord':
+        return t('dashboard.nextActionAddBody')
+      case 'reviewWeek':
+        return t('dashboard.nextActionReviewWeek')
+      default:
+        return t('dashboard.nextActionReviewWeek')
+    }
+  }
+
+  const nextActionTarget = () => {
+    switch (state.nextAction.kind) {
+      case 'completeToday':
+        return '/today'
+      case 'focusWeakestSection':
+      case 'reviewWeek':
+        return '/week'
+      case 'addBodyRecord':
+        return '/body'
+      default:
+        return '/week'
+    }
+  }
 
   return (
     <section className="dt-page">
@@ -220,6 +436,10 @@ export function DashboardPage() {
           <p className="mt-2 text-xs text-slate-600">
             {t('dashboard.remainingItems', { count: todayRemaining })}
           </p>
+          <p className="mt-1 text-xs text-slate-600">{comparisonText(state.todayComparison)}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            {t('dashboard.dailyStreakDays', { count: state.dailyStreak })}
+          </p>
           <p className="mt-3 break-words text-sm text-slate-700">
             {t('dashboard.oneLine')}: {state.todayOneLine || '-'}
           </p>
@@ -241,6 +461,10 @@ export function DashboardPage() {
           <ProgressBar value={state.weekSummary.percent} />
           <p className="mt-2 text-xs text-slate-600">
             {t('dashboard.remainingItems', { count: weekRemaining })}
+          </p>
+          <p className="mt-1 text-xs text-slate-600">{comparisonText(state.weekComparison)}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            {t('dashboard.weeklyStreakWeeks', { count: state.weeklyStreak })}
           </p>
         </article>
 
@@ -280,7 +504,29 @@ export function DashboardPage() {
         </article>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+      <div className="grid gap-3 md:grid-cols-3 md:gap-4">
+        <article className="dt-panel p-3 sm:p-4">
+          <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.insights')}</h2>
+          {state.weakestSection ? (
+            <p className="text-xs text-amber-700">
+              {t('dashboard.weakestSectionHint', {
+                section: t(`section.${state.weakestSection.section}` as 'section.Body'),
+                checked: state.weakestSection.summary.checked,
+                total: state.weakestSection.summary.total,
+              })}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-600">{t('dashboard.weakestSectionUnavailable')}</p>
+          )}
+          <div className="mt-3 rounded-md border border-teal-200 bg-teal-50/80 p-3">
+            <p className="text-xs font-medium text-teal-800">{t('dashboard.nextBestAction')}</p>
+            <p className="mt-1 text-sm text-teal-900">{nextActionText()}</p>
+            <Link className="mt-2 inline-block text-sm dt-link" to={nextActionTarget()}>
+              {t('dashboard.takeAction')}
+            </Link>
+          </div>
+        </article>
+
         <article className="dt-panel p-3 sm:p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-900 sm:text-base">{t('dashboard.recentDaily')}</h2>
           {state.recentDaily.length > 0 ? (

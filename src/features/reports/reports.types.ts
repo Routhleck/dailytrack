@@ -1,4 +1,5 @@
 export type ReportPeriod = 'weekly' | 'monthly'
+export type ReportLanguage = 'en' | 'zh'
 
 export type ReportProviderConfig = {
   providerName: string
@@ -11,6 +12,7 @@ export type ReportProviderConfig = {
 export type BuildReportInput = {
   period: ReportPeriod
   targetId: string
+  language?: ReportLanguage
 }
 
 export type BuildReportResult = {
