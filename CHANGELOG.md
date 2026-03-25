@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - WebDAV section is now collapsed by default and initialized lazily on first expand.
   - deferred WebDAV config/snapshot bootstrap to reduce first-enter render pressure.
   - raised Settings-related route preload priority during background page preloading.
+- Reduced perceived stutter when update notifications appear:
+  - auto update check now starts in idle time after startup delay (instead of competing with active interactions).
+  - updater result state application now uses non-urgent transition scheduling.
+  - update banner switched to floating overlay notification (no main-content layout push).
 
 ### Fixed
 - Fixed performance diagnostics export path on Settings:

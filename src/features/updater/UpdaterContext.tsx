@@ -1,6 +1,7 @@
 import { getVersion } from '@tauri-apps/api/app'
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -129,16 +130,18 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
       try {
         const next = await checkForAvailableUpdate()
-        setUpdate(next)
+        startTransition(() => {
+          setUpdate(next)
 
-        if (next) {
-          setDismissedVersion((previous) => (previous === next.version ? previous : null))
-          setStatus(t('updater.available', { version: next.version }))
-        } else if (manual) {
-          setStatus(t('updater.upToDate'))
-        } else {
-          setStatus('')
-        }
+          if (next) {
+            setDismissedVersion((previous) => (previous === next.version ? previous : null))
+            setStatus(t('updater.available', { version: next.version }))
+          } else if (manual) {
+            setStatus(t('updater.upToDate'))
+          } else {
+            setStatus('')
+          }
+        })
       } catch (reason) {
         if (manual) {
           setStatus('')
@@ -183,12 +186,22 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    let idleId: number | null = null
     const timer = window.setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        idleId = window.requestIdleCallback(() => {
+          void checkForUpdates(false)
+        }, { timeout: 2200 })
+        return
+      }
       void checkForUpdates(false)
     }, 4000)
 
     return () => {
       window.clearTimeout(timer)
+      if (idleId != null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId)
+      }
     }
   }, [autoCheckEnabled, checkForUpdates, configured, resolved])
 

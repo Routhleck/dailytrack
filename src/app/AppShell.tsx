@@ -127,32 +127,6 @@ export function AppShell() {
                 <MobileSyncBanner enabled={showMobileSyncBanner} />
               ) : null}
 
-              {isBannerVisible && update ? (
-                <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
-                  <p className="font-medium">
-                    {t('updater.available', { version: update.version })}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="dt-btn dt-btn-primary"
-                      disabled={installing}
-                      onClick={() => void installUpdate()}
-                    >
-                      {installing ? t('updater.installing') : t('updater.installAndRestart')}
-                    </button>
-                    <button
-                      type="button"
-                      className="dt-btn dt-btn-secondary"
-                      onClick={dismissUpdate}
-                      disabled={installing}
-                    >
-                      {t('updater.later')}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
               {needsInitialTemplateSetup ? (
                 <div className="dt-panel p-4 text-sm text-slate-600">
                   {t('onboarding.description')}
@@ -164,6 +138,36 @@ export function AppShell() {
               )}
             </main>
           </div>
+
+          {isBannerVisible && update ? (
+            <div
+              className="dt-update-banner"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="font-medium">
+                {t('updater.available', { version: update.version })}
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  className="dt-btn dt-btn-primary"
+                  disabled={installing}
+                  onClick={() => void installUpdate()}
+                >
+                  {installing ? t('updater.installing') : t('updater.installAndRestart')}
+                </button>
+                <button
+                  type="button"
+                  className="dt-btn dt-btn-secondary"
+                  onClick={dismissUpdate}
+                  disabled={installing}
+                >
+                  {t('updater.later')}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       <BottomNav />
