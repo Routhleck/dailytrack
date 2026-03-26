@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-03-26
+
 ### Changed
 - Reduced re-render cascades across all pages by splitting `ToastContext` into dispatch-only and state contexts. Pages that push toasts no longer re-render when toast list changes.
 - Reduced updater-related re-renders by splitting `UpdaterContext` into banner-only and full-state contexts. AppShell no longer re-renders on updater check/error/download state changes.
@@ -15,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reduced background sync status polling pressure by making `useSyncStatus` lazy (only polls when `MobileSyncBanner` is actually visible and enabled).
 - Wrapped `BottomNav` in `React.memo` to prevent re-renders on unrelated location state changes.
 
-## [0.14.1] - 2026-03-25
+## [0.14.1]
 
 ### Changed
 - Reduced input lag on Daily and Weekly note editors:
