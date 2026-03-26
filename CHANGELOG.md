@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - feature proof cards
   - richer screenshot gallery structure
   - improved bilingual content hierarchy for EN/ZH.
+- Added branded dailytrack logo presentation on the homepage:
+  - brand lockup in top navigation
+  - logo block in hero section
+  - favicon set to project logo.
 
 ## [1.0.0] - 2026-03-26
 
