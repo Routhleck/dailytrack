@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'site/**'
+      - 'docs/assets/screenshots/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -27,10 +28,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Sync screenshots from docs to site
+        shell: bash
+        run: |
+          mkdir -p site/assets/screenshots
+          find site/assets/screenshots -type f -name '*.png' -delete
+          shopt -s nullglob
+          screenshots=(docs/assets/screenshots/*.png)
+          if [ ${#screenshots[@]} -eq 0 ]; then
+            echo "::error::No PNG screenshots found in docs/assets/screenshots"
+            exit 1
+          fi
+          cp "${screenshots[@]}" site/assets/screenshots/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
