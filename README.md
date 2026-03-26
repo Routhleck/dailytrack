@@ -137,6 +137,7 @@ gh release edit vX.Y.Z --notes-file /tmp/dailytrack-notes.md
 - [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
 - [docs/DISTRIBUTION_POLICY.md](./docs/DISTRIBUTION_POLICY.md)
 - [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
+- [docs/TUTORIALS.md](./docs/TUTORIALS.md)
 - [docs/ROADMAP.md](./docs/ROADMAP.md)
 
 ### Milestones (v1.0+)

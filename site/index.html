@@ -3,134 +3,198 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dailytrack - Local-first tracker</title>
+    <title>dailytrack — Local-first life tracker</title>
     <meta
       name="description"
-      content="dailytrack is a local-first life tracker for Markdown/CSV users. Structured editing, sync tools, and reliable data ownership."
+      content="dailytrack is a local-first tracker for Markdown and CSV users. Structured editing, recovery guardrails, and practical sync tutorials."
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="bg-orb orb-1"></div>
-    <div class="bg-orb orb-2"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="glow glow-a" aria-hidden="true"></div>
+    <div class="glow glow-b" aria-hidden="true"></div>
 
-    <header class="topbar">
-      <div class="brand">dailytrack</div>
-      <div class="lang-switch" role="group" aria-label="language switch">
-        <button class="lang-btn active" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="zh">中文</button>
-      </div>
+    <header class="nav-wrap">
+      <nav class="nav">
+        <a class="brand" href="#top">dailytrack</a>
+        <div class="nav-links">
+          <a href="#features" data-i18n="navFeatures">Features</a>
+          <a href="#tutorials" data-i18n="navTutorials">Tutorials</a>
+          <a href="#gallery" data-i18n="navGallery">Gallery</a>
+        </div>
+        <div class="nav-actions">
+          <div class="lang-switch" role="group" aria-label="language switch">
+            <button class="lang-btn active" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+          </div>
+          <a class="btn btn-primary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="navDownload">Download</a>
+        </div>
+      </nav>
     </header>
 
-    <main>
-      <section class="hero card">
-        <p class="eyebrow" data-i18n="heroEyebrow">LOCAL-FIRST LIFE TRACKING</p>
-        <h1 data-i18n="heroTitle">Your notes stay as files. The app stays out of the way.</h1>
+    <main id="top">
+      <section class="hero card reveal">
+        <p class="eyebrow" data-i18n="heroEyebrow">OPEN SOURCE · LOCAL-FIRST · FILE-OWNED</p>
+        <h1 data-i18n="heroTitle">Turn Markdown files into a reliable daily operating system.</h1>
         <p class="subtitle" data-i18n="heroSubtitle">
-          dailytrack reads and writes Markdown/CSV directly on your device, with structured editing,
-          autosave, and sync tools that never replace local files as source of truth.
+          dailytrack keeps your data in local Markdown/CSV, adds structured editing and autosave,
+          and now provides safer recovery guardrails for long-term personal use.
         </p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="ctaDownload">Download Latest</a>
-          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack#readme" target="_blank" rel="noreferrer" data-i18n="ctaReadme">Read Full README</a>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="ctaDownload">Get Latest Release</a>
+          <a class="btn btn-ghost" href="https://github.com/Routhleck/dailytrack#readme" target="_blank" rel="noreferrer" data-i18n="ctaReadme">Read README</a>
+        </div>
+        <div class="hero-badges">
+          <span data-i18n="badgeLocal">Local files as source of truth</span>
+          <span data-i18n="badgeRecover">Soft-delete + undo recovery</span>
+          <span data-i18n="badgeCross">macOS / Windows / Android</span>
         </div>
       </section>
 
-      <section class="features card">
-        <h2 data-i18n="featuresTitle">Why dailytrack</h2>
+      <section class="stats reveal">
+        <article>
+          <strong>100%</strong>
+          <p data-i18n="stat1">Local Markdown/CSV ownership</p>
+        </article>
+        <article>
+          <strong>2</strong>
+          <p data-i18n="stat2">Editing modes (Structured + Raw)</p>
+        </article>
+        <article>
+          <strong>5</strong>
+          <p data-i18n="stat3">Core tutorials on this page</p>
+        </article>
+      </section>
+
+      <section id="features" class="card reveal">
+        <div class="section-head">
+          <h2 data-i18n="featuresTitle">Why teams and solo builders like dailytrack</h2>
+        </div>
         <div class="feature-grid">
           <article>
-            <h3 data-i18n="f1Title">Local files first</h3>
-            <p data-i18n="f1Body">Markdown and CSV remain the only source of truth.</p>
+            <h3 data-i18n="f1Title">File ownership first</h3>
+            <p data-i18n="f1Body">No hidden app database. Your real data is visible on disk.</p>
           </article>
           <article>
-            <h3 data-i18n="f2Title">Structured + raw</h3>
-            <p data-i18n="f2Body">Fast checkbox workflows and raw markdown fallback in one place.</p>
+            <h3 data-i18n="f2Title">Fast daily operations</h3>
+            <p data-i18n="f2Body">Checklist-first interactions with debounced autosave by default.</p>
           </article>
           <article>
             <h3 data-i18n="f3Title">Recovery guardrails</h3>
-            <p data-i18n="f3Body">Safer delete flow with profile trash + in-session undo restore.</p>
+            <p data-i18n="f3Body">Profile delete is reversible via trash + in-session undo.</p>
           </article>
           <article>
-            <h3 data-i18n="f4Title">Sync toolbox</h3>
-            <p data-i18n="f4Body">WebDAV snapshot + realtime sync with conflict resolution tools.</p>
+            <h3 data-i18n="f4Title">Sync toolkit</h3>
+            <p data-i18n="f4Body">WebDAV snapshot + realtime sync with conflict tools.</p>
           </article>
           <article>
-            <h3 data-i18n="f5Title">Cross-platform</h3>
-            <p data-i18n="f5Body">macOS, Windows, and Android APK sideload support.</p>
+            <h3 data-i18n="f5Title">Portable workflow</h3>
+            <p data-i18n="f5Body">Move data roots, export zip bundles, and keep control.</p>
+          </article>
+          <article>
+            <h3 data-i18n="f6Title">Bilingual UX</h3>
+            <p data-i18n="f6Body">English and Chinese interfaces with consistent data schema.</p>
           </article>
         </div>
       </section>
 
-      <section class="gallery card">
+      <section id="tutorials" class="card reveal tutorials">
         <div class="section-head">
-          <h2 data-i18n="galleryTitle">Interface Preview</h2>
+          <h2 data-i18n="tutorialsTitle">Tutorial Center</h2>
+          <p data-i18n="tutorialsSubtitle">Everything you need to start, sync, and recover — directly on this page.</p>
+        </div>
+
+        <div class="tutorial-tabs" role="tablist" aria-label="tutorial topics">
+          <button class="tab-btn active" data-topic="quick" data-i18n="tabQuick">Quick Start</button>
+          <button class="tab-btn" data-topic="daily" data-i18n="tabDaily">Daily + Weekly Flow</button>
+          <button class="tab-btn" data-topic="body" data-i18n="tabBody">Body Tracking</button>
+          <button class="tab-btn" data-topic="sync" data-i18n="tabSync">WebDAV Sync</button>
+          <button class="tab-btn" data-topic="safety" data-i18n="tabSafety">Recovery & Safety</button>
+        </div>
+
+        <div class="tutorial-panel active" data-topic="quick">
+          <h3 data-i18n="quickTitle">Quick Start in 5 Minutes</h3>
+          <ol>
+            <li data-i18n="quick1">Install from latest release and finish onboarding.</li>
+            <li data-i18n="quick2">Open Daily Note, Weekly Note, and Body once each.</li>
+            <li data-i18n="quick3">Check autosave by reopening the same note page.</li>
+            <li data-i18n="quick4">Confirm your data root path in Settings.</li>
+          </ol>
+        </div>
+
+        <div class="tutorial-panel" data-topic="daily">
+          <h3 data-i18n="dailyTitle">Daily + Weekly Operating Rhythm</h3>
+          <ol>
+            <li data-i18n="daily1">Morning: review Daily Core checklist.</li>
+            <li data-i18n="daily2">During day: update checklist and one-line notes.</li>
+            <li data-i18n="daily3">Week-end: fill Weekly reflections and next-week priorities.</li>
+            <li data-i18n="daily4">Use history pages for calendar/week-grid review.</li>
+          </ol>
+        </div>
+
+        <div class="tutorial-panel" data-topic="body">
+          <h3 data-i18n="bodyTitle">Body Tracking Basics</h3>
+          <ol>
+            <li data-i18n="body1">Add one record with date + key metrics.</li>
+            <li data-i18n="body2">Configure visible metrics and units in Preferences.</li>
+            <li data-i18n="body3">Use trend ranges (7d/30d/90d/all) for weekly review.</li>
+            <li data-i18n="body4">Attach context in note field for better interpretation.</li>
+          </ol>
+        </div>
+
+        <div class="tutorial-panel" data-topic="sync">
+          <h3 data-i18n="syncTitle">WebDAV Sync Tutorial</h3>
+          <ol>
+            <li data-i18n="sync1">Set URL/credentials and run Test Connection first.</li>
+            <li data-i18n="sync2">Do one manual Push Now to establish baseline snapshot.</li>
+            <li data-i18n="sync3">Use Sync page for Push/Pull/Both operations.</li>
+            <li data-i18n="sync4">Resolve conflicts with preview before batch apply.</li>
+          </ol>
+        </div>
+
+        <div class="tutorial-panel" data-topic="safety">
+          <h3 data-i18n="safetyTitle">Recovery & Safety Tutorial</h3>
+          <ol>
+            <li data-i18n="safety1">Profile deletes go to `.trash` instead of hard deletion.</li>
+            <li data-i18n="safety2">Use in-session Undo immediately after mistaken delete.</li>
+            <li data-i18n="safety3">Review destructive sync actions in confirmation dialog.</li>
+            <li data-i18n="safety4">Keep periodic zip exports as offline backup.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="gallery" class="card reveal">
+        <div class="section-head">
+          <h2 data-i18n="galleryTitle">Interface Gallery</h2>
           <a href="https://github.com/Routhleck/dailytrack/tree/master/docs/assets/screenshots" target="_blank" rel="noreferrer" data-i18n="galleryLink">View source screenshots</a>
         </div>
         <div class="shot-grid">
-          <figure>
-            <img src="./assets/screenshots/dashboard.png" alt="Dashboard" />
-            <figcaption data-i18n="gDashboard">Dashboard</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/daily-note.png" alt="Daily note" />
-            <figcaption data-i18n="gDaily">Daily Note</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/daily-history.png" alt="Daily history" />
-            <figcaption data-i18n="gDailyHistory">Daily History</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/weekly-note.png" alt="Weekly note" />
-            <figcaption data-i18n="gWeekly">Weekly Note</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/weekly-history.png" alt="Weekly history" />
-            <figcaption data-i18n="gWeeklyHistory">Weekly History</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/body.png" alt="Body" />
-            <figcaption data-i18n="gBody">Body</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/settings.png" alt="Settings" />
-            <figcaption data-i18n="gSettings">Settings</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/profiles.png" alt="Profiles" />
-            <figcaption data-i18n="gProfiles">Profiles</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/sync.png" alt="Sync" />
-            <figcaption data-i18n="gSync">Sync</figcaption>
-          </figure>
-          <figure>
-            <img src="./assets/screenshots/onboarding.png" alt="Onboarding" />
-            <figcaption data-i18n="gOnboarding">Onboarding</figcaption>
-          </figure>
+          <figure><img src="./assets/screenshots/dashboard.png" alt="Dashboard" /><figcaption data-i18n="gDashboard">Dashboard</figcaption></figure>
+          <figure><img src="./assets/screenshots/daily-note.png" alt="Daily Note" /><figcaption data-i18n="gDaily">Daily Note</figcaption></figure>
+          <figure><img src="./assets/screenshots/daily-history.png" alt="Daily History" /><figcaption data-i18n="gDailyHistory">Daily History</figcaption></figure>
+          <figure><img src="./assets/screenshots/weekly-note.png" alt="Weekly Note" /><figcaption data-i18n="gWeekly">Weekly Note</figcaption></figure>
+          <figure><img src="./assets/screenshots/weekly-history.png" alt="Weekly History" /><figcaption data-i18n="gWeeklyHistory">Weekly History</figcaption></figure>
+          <figure><img src="./assets/screenshots/body.png" alt="Body" /><figcaption data-i18n="gBody">Body</figcaption></figure>
+          <figure><img src="./assets/screenshots/settings.png" alt="Settings" /><figcaption data-i18n="gSettings">Settings</figcaption></figure>
+          <figure><img src="./assets/screenshots/profiles.png" alt="Profiles" /><figcaption data-i18n="gProfiles">Profiles</figcaption></figure>
+          <figure><img src="./assets/screenshots/sync.png" alt="Sync" /><figcaption data-i18n="gSync">Sync</figcaption></figure>
+          <figure><img src="./assets/screenshots/onboarding.png" alt="Onboarding" /><figcaption data-i18n="gOnboarding">Onboarding</figcaption></figure>
         </div>
       </section>
 
-      <section class="downloads card">
-        <h2 data-i18n="downloadsTitle">Download Channels</h2>
-        <p data-i18n="downloadsBody">
-          Stable signed channel is the target. Current public builds follow testing-channel expectations.
-        </p>
-        <div class="download-grid">
-          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadMac">macOS Builds</a>
-          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadWin">Windows Builds</a>
-          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadAndroid">Android APK</a>
+      <section class="card cta reveal">
+        <h2 data-i18n="finalTitle">Ship your personal operating system, not another note silo.</h2>
+        <p data-i18n="finalBody">Start with local files, add structure where it helps, and keep long-term trust in your data.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="finalDownload">Download dailytrack</a>
+          <a class="btn btn-ghost" href="https://github.com/Routhleck/dailytrack/blob/master/docs/TROUBLESHOOTING.md" target="_blank" rel="noreferrer" data-i18n="finalHelp">Troubleshooting</a>
         </div>
-        <p class="small-links">
-          <a href="https://github.com/Routhleck/dailytrack/blob/master/docs/DISTRIBUTION_POLICY.md" target="_blank" rel="noreferrer" data-i18n="policyLink">Distribution Policy</a>
-          <span>·</span>
-          <a href="https://github.com/Routhleck/dailytrack/blob/master/docs/TROUBLESHOOTING.md" target="_blank" rel="noreferrer" data-i18n="troubleshootLink">Troubleshooting</a>
-        </p>
       </section>
     </main>
 
     <footer>
-      <p data-i18n="footerText">Built for private, long-term self tracking with local data ownership.</p>
+      <p data-i18n="footerText">Open source, local-first, built for long-term self-tracking reliability.</p>
     </footer>
 
     <script src="./app.js"></script>

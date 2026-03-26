@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Added in-page tutorial center on the project homepage (`site/`) with five interactive guide tracks:
+  - quick start
+  - daily/weekly workflow
+  - body tracking
+  - WebDAV sync
+  - recovery and safety.
+- Added tutorial docs hub and guide pages:
+  - `docs/TUTORIALS.md`
+  - `docs/tutorials/*`
+
+### Changed
+- Redesigned the project homepage with a more promotional, campaign-style layout:
+  - stronger hero/value proposition
+  - feature proof cards
+  - richer screenshot gallery structure
+  - improved bilingual content hierarchy for EN/ZH.
+
 ## [1.0.0] - 2026-03-26
 
 ### Added
