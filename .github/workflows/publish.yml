@@ -112,11 +112,17 @@ jobs:
 
           const cargoPath = 'src-tauri/Cargo.toml'
           const cargo = fs.readFileSync(cargoPath, 'utf8')
-          const updated = cargo.replace(/^version\s*=\s*".*"$/m, `version = "${version}"`)
-          if (cargo === updated) {
-            throw new Error('Failed to update version in src-tauri/Cargo.toml')
+          const cargoVersionPattern = /^version\s*=\s*".*"$/m
+          if (!cargoVersionPattern.test(cargo)) {
+            throw new Error('Failed to locate version field in src-tauri/Cargo.toml')
           }
-          fs.writeFileSync(cargoPath, updated)
+          const updated = cargo.replace(cargoVersionPattern, `version = "${version}"`)
+          if (cargo !== updated) {
+            fs.writeFileSync(cargoPath, updated)
+            console.log(`Updated src-tauri/Cargo.toml version to ${version}`)
+          } else {
+            console.log(`src-tauri/Cargo.toml already at version ${version}`)
+          }
           NODE
 
       - name: Setup Node.js
@@ -340,11 +346,17 @@ jobs:
 
           const cargoPath = 'src-tauri/Cargo.toml'
           const cargo = fs.readFileSync(cargoPath, 'utf8')
-          const updated = cargo.replace(/^version\s*=\s*".*"$/m, `version = "${version}"`)
-          if (cargo === updated) {
-            throw new Error('Failed to update version in src-tauri/Cargo.toml')
+          const cargoVersionPattern = /^version\s*=\s*".*"$/m
+          if (!cargoVersionPattern.test(cargo)) {
+            throw new Error('Failed to locate version field in src-tauri/Cargo.toml')
           }
-          fs.writeFileSync(cargoPath, updated)
+          const updated = cargo.replace(cargoVersionPattern, `version = "${version}"`)
+          if (cargo !== updated) {
+            fs.writeFileSync(cargoPath, updated)
+            console.log(`Updated src-tauri/Cargo.toml version to ${version}`)
+          } else {
+            console.log(`src-tauri/Cargo.toml already at version ${version}`)
+          }
           NODE
 
       - name: Setup Java 17
