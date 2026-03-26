@@ -197,6 +197,10 @@ export function BodyPage() {
   const formFocusedRef = useRef(false)
   const lastFormInteractionAtRef = useRef(0)
   const resumePollAfterRef = useRef(0)
+  const pushInfoRef = useRef(pushInfo)
+  const tRef = useRef(t)
+  useEffect(() => { pushInfoRef.current = pushInfo }, [pushInfo])
+  useEffect(() => { tRef.current = t }, [t])
 
   function markFormInteraction() {
     lastFormInteractionAtRef.current = Date.now()
@@ -307,7 +311,7 @@ export function BodyPage() {
           if (!areBodyRecordsEqual(recordsRef.current, latest)) {
             setRecords(latest)
             if (!isFormInteracting()) {
-              pushInfo(t('body.updatedFromDisk'))
+              pushInfoRef.current(tRef.current('body.updatedFromDisk'))
             }
           }
         })
@@ -322,7 +326,7 @@ export function BodyPage() {
     return () => {
       window.clearInterval(timer)
     }
-  }, [dataRoot, preferences.sync.mode, pushInfo, t])
+  }, [dataRoot, preferences.sync.mode])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()

@@ -24,9 +24,9 @@ function useIsMobileViewport() {
   return isMobile
 }
 
-function MobileSyncBannerContent() {
+function MobileSyncBannerContent({ active }: { active: boolean }) {
   const { t } = useI18n()
-  const syncSnapshot = useSyncStatus()
+  const syncSnapshot = useSyncStatus({ enabled: active })
 
   const mobileSyncLabel = (() => {
     if (!syncSnapshot.online) {
@@ -68,10 +68,11 @@ function MobileSyncBannerContent() {
 
 export function MobileSyncBanner({ enabled }: { enabled: boolean }) {
   const isMobile = useIsMobileViewport()
+  const active = enabled && isMobile
 
-  if (!enabled || !isMobile) {
+  if (!active) {
     return null
   }
 
-  return <MobileSyncBannerContent />
+  return <MobileSyncBannerContent active={active} />
 }

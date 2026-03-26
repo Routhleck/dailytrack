@@ -9,7 +9,7 @@ import { usePreferences } from '../features/preferences/PreferencesContext'
 import { Sidebar } from '../components/Sidebar'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { TutorialGuide } from '../features/tutorial/TutorialGuide'
-import { useUpdater } from '../features/updater/UpdaterContext'
+import { useUpdaterBanner } from '../features/updater/UpdaterContext'
 import { MobileSyncBanner } from '../features/webdav/MobileSyncBanner'
 import { markRuntimePerf, recordRuntimePerfSeries } from '../lib/perf/runtimePerf'
 
@@ -17,7 +17,7 @@ export function AppShell() {
   const { t, language, setLanguage } = useI18n()
   const { preferences } = usePreferences()
   const { activeProfile, needsInitialTemplateSetup, loading, error } = useDataRoot()
-  const { isBannerVisible, update, installUpdate, installing, dismissUpdate } = useUpdater()
+  const { isBannerVisible, update, installUpdate, installing, dismissUpdate } = useUpdaterBanner()
   const { isKeyboardOpen } = useMobileKeyboardState()
   const showMobileSyncBanner = preferences.ui.mobile.showSyncBanner
   const location = useLocation()

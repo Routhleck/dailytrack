@@ -1,78 +1,86 @@
-import { useEffect, useRef, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 const KEYBOARD_OPEN_DELTA_PX = 120
 
-function getKeyboardOpenState(): boolean {
+// ---------- Module-level singleton ----------
+
+let currentState = false
+let frameId: number | null = null
+const listeners = new Set<() => void>()
+
+function computeKeyboardOpen(): boolean {
   if (typeof window === 'undefined') {
     return false
   }
-
   const isMobileLayout = window.matchMedia(MOBILE_MEDIA_QUERY).matches
   if (!isMobileLayout) {
     return false
   }
-
   const viewport = window.visualViewport
   if (!viewport) {
     return false
   }
-
-  const keyboardDelta = window.innerHeight - viewport.height - viewport.offsetTop
-  return keyboardDelta > KEYBOARD_OPEN_DELTA_PX
+  return window.innerHeight - viewport.height - viewport.offsetTop > KEYBOARD_OPEN_DELTA_PX
 }
 
+function notify() {
+  for (const listener of listeners) {
+    listener()
+  }
+}
+
+function handleViewportEvent() {
+  if (frameId != null) {
+    window.cancelAnimationFrame(frameId)
+  }
+  frameId = window.requestAnimationFrame(() => {
+    frameId = null
+    const next = computeKeyboardOpen()
+    if (next !== currentState) {
+      currentState = next
+      notify()
+    }
+  })
+}
+
+let listenersAttached = false
+
+function ensureListeners() {
+  if (listenersAttached || typeof window === 'undefined') {
+    return
+  }
+  listenersAttached = true
+  currentState = computeKeyboardOpen()
+
+  window.addEventListener('resize', handleViewportEvent)
+  window.addEventListener('orientationchange', handleViewportEvent)
+  const viewport = window.visualViewport
+  if (viewport) {
+    viewport.addEventListener('resize', handleViewportEvent)
+    viewport.addEventListener('scroll', handleViewportEvent)
+  }
+}
+
+function subscribe(callback: () => void): () => void {
+  ensureListeners()
+  listeners.add(callback)
+  return () => {
+    listeners.delete(callback)
+  }
+}
+
+function getSnapshot(): boolean {
+  return currentState
+}
+
+function getServerSnapshot(): boolean {
+  return false
+}
+
+// ---------- Hook ----------
+
 export function useMobileKeyboardState(): { isKeyboardOpen: boolean } {
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(() => getKeyboardOpenState())
-  const frameRef = useRef<number | null>(null)
-  const stateRef = useRef(isKeyboardOpen)
-
-  useEffect(() => {
-    stateRef.current = isKeyboardOpen
-  }, [isKeyboardOpen])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const viewport = window.visualViewport
-    const updateKeyboardState = () => {
-      if (frameRef.current != null) {
-        window.cancelAnimationFrame(frameRef.current)
-      }
-
-      frameRef.current = window.requestAnimationFrame(() => {
-        frameRef.current = null
-        const next = getKeyboardOpenState()
-        if (next !== stateRef.current) {
-          setIsKeyboardOpen(next)
-        }
-      })
-    }
-
-    updateKeyboardState()
-    window.addEventListener('resize', updateKeyboardState)
-    window.addEventListener('orientationchange', updateKeyboardState)
-
-    if (viewport) {
-      viewport.addEventListener('resize', updateKeyboardState)
-      viewport.addEventListener('scroll', updateKeyboardState)
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateKeyboardState)
-      window.removeEventListener('orientationchange', updateKeyboardState)
-      if (viewport) {
-        viewport.removeEventListener('resize', updateKeyboardState)
-        viewport.removeEventListener('scroll', updateKeyboardState)
-      }
-      if (frameRef.current != null) {
-        window.cancelAnimationFrame(frameRef.current)
-        frameRef.current = null
-      }
-    }
-  }, [])
-
+  const isKeyboardOpen = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   return { isKeyboardOpen }
 }

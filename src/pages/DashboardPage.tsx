@@ -140,26 +140,39 @@ export function DashboardPage() {
       const latestBody = latestBodyRecord(bodyRecords)
 
       const orderedDailyDates = Array.from(new Set([today.date, ...dailyDates])).sort(compareIsoDateDesc)
+      const dailySummaryByDate: Record<string, ProgressSummary> = {
+        [today.date]: todayCoreSummary,
+      }
+
+      // Parallel batch: load daily summaries in groups of 8
+      const dailyDatesToLoad = orderedDailyDates.slice(0, 45).filter((d) => d !== today.date)
+      for (let i = 0; i < dailyDatesToLoad.length; i += 8) {
+        const batch = dailyDatesToLoad.slice(i, i + 8)
+        const results = await Promise.all(
+          batch.map((date) =>
+            getDailyNote(dataRoot, date)
+              .then((note) => ({ date, summary: summarizeChecklist(note.dailyCore) }))
+              .catch(() => ({ date, summary: null as ProgressSummary | null })),
+          ),
+        )
+        for (const { date, summary } of results) {
+          if (summary) {
+            dailySummaryByDate[date] = summary
+          }
+        }
+      }
+
       let previousDailySummary: ProgressSummary | null = null
       let dailyStreak = 0
       let dailyStreakActive = true
       let dailyStreakAnchor = today.date
       let lastCompletedDailyDate: string | null = null
-      const dailySummaryByDate: Record<string, ProgressSummary> = {
-        [today.date]: todayCoreSummary,
-      }
 
       for (const date of orderedDailyDates.slice(0, 45)) {
-        const summary = date === today.date
-          ? todayCoreSummary
-          : await getDailyNote(dataRoot, date)
-            .then((note) => summarizeChecklist(note.dailyCore))
-            .catch(() => null)
-
+        const summary = dailySummaryByDate[date] ?? null
         if (!summary) {
           continue
         }
-        dailySummaryByDate[date] = summary
 
         if (date !== today.date && previousDailySummary == null) {
           previousDailySummary = summary
@@ -201,9 +214,30 @@ export function DashboardPage() {
         }
       }
 
+      // Parallel batch: load weekly summaries in groups of 8
       const orderedWeeklyIds = Array.from(new Set([week.weekId, ...weeklyIds])).sort((left, right) =>
         right.localeCompare(left),
       )
+      const weeklySummaryById: Record<string, ProgressSummary> = {
+        [week.weekId]: weekSummary,
+      }
+      const weeklyIdsToLoad = orderedWeeklyIds.slice(0, 24).filter((id) => id !== week.weekId)
+      for (let i = 0; i < weeklyIdsToLoad.length; i += 8) {
+        const batch = weeklyIdsToLoad.slice(i, i + 8)
+        const results = await Promise.all(
+          batch.map((weekId) =>
+            getWeeklyNote(dataRoot, weekId)
+              .then((note) => ({ weekId, summary: summarizeWeeklyNote(note) }))
+              .catch(() => ({ weekId, summary: null as ProgressSummary | null })),
+          ),
+        )
+        for (const { weekId, summary } of results) {
+          if (summary) {
+            weeklySummaryById[weekId] = summary
+          }
+        }
+      }
+
       let previousWeekSummary: ProgressSummary | null = null
       let weeklyStreak = 0
       let weeklyStreakActive = true
@@ -211,12 +245,7 @@ export function DashboardPage() {
       let lastCompletedWeekId: string | null = null
 
       for (const weekId of orderedWeeklyIds.slice(0, 24)) {
-        const summary = weekId === week.weekId
-          ? weekSummary
-          : await getWeeklyNote(dataRoot, weekId)
-            .then((note) => summarizeWeeklyNote(note))
-            .catch(() => null)
-
+        const summary = weeklySummaryById[weekId] ?? null
         if (!summary) {
           continue
         }

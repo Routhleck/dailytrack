@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No user-visible changes yet.
+### Changed
+- Reduced re-render cascades across all pages by splitting `ToastContext` into dispatch-only and state contexts. Pages that push toasts no longer re-render when toast list changes.
+- Reduced updater-related re-renders by splitting `UpdaterContext` into banner-only and full-state contexts. AppShell no longer re-renders on updater check/error/download state changes.
+- Reduced BodyPage poll interval churn by stabilizing `pushInfo` and `t` refs in effect deps.
+- Reduced mobile keyboard detection overhead by replacing per-component `useState`+`useEffect` with a module-level singleton using `useSyncExternalStore`. Eliminated duplicate event listeners from AppShell + BottomNav.
+- Improved Dashboard load speed on Android by loading daily/weekly note summaries in parallel batches of 8 instead of sequential one-by-one `await`.
+- Reduced background sync status polling pressure by making `useSyncStatus` lazy (only polls when `MobileSyncBanner` is actually visible and enabled).
+- Wrapped `BottomNav` in `React.memo` to prevent re-renders on unrelated location state changes.
 
 ## [0.14.1] - 2026-03-25
 

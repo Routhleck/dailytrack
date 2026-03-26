@@ -19,7 +19,15 @@ import {
 } from './updater.service'
 import { loadAutoUpdatePreference, saveAutoUpdatePreference } from './updater.store'
 
-type UpdaterContextValue = {
+type UpdaterBannerValue = {
+  isBannerVisible: boolean
+  update: AvailableUpdate | null
+  installUpdate: () => Promise<void>
+  installing: boolean
+  dismissUpdate: () => void
+}
+
+type UpdaterFullValue = {
   supported: boolean
   configured: boolean
   resolved: boolean
@@ -38,7 +46,8 @@ type UpdaterContextValue = {
   isBannerVisible: boolean
 }
 
-const UpdaterContext = createContext<UpdaterContextValue | undefined>(undefined)
+const UpdaterBannerContext = createContext<UpdaterBannerValue | undefined>(undefined)
+const UpdaterFullContext = createContext<UpdaterFullValue | undefined>(undefined)
 
 function toErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim().length > 0) {
@@ -219,7 +228,12 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
   const isBannerVisible = Boolean(update && dismissedVersion !== update.version)
 
-  const value = useMemo<UpdaterContextValue>(
+  const bannerValue = useMemo<UpdaterBannerValue>(
+    () => ({ isBannerVisible, update, installUpdate, installing, dismissUpdate }),
+    [isBannerVisible, update, installUpdate, installing, dismissUpdate],
+  )
+
+  const fullValue = useMemo<UpdaterFullValue>(
     () => ({
       configured,
       supported,
@@ -258,15 +272,36 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     ],
   )
 
-  return <UpdaterContext.Provider value={value}>{children}</UpdaterContext.Provider>
+  return (
+    <UpdaterFullContext.Provider value={fullValue}>
+      <UpdaterBannerContext.Provider value={bannerValue}>
+        {children}
+      </UpdaterBannerContext.Provider>
+    </UpdaterFullContext.Provider>
+  )
 }
 
+/**
+ * Lightweight hook for banner-only consumers (AppShell).
+ * Only re-renders when banner visibility / install state changes.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useUpdaterBanner() {
+  const context = useContext(UpdaterBannerContext)
+  if (!context) {
+    throw new Error('useUpdaterBanner must be used inside UpdaterProvider')
+  }
+  return context
+}
+
+/**
+ * Full hook for Settings page and other detailed consumers.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useUpdater() {
-  const context = useContext(UpdaterContext)
+  const context = useContext(UpdaterFullContext)
   if (!context) {
     throw new Error('useUpdater must be used inside UpdaterProvider')
   }
-
   return context
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -13,7 +13,7 @@ import { useMobileKeyboardState } from '../features/mobile/useMobileKeyboardStat
 import { MobileGroupSheet } from './MobileGroupSheet'
 import { NavGlyph } from './NavGlyph'
 
-export function BottomNav() {
+export const BottomNav = memo(function BottomNav() {
   const { t } = useI18n()
   const location = useLocation()
   const navigate = useNavigate()
@@ -43,6 +43,8 @@ export function BottomNav() {
   }, [openSheet, t])
 
   const sheetItems = openSheet === 'record' ? MOBILE_RECORD_ITEMS : MOBILE_HISTORY_ITEMS
+
+  const pathname = location.pathname
 
   return (
     <>
@@ -75,7 +77,7 @@ export function BottomNav() {
                 onClick={() => {
                   if (item.kind === 'route') {
                     setOpenSheet(null)
-                    if (location.pathname !== item.to) {
+                    if (pathname !== item.to) {
                       navigate(item.to)
                     }
                     return
@@ -94,4 +96,4 @@ export function BottomNav() {
       </nav>
     </>
   )
-}
+})

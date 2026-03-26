@@ -41,7 +41,20 @@ function deriveNextAutoPullInSec(
   return Math.max(0, Math.ceil((lastPoint + intervalSec * 1000 - nowMs) / 1000))
 }
 
-export function useSyncStatus(): SyncStatusSnapshot {
+const EMPTY_SNAPSHOT: SyncStatusSnapshot = {
+  loading: false,
+  error: null,
+  online: true,
+  webdavEnabled: false,
+  autoPullEnabled: false,
+  autoPullIntervalSec: 30,
+  status: null,
+  nextAutoPullInSec: null,
+  refresh: async () => {},
+}
+
+export function useSyncStatus(options?: { enabled?: boolean }): SyncStatusSnapshot {
+  const active = options?.enabled ?? true
   const { baseDataRoot } = useDataRoot()
   const [status, setStatus] = useState<RealtimeSyncStatus | null>(null)
   const [config, setConfig] = useState<WebdavConfig | null>(null)
@@ -75,6 +88,9 @@ export function useSyncStatus(): SyncStatusSnapshot {
   }, [baseDataRoot])
 
   useEffect(() => {
+    if (!active) {
+      return
+    }
     const timerId = window.setTimeout(() => {
       void refresh()
     }, 280)
@@ -82,9 +98,12 @@ export function useSyncStatus(): SyncStatusSnapshot {
     return () => {
       window.clearTimeout(timerId)
     }
-  }, [refresh])
+  }, [active, refresh])
 
   useEffect(() => {
+    if (!active) {
+      return
+    }
     const timerId = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
         void refresh()
@@ -106,10 +125,10 @@ export function useSyncStatus(): SyncStatusSnapshot {
       window.clearInterval(timerId)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [refresh])
+  }, [active, refresh])
 
   useEffect(() => {
-    if (!config?.enabled || !config.autoPullEnabled) {
+    if (!active || !config?.enabled || !config.autoPullEnabled) {
       return
     }
 
@@ -123,7 +142,7 @@ export function useSyncStatus(): SyncStatusSnapshot {
     return () => {
       window.clearInterval(timerId)
     }
-  }, [config?.autoPullEnabled, config?.enabled])
+  }, [active, config?.autoPullEnabled, config?.enabled])
 
   useEffect(() => {
     const onOnline = () => setOnline(true)
@@ -166,6 +185,10 @@ export function useSyncStatus(): SyncStatusSnapshot {
     () => deriveNextAutoPullInSec(status, config, nowMs, autoPullAnchorMs),
     [autoPullAnchorMs, config, nowMs, status],
   )
+
+  if (!active) {
+    return EMPTY_SNAPSHOT
+  }
 
   return {
     loading,

@@ -46,15 +46,15 @@ export function WeeklyNotePage() {
   const pollBusyRef = useRef(false)
   const resumePollAfterRef = useRef(0)
   const noteRef = useRef<WeeklyNote | null>(null)
-  noteRef.current = note
   const rawDraftRef = useRef('')
-  rawDraftRef.current = rawDraft
   const savingRef = useRef(false)
-  savingRef.current = saving
   const dirtyRef = useRef(false)
   const saveTimerRef = useRef<number | null>(null)
   const debounceDelayRef = useRef(1200)
-  debounceDelayRef.current = mode === 'structured' ? 1200 : 1500
+  useEffect(() => { noteRef.current = note }, [note])
+  useEffect(() => { rawDraftRef.current = rawDraft }, [rawDraft])
+  useEffect(() => { savingRef.current = saving }, [saving])
+  useEffect(() => { debounceDelayRef.current = mode === 'structured' ? 1200 : 1500 }, [mode])
 
   const templateDiff = useMemo(
     () => (note && templateNote ? diffWeeklyAgainstTemplate(note, templateNote) : null),
@@ -162,7 +162,7 @@ export function WeeklyNotePage() {
   )
 
   const performSaveRef = useRef(performSave)
-  performSaveRef.current = performSave
+  useEffect(() => { performSaveRef.current = performSave }, [performSave])
 
   const scheduleAutosave = useCallback(() => {
     dirtyRef.current = true

@@ -16,8 +16,7 @@ type ToastItem = {
   message: string
 }
 
-type ToastContextValue = {
-  toasts: ToastItem[]
+type ToastDispatchValue = {
   pushToast: (message: string, kind?: ToastKind) => void
   pushSuccess: (message: string) => void
   pushError: (message: string) => void
@@ -25,12 +24,17 @@ type ToastContextValue = {
   dismissToast: (id: number) => void
 }
 
+type ToastStateValue = {
+  toasts: ToastItem[]
+}
+
 const MAX_TOASTS = 4
 const SUCCESS_LIFETIME_MS = 2600
 const INFO_LIFETIME_MS = 3000
 const ERROR_LIFETIME_MS = 5200
 
-const ToastContext = createContext<ToastContextValue | undefined>(undefined)
+const ToastDispatchContext = createContext<ToastDispatchValue | undefined>(undefined)
+const ToastStateContext = createContext<ToastStateValue | undefined>(undefined)
 
 function toastLifetime(kind: ToastKind): number {
   switch (kind) {
@@ -70,23 +74,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timersRef.current.set(id, timerId)
   }, [dismissToast])
 
-  const value = useMemo<ToastContextValue>(
+  const dispatch = useMemo<ToastDispatchValue>(
     () => ({
-      toasts,
       pushToast,
       pushSuccess: (message) => pushToast(message, 'success'),
       pushError: (message) => pushToast(message, 'error'),
       pushInfo: (message) => pushToast(message, 'info'),
       dismissToast,
     }),
-    [dismissToast, pushToast, toasts],
+    [dismissToast, pushToast],
   )
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
+  const state = useMemo<ToastStateValue>(() => ({ toasts }), [toasts])
+
+  return (
+    <ToastDispatchContext.Provider value={dispatch}>
+      <ToastStateContext.Provider value={state}>
+        {children}
+      </ToastStateContext.Provider>
+    </ToastDispatchContext.Provider>
+  )
 }
 
 export function ToastViewport() {
-  const { toasts, dismissToast } = useToast()
+  const { toasts } = useToastState()
+  const { dismissToast } = useToast()
 
   return (
     <aside className="pointer-events-none fixed right-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[80] w-[min(24rem,calc(100vw-1.5rem))] space-y-2 md:right-6">
@@ -112,11 +124,28 @@ export function ToastViewport() {
   )
 }
 
+/**
+ * Stable dispatch-only hook. Consumers using this will NOT re-render when toasts change.
+ * Use this in pages/components that only push or dismiss toasts.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
-  const ctx = useContext(ToastContext)
+  const ctx = useContext(ToastDispatchContext)
   if (!ctx) {
     throw new Error('useToast must be used inside ToastProvider')
+  }
+  return ctx
+}
+
+/**
+ * State hook that subscribes to the toasts array. Only use in components
+ * that need to render the toast list (e.g. ToastViewport).
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useToastState() {
+  const ctx = useContext(ToastStateContext)
+  if (!ctx) {
+    throw new Error('useToastState must be used inside ToastProvider')
   }
   return ctx
 }
