@@ -254,6 +254,17 @@ Acceptance focus:
 
 - Data-loss anxiety is minimized with clear recovery paths.
 
+Progress snapshot:
+
+- Done: profile soft-delete flow now moves deleted profiles to `<data-root>/.trash/<profile>-<timestamp>`.
+- Done: profile delete now supports in-session undo restore from trash.
+- Done: startup trash auto-purge removes entries older than 7 days.
+- Done: Sync destructive conflict actions now use in-app confirmation modal (replaces browser confirm).
+- Done: added `docs/DISTRIBUTION_POLICY.md` and `docs/TROUBLESHOOTING.md` as v1.0 operator docs.
+- Done: upgraded QA and release checklists with v1.0 reliability guardrail checks.
+- In progress: README/user-facing presentation refresh and screenshot refresh for final `v1.0.0` release assets.
+- In progress: GitHub Pages bilingual landing page rollout and release-homepage alignment.
+
 ## v1.1.0 - Search and Navigation Power
 
 Goal: make retrieval and navigation fast for power users.

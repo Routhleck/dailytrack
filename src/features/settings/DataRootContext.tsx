@@ -15,7 +15,10 @@ import {
   type EnsureDataRootInfo,
   listProfiles,
   migrateDataRoot as migrateDataRootApi,
+  purgeTrash,
   resetTrackerData as resetTrackerDataApi,
+  restoreProfile as restoreProfileApi,
+  trashProfile as trashProfileApi,
   writeTextFile,
 } from '../../lib/fs/fileApi'
 import {
@@ -52,6 +55,11 @@ type MigrateDataRootSummary = {
   createdDirs: number
 }
 
+type TrashUndoInfo = {
+  profileName: string
+  trashEntry: string
+}
+
 type DataRootContextValue = {
   baseDataRoot: string | null
   dataRoot: string | null
@@ -73,6 +81,8 @@ type DataRootContextValue = {
   switchProfile: (profileName: string) => Promise<void>
   createProfile: (profileName: string, options?: ProfileCreateOptions) => Promise<void>
   deleteProfile: (profileName: string) => Promise<void>
+  trashProfile: (profileName: string) => Promise<TrashUndoInfo>
+  restoreProfile: (undo: TrashUndoInfo) => Promise<void>
 }
 
 const DataRootContext = createContext<DataRootContextValue | undefined>(undefined)
@@ -157,6 +167,17 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
     const preferredProfile = loadActiveProfilePreference() ?? undefined
     void bootstrap(preferredRoot, preferredProfile)
   }, [])
+
+  // Purge old trash entries on startup (deferred, non-blocking)
+  useEffect(() => {
+    if (!baseDataRoot) return
+    const timer = window.setTimeout(() => {
+      void purgeTrash(baseDataRoot).catch(() => {
+        // ignore purge failures silently
+      })
+    }, 8000)
+    return () => window.clearTimeout(timer)
+  }, [baseDataRoot])
 
   const value = useMemo<DataRootContextValue>(
     () => ({
@@ -289,6 +310,30 @@ export function DataRootProvider({ children }: { children: ReactNode }) {
         const fallbackProfile = await deleteProfileApi(baseDataRoot, profileName)
         await bootstrap(baseDataRoot, activeProfile === profileName ? fallbackProfile : activeProfile ?? undefined)
         emitDataChanged({ scope: 'profile', profile: fallbackProfile })
+      },
+      trashProfile: async (profileName: string) => {
+        if (!baseDataRoot) {
+          throw new Error('Data root is not initialized')
+        }
+
+        const result = await trashProfileApi(baseDataRoot, profileName)
+        // Extract trash entry dir name from full path
+        const trashEntry = result.trashPath.replace(/\\/g, '/').split('/').pop() ?? ''
+        await bootstrap(
+          baseDataRoot,
+          activeProfile === profileName ? result.fallbackProfile : activeProfile ?? undefined,
+        )
+        emitDataChanged({ scope: 'profile', profile: result.fallbackProfile })
+        return { profileName, trashEntry }
+      },
+      restoreProfile: async (undo: TrashUndoInfo) => {
+        if (!baseDataRoot) {
+          throw new Error('Data root is not initialized')
+        }
+
+        await restoreProfileApi(baseDataRoot, undo.trashEntry, undo.profileName)
+        await bootstrap(baseDataRoot, undo.profileName)
+        emitDataChanged({ scope: 'profile', profile: undo.profileName })
       },
     }),
     [activeProfile, baseDataRoot, dataRoot, error, loading, needsInitialTemplateSetup, profiles],

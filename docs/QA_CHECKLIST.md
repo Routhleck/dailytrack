@@ -15,6 +15,10 @@
 - [ ] Profile list/bootstrap works (`profiles/default` auto-created).
 - [ ] Profile switching changes active dataset.
 - [ ] Profile deletion is blocked when only one profile remains.
+- [ ] Profile deletion uses typed-name confirmation modal before execution.
+- [ ] Profile deletion moves data to `<base-root>/.trash/<profile>-<timestamp>/` (soft-delete, not hard-delete).
+- [ ] Profile delete undo can restore trashed profile in-session.
+- [ ] Startup auto-purge removes `.trash/` entries older than 7 days and keeps newer ones.
 
 ## Body CSV
 - [ ] Read table data correctly.
@@ -90,4 +94,5 @@
 - [ ] `Pull Only` downloads remote-only changes without pushing local-only changes.
 - [ ] Conflict case generates unresolved entry and conflict copy file under `conflicts/`.
 - [ ] Conflict resolve actions (`Keep Local`, `Apply Remote`, `Mark Resolved`) update conflict list and data files correctly.
+- [ ] Conflict destructive actions require confirmation modal with dry-run impact summary before apply.
 - [ ] Background realtime bridge sync does not block editing and emits refresh events on updates.

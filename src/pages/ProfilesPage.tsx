@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../features/feedback/ToastContext'
 import { useI18n } from '../features/i18n/I18nContext'
 import {
   TEMPLATE_PRESETS,
@@ -42,6 +43,7 @@ type DailyTemplateSection = 'dailyCore' | 'optional'
 
 export function ProfilesPage() {
   const { t, language } = useI18n()
+  const { pushSuccess, pushError } = useToast()
   const {
     baseDataRoot,
     dataRoot,
@@ -49,9 +51,14 @@ export function ProfilesPage() {
     profiles,
     switchProfile,
     createProfile,
-    deleteProfile,
+    trashProfile,
+    restoreProfile,
     loading,
   } = useDataRoot()
+
+  const [deleteConfirmProfile, setDeleteConfirmProfile] = useState<string | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   const [createName, setCreateName] = useState('')
   const [presetId, setPresetId] = useState('balanced')
@@ -153,6 +160,38 @@ export function ProfilesPage() {
       cancelled = true
     }
   }, [dataRoot, t])
+
+  const handleDeleteProfile = useCallback(async (profileName: string) => {
+    setDeleteBusy(true)
+    try {
+      const undo = await trashProfile(profileName)
+      setDeleteConfirmProfile(null)
+      setDeleteConfirmText('')
+      pushSuccess(t('profiles.deletedToTrash', { name: profileName }))
+
+      // Give user time to undo — show info toast with instruction
+      // The actual undo is handled via the restoreProfile action
+      // Store undo info so the restore button can use it
+      setLastTrashUndo(undo)
+    } catch (err) {
+      pushError(err instanceof Error ? err.message : t('profiles.deleteFailed'))
+    } finally {
+      setDeleteBusy(false)
+    }
+  }, [pushError, pushSuccess, t, trashProfile])
+
+  const [lastTrashUndo, setLastTrashUndo] = useState<{ profileName: string; trashEntry: string } | null>(null)
+
+  const handleUndoDelete = useCallback(async () => {
+    if (!lastTrashUndo) return
+    try {
+      await restoreProfile(lastTrashUndo)
+      pushSuccess(t('profiles.restored', { name: lastTrashUndo.profileName }))
+      setLastTrashUndo(null)
+    } catch (err) {
+      pushError(err instanceof Error ? err.message : t('profiles.restoreFailed'))
+    }
+  }, [lastTrashUndo, pushError, pushSuccess, restoreProfile, t])
 
   async function handleCreateProfile(event: FormEvent) {
     event.preventDefault()
@@ -874,7 +913,10 @@ export function ProfilesPage() {
                 <button
                   type="button"
                   className="dt-btn dt-btn-danger px-3 py-1 text-xs"
-                  onClick={() => void deleteProfile(profile)}
+                  onClick={() => {
+                    setDeleteConfirmProfile(profile)
+                    setDeleteConfirmText('')
+                  }}
                   disabled={loading || profiles.length <= 1 || profile === activeProfile}
                 >
                   {t('profiles.delete')}
@@ -886,7 +928,64 @@ export function ProfilesPage() {
         <p className="text-xs text-slate-500">
           {t('profiles.deleteHint')}
         </p>
+
+        {lastTrashUndo && (
+          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <span>{t('profiles.trashUndoHint', { name: lastTrashUndo.profileName })}</span>
+            <button
+              type="button"
+              className="dt-btn dt-btn-secondary px-2 py-0.5 text-xs"
+              onClick={() => void handleUndoDelete()}
+            >
+              {t('profiles.undo')}
+            </button>
+          </div>
+        )}
       </article>
+
+      {deleteConfirmProfile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[min(24rem,calc(100vw-2rem))] rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-slate-900">
+              {t('profiles.deleteConfirmTitle', { name: deleteConfirmProfile })}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {t('profiles.deleteConfirmBody', { name: deleteConfirmProfile })}
+            </p>
+            <label className="mt-3 block text-xs font-medium text-slate-700">
+              {t('profiles.deleteConfirmInput', { name: deleteConfirmProfile })}
+            </label>
+            <input
+              className="dt-input mt-1"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deleteBusy}
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="dt-btn dt-btn-secondary px-3 py-1 text-sm"
+                onClick={() => {
+                  setDeleteConfirmProfile(null)
+                  setDeleteConfirmText('')
+                }}
+                disabled={deleteBusy}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="dt-btn dt-btn-danger px-3 py-1 text-sm"
+                onClick={() => void handleDeleteProfile(deleteConfirmProfile)}
+                disabled={deleteBusy || deleteConfirmText !== deleteConfirmProfile}
+              >
+                {deleteBusy ? t('common.deleting') : t('profiles.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleCreateProfile} className="dt-panel space-y-3 p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('profiles.createProfile')}</h2>

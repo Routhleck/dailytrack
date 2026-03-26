@@ -169,6 +169,32 @@ export async function deleteProfile(dataRoot: string, profileName: string): Prom
   return invoke<string>('delete_profile', { dataRoot, profileName })
 }
 
+export type TrashProfileResult = {
+  trashPath: string
+  fallbackProfile: string
+}
+
+export async function trashProfile(dataRoot: string, profileName: string): Promise<TrashProfileResult> {
+  return invoke<TrashProfileResult>('trash_profile', { dataRoot, profileName })
+}
+
+export async function restoreProfile(
+  dataRoot: string,
+  trashEntry: string,
+  profileName: string,
+): Promise<void> {
+  return invoke<void>('restore_profile', { dataRoot, trashEntry, profileName })
+}
+
+export type PurgeTrashResult = {
+  removed: number
+  kept: number
+}
+
+export async function purgeTrash(dataRoot: string): Promise<PurgeTrashResult> {
+  return invoke<PurgeTrashResult>('purge_trash', { dataRoot })
+}
+
 export async function readTextFile(dataRoot: string, path: string): Promise<string> {
   return invoke<string>('read_text_file', { path, dataRoot })
 }

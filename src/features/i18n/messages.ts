@@ -46,6 +46,8 @@ export const enMessages = {
   'common.noTemplateChanges': 'No changes relative to template.',
   'common.templateDiffUnavailable': 'Template diff is unavailable. Showing all items.',
   'common.templateItemsMissing': '{count} template items are missing in current note.',
+  'common.cancel': 'Cancel',
+  'common.deleting': 'Deleting...',
 
   'onboarding.title': 'Initial Template Setup',
   'onboarding.description':
@@ -329,6 +331,7 @@ export const enMessages = {
   'sync.keepLocal': 'Keep Local',
   'sync.applyRemote': 'Apply Remote',
   'sync.markResolved': 'Mark Resolved',
+  'sync.confirmTitle': 'Confirm Action',
   'sync.confirmApplyRemoteDryRun':
     'Apply remote for {total} conflicts? overwrite={overwriteCount}, delete={deleteCount} local files.',
   'sync.confirmMarkResolvedDryRun':
@@ -597,6 +600,15 @@ export const enMessages = {
   'profiles.applyWeeklyTemplateToCurrentWeekDone': 'Applied weekly template to {weekId}.',
   'profiles.applyTemplateFailed': 'Failed to apply template.',
   'profiles.activeProfileNotReady': 'Active profile is not ready.',
+  'profiles.deleteConfirmTitle': 'Delete profile "{name}"',
+  'profiles.deleteConfirmBody': 'This profile and all its data will be moved to trash. You can undo this action shortly after deletion.',
+  'profiles.deleteConfirmInput': 'Type "{name}" to confirm',
+  'profiles.deletedToTrash': 'Profile "{name}" moved to trash.',
+  'profiles.deleteFailed': 'Failed to delete profile.',
+  'profiles.trashUndoHint': 'Profile "{name}" was deleted. You can restore it now.',
+  'profiles.undo': 'Undo',
+  'profiles.restored': 'Profile "{name}" restored.',
+  'profiles.restoreFailed': 'Failed to restore profile.',
 
   'preferences.title': 'Preferences',
   'preferences.loadingDescription': 'Loading profile preferences...',
@@ -902,6 +914,8 @@ export const zhMessages: Record<MessageKey, string> = {
   'common.noTemplateChanges': '相对模板没有变更。',
   'common.templateDiffUnavailable': '无法计算模板差异，已显示全部条目。',
   'common.templateItemsMissing': '当前记录中缺少 {count} 个模板条目。',
+  'common.cancel': '取消',
+  'common.deleting': '删除中...',
 
   'onboarding.title': '首次模板初始化',
   'onboarding.description': '当前根目录未检测到追踪数据。请先选择一个初始模板（或空白骨架）后继续。',
@@ -1177,6 +1191,7 @@ export const zhMessages: Record<MessageKey, string> = {
   'sync.keepLocal': '保留本地',
   'sync.applyRemote': '应用远端',
   'sync.markResolved': '标记已处理',
+  'sync.confirmTitle': '确认操作',
   'sync.confirmApplyRemoteDryRun':
     '确认应用远端内容？总计 {total} 条，预计覆盖 {overwriteCount} 条、删除本地 {deleteCount} 条。',
   'sync.confirmMarkResolvedDryRun': '确认将 {total} 条冲突仅标记为已处理（不应用远端内容）？',
@@ -1437,6 +1452,15 @@ export const zhMessages: Record<MessageKey, string> = {
   'profiles.applyWeeklyTemplateToCurrentWeekDone': '已将每周模板应用到 {weekId}。',
   'profiles.applyTemplateFailed': '应用模板失败。',
   'profiles.activeProfileNotReady': '当前档案尚未就绪。',
+  'profiles.deleteConfirmTitle': '删除档案「{name}」',
+  'profiles.deleteConfirmBody': '此档案及其全部数据将被移至回收站。删除后可短时间内撤销。',
+  'profiles.deleteConfirmInput': '输入「{name}」以确认',
+  'profiles.deletedToTrash': '档案「{name}」已移至回收站。',
+  'profiles.deleteFailed': '删除档案失败。',
+  'profiles.trashUndoHint': '档案「{name}」已删除，可立即恢复。',
+  'profiles.undo': '撤销',
+  'profiles.restored': '档案「{name}」已恢复。',
+  'profiles.restoreFailed': '恢复档案失败。',
 
   'preferences.title': '偏好设置',
   'preferences.loadingDescription': '正在加载档案偏好...',

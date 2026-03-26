@@ -1,27 +1,34 @@
 # Screenshot Assets
 
-This folder contains README screenshot assets.
+This folder stores screenshots used by README and project homepage.
 
-Current files are PNG placeholders so the public repo page has stable visual blocks.
-
-Replace them with real screenshots while keeping the same file names:
+## Core set (required for README/homepage)
 
 - `dashboard.png`
 - `daily-note.png`
+- `daily-history.png`
 - `weekly-note.png`
+- `weekly-history.png`
+- `body.png`
 - `settings.png`
 
-Current policy:
+## Extended set (recommended for release page)
 
-- Screenshot refresh is deferred and will be finalized before `v1.0.0`.
+- `profiles.png`
+- `sync.png`
+- `onboarding.png`
 
-Recommended capture notes:
+## Current status
 
-- Window size: around 1440x900
-- Language: EN first, then optionally add ZH variants
-- Keep fake/demo personal data only
-- Capture after data is initialized (avoid empty first-run modal unless documenting onboarding)
-- If adding mobile captures later, prioritize:
-  - bottom nav (`Dashboard / Record / History / More`)
-  - record/history grouped sheets
-  - more hub page
+- `body.png` is currently a temporary placeholder image.
+- `daily-history.png` and `weekly-history.png` currently use temporary placeholders.
+- Replace `body.png` with a real in-app capture before final `v1.0.0` tagging.
+- Extended set files currently use temporary placeholders and should be replaced before final `v1.0.0` tagging.
+
+## Capture recommendations
+
+- Window size: around `1440x900`
+- Use demo/sanitized personal data only
+- Capture after onboarding is complete
+- Keep UI language consistent per set (`EN` first, optional `ZH` variants)
+- Prefer Calm Glass default theme state (no debug overlays)

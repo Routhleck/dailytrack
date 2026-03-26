@@ -75,6 +75,20 @@ struct MigrateDataRootResult {
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
+struct TrashProfileResult {
+  trash_path: String,
+  fallback_profile: String,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct PurgeTrashResult {
+  removed: u64,
+  kept: u64,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 struct GenerateLlmReportResult {
   content: String,
 }
@@ -474,6 +488,127 @@ fn remove_path_if_exists(path: &Path) -> Result<(), String> {
 
   fs::remove_file(path).map_err(|err| format!("Failed to remove file {}: {err}", path.display()))?;
   Ok(())
+}
+
+fn trash_root(base_root: &Path) -> PathBuf {
+  base_root.join(".trash")
+}
+
+fn move_profile_to_trash(
+  base_root: &Path,
+  profile_name: &str,
+) -> Result<(PathBuf, String), String> {
+  let source = profile_root(base_root, profile_name);
+  if !source.exists() {
+    return Err(format!("Profile {} does not exist", profile_name));
+  }
+
+  let profiles = list_profile_names(base_root)?;
+  if profiles.len() <= 1 {
+    return Err("Cannot delete the last remaining profile".to_string());
+  }
+
+  let trash_dir = trash_root(base_root);
+  fs::create_dir_all(trash_dir.as_path())
+    .map_err(|err| format!("Failed to create trash directory: {err}"))?;
+
+  let timestamp = now_unix_millis();
+  let trash_entry_name = format!("{}-{}", profile_name, timestamp);
+  let destination = trash_dir.join(trash_entry_name.as_str());
+
+  fs::rename(source.as_path(), destination.as_path()).map_err(|err| {
+    format!(
+      "Failed to move profile {} to trash: {err}",
+      profile_name
+    )
+  })?;
+
+  let remaining = list_profile_names(base_root)?;
+  let fallback = if remaining.iter().any(|name| name == DEFAULT_PROFILE_NAME) {
+    DEFAULT_PROFILE_NAME.to_string()
+  } else {
+    remaining
+      .first()
+      .cloned()
+      .ok_or_else(|| "No remaining profile after trash".to_string())?
+  };
+
+  Ok((destination, fallback))
+}
+
+fn restore_profile_from_trash(
+  base_root: &Path,
+  trash_entry: &str,
+  profile_name: &str,
+) -> Result<(), String> {
+  let trash_dir = trash_root(base_root);
+  let source = trash_dir.join(trash_entry);
+  if !source.exists() || !source.is_dir() {
+    return Err(format!("Trash entry {} does not exist", trash_entry));
+  }
+
+  let destination = profile_root(base_root, profile_name);
+  if destination.exists() {
+    return Err(format!(
+      "Profile {} already exists, cannot restore over it",
+      profile_name
+    ));
+  }
+
+  fs::rename(source.as_path(), destination.as_path()).map_err(|err| {
+    format!(
+      "Failed to restore profile {} from trash: {err}",
+      profile_name
+    )
+  })?;
+
+  Ok(())
+}
+
+const TRASH_MAX_AGE_MS: u64 = 7 * 24 * 60 * 60 * 1000;
+
+fn parse_trash_entry_timestamp_ms(entry_name: &str) -> Option<u64> {
+  entry_name.rsplit('-').next().and_then(|s| s.parse().ok())
+}
+
+fn purge_old_trash_entries(base_root: &Path) -> Result<(u64, u64), String> {
+  let trash_dir = trash_root(base_root);
+  if !trash_dir.exists() {
+    return Ok((0, 0));
+  }
+
+  let now = now_unix_millis();
+  let mut removed: u64 = 0;
+  let mut kept: u64 = 0;
+
+  let entries = fs::read_dir(trash_dir.as_path())
+    .map_err(|err| format!("Failed to read trash directory: {err}"))?;
+
+  for entry in entries {
+    let entry = entry.map_err(|err| format!("Failed to read trash entry: {err}"))?;
+    let path = entry.path();
+    if !path.is_dir() {
+      continue;
+    }
+
+    let name = match entry.file_name().into_string() {
+      Ok(name) => name,
+      Err(_) => continue,
+    };
+
+    // Entry format: <profile_name>-<timestamp_ms>
+    let timestamp = parse_trash_entry_timestamp_ms(name.as_str()).unwrap_or(0);
+
+    if timestamp > 0 && now.saturating_sub(timestamp) > TRASH_MAX_AGE_MS {
+      if fs::remove_dir_all(path.as_path()).is_ok() {
+        removed += 1;
+      }
+    } else {
+      kept += 1;
+    }
+  }
+
+  Ok((removed, kept))
 }
 
 fn copy_legacy_data_into_profile(base_root: &Path, profile_root_path: &Path) -> Result<(), String> {
@@ -913,6 +1048,31 @@ fn delete_profile(data_root: String, profile_name: String) -> Result<String, Str
 }
 
 #[tauri::command]
+fn trash_profile(data_root: String, profile_name: String) -> Result<TrashProfileResult, String> {
+  validate_profile_name(profile_name.as_str())?;
+  let base_root = resolve_data_root(Some(data_root))?;
+  let (trash_path, fallback) = move_profile_to_trash(base_root.as_path(), profile_name.as_str())?;
+  Ok(TrashProfileResult {
+    trash_path: trash_path.to_string_lossy().to_string(),
+    fallback_profile: fallback,
+  })
+}
+
+#[tauri::command]
+fn restore_profile(data_root: String, trash_entry: String, profile_name: String) -> Result<(), String> {
+  validate_profile_name(profile_name.as_str())?;
+  let base_root = resolve_data_root(Some(data_root))?;
+  restore_profile_from_trash(base_root.as_path(), trash_entry.as_str(), profile_name.as_str())
+}
+
+#[tauri::command]
+fn purge_trash(data_root: String) -> Result<PurgeTrashResult, String> {
+  let base_root = resolve_data_root(Some(data_root))?;
+  let (removed, kept) = purge_old_trash_entries(base_root.as_path())?;
+  Ok(PurgeTrashResult { removed, kept })
+}
+
+#[tauri::command]
 fn read_text_file(path: String, data_root: String) -> Result<String, String> {
   let root = canonicalize_data_root_path(data_root.as_str())?;
   let target = validate_existing_file_under_root(root.as_path(), path.as_str())?;
@@ -1275,6 +1435,79 @@ fn reset_tracker_data(data_root: String) -> Result<String, String> {
   Ok(root.to_string_lossy().to_string())
 }
 
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use uuid::Uuid;
+
+  struct TempRoot {
+    path: PathBuf,
+  }
+
+  impl TempRoot {
+    fn new() -> Self {
+      let path = std::env::temp_dir().join(format!("dailytrack-trash-test-{}", Uuid::new_v4()));
+      fs::create_dir_all(path.as_path()).expect("failed to create temp root");
+      Self { path }
+    }
+  }
+
+  impl Drop for TempRoot {
+    fn drop(&mut self) {
+      let _ = fs::remove_dir_all(self.path.as_path());
+    }
+  }
+
+  #[test]
+  fn trash_and_restore_profile_roundtrip() {
+    let root = TempRoot::new();
+    let default_profile = profile_root(root.path.as_path(), "default");
+    let work_profile = profile_root(root.path.as_path(), "work");
+    ensure_tracker_layout(default_profile.as_path()).expect("failed to create default profile layout");
+    ensure_tracker_layout(work_profile.as_path()).expect("failed to create work profile layout");
+
+    let (trash_path, fallback) =
+      move_profile_to_trash(root.path.as_path(), "work").expect("failed to move profile to trash");
+    assert_eq!(fallback, "default");
+    assert!(!work_profile.exists());
+    assert!(trash_path.exists());
+
+    let trash_entry = trash_path
+      .file_name()
+      .and_then(|name| name.to_str())
+      .expect("missing trash entry name")
+      .to_string();
+    restore_profile_from_trash(root.path.as_path(), trash_entry.as_str(), "work")
+      .expect("failed to restore profile");
+    assert!(work_profile.exists());
+    assert!(!trash_path.exists());
+  }
+
+  #[test]
+  fn purge_old_trash_entries_removes_only_expired_entries() {
+    let root = TempRoot::new();
+    let trash_dir = trash_root(root.path.as_path());
+    fs::create_dir_all(trash_dir.as_path()).expect("failed to create trash dir");
+
+    let now = now_unix_millis();
+    let old_entry = trash_dir.join(format!("old-{}", now.saturating_sub(TRASH_MAX_AGE_MS + 5_000)));
+    let recent_entry = trash_dir.join(format!("recent-{}", now.saturating_sub(5_000)));
+    let invalid_entry = trash_dir.join("no-timestamp");
+
+    fs::create_dir_all(old_entry.as_path()).expect("failed to create old entry");
+    fs::create_dir_all(recent_entry.as_path()).expect("failed to create recent entry");
+    fs::create_dir_all(invalid_entry.as_path()).expect("failed to create invalid entry");
+
+    let (removed, kept) = purge_old_trash_entries(root.path.as_path()).expect("failed to purge trash");
+
+    assert_eq!(removed, 1);
+    assert_eq!(kept, 2);
+    assert!(!old_entry.exists());
+    assert!(recent_entry.exists());
+    assert!(invalid_entry.exists());
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -1290,6 +1523,9 @@ pub fn run() {
       ensure_profile,
       create_profile,
       delete_profile,
+      trash_profile,
+      restore_profile,
+      purge_trash,
       read_text_file,
       write_text_file,
       list_files,

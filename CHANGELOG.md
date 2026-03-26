@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-26
+
+### Added
+- Added reliability recovery guardrails for profile deletion:
+  - soft-delete now moves profile data to `<data-root>/.trash/<profile>-<timestamp>`
+  - in-session undo restore flow for recently deleted profile
+  - startup trash auto-purge for entries older than 7 days.
+- Added reusable confirmation dialog flow for destructive Sync conflict actions (replace browser `window.confirm`).
+- Added distribution and support docs:
+  - `docs/DISTRIBUTION_POLICY.md`
+  - `docs/TROUBLESHOOTING.md`.
+- Added Rust unit tests for profile trash/restore roundtrip and old-trash purge behavior.
+- Added GitHub Pages landing site scaffold:
+  - `site/` static bilingual homepage (`en` / `zh`)
+  - screenshot gallery + release/download CTA cards
+  - `.github/workflows/pages.yml` deployment workflow.
+
+### Changed
+- Upgraded `docs/QA_CHECKLIST.md` with v1.0 recovery guardrail verification items.
+- Upgraded `docs/RELEASE_CHECKLIST.md` with distribution-channel declaration and troubleshooting/distribution doc requirements.
+- Restructured README into user-facing top section + developer-facing bottom section.
+- Updated README roadmap summary to keep only `v1.0+` milestones and link full backlog to `docs/ROADMAP.md`.
+- Added README badges for version/license/platforms and linked project homepage URL.
+- Updated screenshot asset guidance and added temporary placeholders for v1.0 screenshot set completion (`body`, `daily-history`, `weekly-history`, `profiles`, `sync`, `onboarding`).
+- Updated `docs/ROADMAP.md` v1.0 milestone with a live progress snapshot of completed/in-progress reliability work.
+
 ## [0.14.2] - 2026-03-26
 
 ### Changed

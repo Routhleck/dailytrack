@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { useConfirmDialog } from '../components/useConfirmDialog'
 import { PageHeader } from '../components/PageHeader'
 import { useToast } from '../features/feedback/ToastContext'
 import { useI18n } from '../features/i18n/I18nContext'
@@ -165,6 +166,7 @@ function summarizeDryRun(
 export function SyncPage() {
   const { t } = useI18n()
   const { pushError, pushInfo, pushSuccess } = useToast()
+  const { confirm, dialog: confirmDialog } = useConfirmDialog()
   const { baseDataRoot } = useDataRoot()
   const [status, setStatus] = useState<RealtimeSyncStatus | null>(null)
   const [webdavConfig, setWebdavConfig] = useState<WebdavConfig | null>(null)
@@ -335,15 +337,20 @@ export function SyncPage() {
 
     if (strategy === 'apply_remote') {
       const dryRun = summarizeDryRun(conflictById, conflictIds, strategy)
-      if (!window.confirm(t('sync.confirmApplyRemoteDryRun', dryRun))) {
-        return
-      }
+      const confirmed = await confirm(
+        t('sync.confirmTitle'),
+        t('sync.confirmApplyRemoteDryRun', dryRun),
+        true,
+      )
+      if (!confirmed) return
     }
     if (strategy === 'mark_resolved') {
       const dryRun = summarizeDryRun(conflictById, conflictIds, strategy)
-      if (!window.confirm(t('sync.confirmMarkResolvedDryRun', dryRun))) {
-        return
-      }
+      const confirmed = await confirm(
+        t('sync.confirmTitle'),
+        t('sync.confirmMarkResolvedDryRun', dryRun),
+      )
+      if (!confirmed) return
     }
 
     setBatchResolving(true)
@@ -386,16 +393,21 @@ export function SyncPage() {
 
     if (strategy === 'apply_remote') {
       const dryRun = summarizeDryRun(conflictById, [conflictId], strategy)
-      if (!window.confirm(t('sync.confirmApplyRemoteDryRun', dryRun))) {
-        return
-      }
+      const confirmed = await confirm(
+        t('sync.confirmTitle'),
+        t('sync.confirmApplyRemoteDryRun', dryRun),
+        true,
+      )
+      if (!confirmed) return
     }
 
     if (strategy === 'mark_resolved') {
       const dryRun = summarizeDryRun(conflictById, [conflictId], strategy)
-      if (!window.confirm(t('sync.confirmMarkResolvedDryRun', dryRun))) {
-        return
-      }
+      const confirmed = await confirm(
+        t('sync.confirmTitle'),
+        t('sync.confirmMarkResolvedDryRun', dryRun),
+      )
+      if (!confirmed) return
     }
 
     setResolvingId(conflictId)
@@ -1059,6 +1071,7 @@ export function SyncPage() {
           })}
         </div>
       </article>
+      {confirmDialog}
     </section>
   )
 }

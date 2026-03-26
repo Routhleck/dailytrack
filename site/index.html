@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dailytrack - Local-first tracker</title>
+    <meta
+      name="description"
+      content="dailytrack is a local-first life tracker for Markdown/CSV users. Structured editing, sync tools, and reliable data ownership."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <header class="topbar">
+      <div class="brand">dailytrack</div>
+      <div class="lang-switch" role="group" aria-label="language switch">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero card">
+        <p class="eyebrow" data-i18n="heroEyebrow">LOCAL-FIRST LIFE TRACKING</p>
+        <h1 data-i18n="heroTitle">Your notes stay as files. The app stays out of the way.</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">
+          dailytrack reads and writes Markdown/CSV directly on your device, with structured editing,
+          autosave, and sync tools that never replace local files as source of truth.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="ctaDownload">Download Latest</a>
+          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack#readme" target="_blank" rel="noreferrer" data-i18n="ctaReadme">Read Full README</a>
+        </div>
+      </section>
+
+      <section class="features card">
+        <h2 data-i18n="featuresTitle">Why dailytrack</h2>
+        <div class="feature-grid">
+          <article>
+            <h3 data-i18n="f1Title">Local files first</h3>
+            <p data-i18n="f1Body">Markdown and CSV remain the only source of truth.</p>
+          </article>
+          <article>
+            <h3 data-i18n="f2Title">Structured + raw</h3>
+            <p data-i18n="f2Body">Fast checkbox workflows and raw markdown fallback in one place.</p>
+          </article>
+          <article>
+            <h3 data-i18n="f3Title">Recovery guardrails</h3>
+            <p data-i18n="f3Body">Safer delete flow with profile trash + in-session undo restore.</p>
+          </article>
+          <article>
+            <h3 data-i18n="f4Title">Sync toolbox</h3>
+            <p data-i18n="f4Body">WebDAV snapshot + realtime sync with conflict resolution tools.</p>
+          </article>
+          <article>
+            <h3 data-i18n="f5Title">Cross-platform</h3>
+            <p data-i18n="f5Body">macOS, Windows, and Android APK sideload support.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="gallery card">
+        <div class="section-head">
+          <h2 data-i18n="galleryTitle">Interface Preview</h2>
+          <a href="https://github.com/Routhleck/dailytrack/tree/master/docs/assets/screenshots" target="_blank" rel="noreferrer" data-i18n="galleryLink">View source screenshots</a>
+        </div>
+        <div class="shot-grid">
+          <figure>
+            <img src="./assets/screenshots/dashboard.png" alt="Dashboard" />
+            <figcaption data-i18n="gDashboard">Dashboard</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/daily-note.png" alt="Daily note" />
+            <figcaption data-i18n="gDaily">Daily Note</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/daily-history.png" alt="Daily history" />
+            <figcaption data-i18n="gDailyHistory">Daily History</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/weekly-note.png" alt="Weekly note" />
+            <figcaption data-i18n="gWeekly">Weekly Note</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/weekly-history.png" alt="Weekly history" />
+            <figcaption data-i18n="gWeeklyHistory">Weekly History</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/body.png" alt="Body" />
+            <figcaption data-i18n="gBody">Body</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/settings.png" alt="Settings" />
+            <figcaption data-i18n="gSettings">Settings</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/profiles.png" alt="Profiles" />
+            <figcaption data-i18n="gProfiles">Profiles</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/sync.png" alt="Sync" />
+            <figcaption data-i18n="gSync">Sync</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/screenshots/onboarding.png" alt="Onboarding" />
+            <figcaption data-i18n="gOnboarding">Onboarding</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="downloads card">
+        <h2 data-i18n="downloadsTitle">Download Channels</h2>
+        <p data-i18n="downloadsBody">
+          Stable signed channel is the target. Current public builds follow testing-channel expectations.
+        </p>
+        <div class="download-grid">
+          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadMac">macOS Builds</a>
+          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadWin">Windows Builds</a>
+          <a class="btn btn-secondary" href="https://github.com/Routhleck/dailytrack/releases/latest" target="_blank" rel="noreferrer" data-i18n="downloadAndroid">Android APK</a>
+        </div>
+        <p class="small-links">
+          <a href="https://github.com/Routhleck/dailytrack/blob/master/docs/DISTRIBUTION_POLICY.md" target="_blank" rel="noreferrer" data-i18n="policyLink">Distribution Policy</a>
+          <span>·</span>
+          <a href="https://github.com/Routhleck/dailytrack/blob/master/docs/TROUBLESHOOTING.md" target="_blank" rel="noreferrer" data-i18n="troubleshootLink">Troubleshooting</a>
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p data-i18n="footerText">Built for private, long-term self tracking with local data ownership.</p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
