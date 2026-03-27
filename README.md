@@ -29,6 +29,7 @@ Local-first life tracker for Markdown and CSV users.
 
 - Dashboard with today/week progress, reminders, and completion heatmap
 - Daily/Weekly note editing with autosave and template-delta focus mode
+- Weekly history calendar now supports `By month` / `By year` views for lower-density browsing on mobile screens
 - Body tracking via local `body.csv` with chart + trend support
 - Memory-first runtime cache + idle write-behind sync for smoother editing on larger datasets
 - Startup progress gate with staged loading feedback before entering the workspace

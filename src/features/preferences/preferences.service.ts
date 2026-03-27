@@ -7,14 +7,20 @@ import {
   normalizeBodyMetricGoal,
 } from '../body/body.format'
 import { joinPath } from '../../lib/fs/pathApi'
-import type { SyncMode, TrackerPreferences, TypographyScale } from '../../types/preferences'
+import type {
+  SyncMode,
+  TrackerPreferences,
+  TypographyScale,
+  WeeklyCalendarView,
+} from '../../types/preferences'
 import type { BodyNumericMetricKey } from '../../types/tracker'
 import type { WeeklySectionKey } from '../../types/tracker'
 
 const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', 'Social']
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
 const TYPOGRAPHY_SCALES: TypographyScale[] = ['sm', 'md', 'lg']
-export const PREFERENCES_SCHEMA_VERSION = 6
+const WEEKLY_CALENDAR_VIEWS: WeeklyCalendarView[] = ['month', 'year']
+export const PREFERENCES_SCHEMA_VERSION = 7
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
   schemaVersion: PREFERENCES_SCHEMA_VERSION,
@@ -37,6 +43,7 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
     mobile: {
       showSyncBanner: true,
     },
+    weeklyCalendarView: 'month',
   },
   daily: {
     showOptional: true,
@@ -84,6 +91,12 @@ function toSyncMode(value: unknown, fallback: SyncMode): SyncMode {
 function toTypographyScale(value: unknown, fallback: TypographyScale): TypographyScale {
   return typeof value === 'string' && TYPOGRAPHY_SCALES.includes(value as TypographyScale)
     ? (value as TypographyScale)
+    : fallback
+}
+
+function toWeeklyCalendarView(value: unknown, fallback: WeeklyCalendarView): WeeklyCalendarView {
+  return typeof value === 'string' && WEEKLY_CALENDAR_VIEWS.includes(value as WeeklyCalendarView)
+    ? (value as WeeklyCalendarView)
     : fallback
 }
 
@@ -185,6 +198,10 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
           DEFAULT_PREFERENCES.ui.mobile.showSyncBanner,
         ),
       },
+      weeklyCalendarView: toWeeklyCalendarView(
+        uiRaw.weeklyCalendarView,
+        DEFAULT_PREFERENCES.ui.weeklyCalendarView,
+      ),
     },
     daily: {
       showOptional: toBoolean(dailyRaw.showOptional, DEFAULT_PREFERENCES.daily.showOptional),

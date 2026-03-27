@@ -13,6 +13,7 @@ export type BodyMetricGoal = {
 
 export type SyncMode = 'watch' | 'poll'
 export type TypographyScale = 'sm' | 'md' | 'lg'
+export type WeeklyCalendarView = 'month' | 'year'
 
 export type ReminderPreferences = {
   enabled: boolean
@@ -37,6 +38,7 @@ export type TrackerPreferences = {
     mobile: {
       showSyncBanner: boolean
     }
+    weeklyCalendarView: WeeklyCalendarView
   }
   daily: {
     showOptional: boolean

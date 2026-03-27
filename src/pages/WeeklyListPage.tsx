@@ -8,11 +8,13 @@ import {
   type ProgressSummary,
 } from '../features/dashboard/dashboard.service'
 import { useI18n } from '../features/i18n/I18nContext'
+import { usePreferences } from '../features/preferences/PreferencesContext'
 import { useDataRoot } from '../features/settings/DataRootContext'
 import { WEEKLY_SECTION_ORDER } from '../features/weekly/weekly.parser'
 import { getWeeklyNote, listWeeklyIds } from '../features/weekly/weekly.service'
 import { currentWeekId } from '../lib/date/week'
 import { fallbackPollIntervalMs, onDataChanged } from '../lib/liveSync'
+import type { WeeklyCalendarView } from '../types/preferences'
 
 type CompletionFilter = 'all' | 'completed' | 'pending'
 type RecencyFilter = 'all' | '4w' | '12w' | '24w'
@@ -55,9 +57,98 @@ function weekIdsForYear(year: number): string[] {
   return Array.from({ length: count }, (_, index) => `${year}-W${String(index + 1).padStart(2, '0')}`)
 }
 
+function weekIdToMondayUtcDate(weekId: string): Date | null {
+  const matched = weekId.match(/^(\d{4})-W(\d{2})$/)
+  if (!matched) {
+    return null
+  }
+
+  const year = Number.parseInt(matched[1], 10)
+  const week = Number.parseInt(matched[2], 10)
+  if (!Number.isFinite(year) || !Number.isFinite(week) || week < 1 || week > 53) {
+    return null
+  }
+
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const day = jan4.getUTCDay() || 7
+  const week1Monday = new Date(jan4)
+  week1Monday.setUTCDate(jan4.getUTCDate() - day + 1)
+
+  const targetMonday = new Date(week1Monday)
+  targetMonday.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7)
+  return targetMonday
+}
+
+function monthIdFromWeekId(weekId: string): string | null {
+  const monday = weekIdToMondayUtcDate(weekId)
+  if (!monday) {
+    return null
+  }
+  const year = monday.getUTCFullYear()
+  const month = String(monday.getUTCMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+function parseMonthId(monthId: string): { year: number; month: number } | null {
+  const matched = monthId.match(/^(\d{4})-(\d{2})$/)
+  if (!matched) {
+    return null
+  }
+  const year = Number.parseInt(matched[1], 10)
+  const month = Number.parseInt(matched[2], 10)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+    return null
+  }
+  return { year, month }
+}
+
+function shiftMonthId(monthId: string, delta: number): string {
+  const parsed = parseMonthId(monthId)
+  if (!parsed) {
+    return monthId
+  }
+  const shifted = new Date(Date.UTC(parsed.year, parsed.month - 1 + delta, 1))
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function currentMonthIdUtc(): string {
+  const now = new Date()
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function weekIntersectsMonth(weekId: string, year: number, month: number): boolean {
+  const monday = weekIdToMondayUtcDate(weekId)
+  if (!monday) {
+    return false
+  }
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+
+  const monthStartMs = Date.UTC(year, month - 1, 1, 0, 0, 0, 0)
+  const monthEndMs = Date.UTC(year, month, 0, 23, 59, 59, 999)
+  return monday.getTime() <= monthEndMs && sunday.getTime() >= monthStartMs
+}
+
+function weekStartMs(weekId: string): number {
+  return weekIdToMondayUtcDate(weekId)?.getTime() ?? Number.POSITIVE_INFINITY
+}
+
+function weekIdsForMonth(monthId: string): string[] {
+  const parsed = parseMonthId(monthId)
+  if (!parsed) {
+    return []
+  }
+  const candidateYears = [parsed.year - 1, parsed.year, parsed.year + 1]
+  const candidates = candidateYears.flatMap((year) => weekIdsForYear(year))
+  return candidates
+    .filter((weekId) => weekIntersectsMonth(weekId, parsed.year, parsed.month))
+    .sort((left, right) => weekStartMs(left) - weekStartMs(right))
+}
+
 export function WeeklyListPage() {
   const { t } = useI18n()
   const { dataRoot } = useDataRoot()
+  const { preferences, loading: preferencesLoading, updatePreferences } = usePreferences()
   const navigate = useNavigate()
   const [weeks, setWeeks] = useState<string[]>([])
   const [query, setQuery] = useState('')
@@ -65,7 +156,9 @@ export function WeeklyListPage() {
   const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all')
   const [detailFilter, setDetailFilter] = useState<DetailFilter>('all')
   const [metadata, setMetadata] = useState<Record<string, WeeklyListMeta>>({})
+  const [calendarView, setCalendarView] = useState<WeeklyCalendarView>('month')
   const [calendarYear, setCalendarYear] = useState(() => new Date().getUTCFullYear())
+  const [calendarMonth, setCalendarMonth] = useState(() => currentMonthIdUtc())
   const [error, setError] = useState('')
   const loadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
@@ -74,6 +167,13 @@ export function WeeklyListPage() {
   useEffect(() => {
     weeksRef.current = weeks
   }, [weeks])
+
+  useEffect(() => {
+    if (preferencesLoading) {
+      return
+    }
+    setCalendarView(preferences.ui.weeklyCalendarView)
+  }, [preferences.ui.weeklyCalendarView, preferencesLoading])
 
   useEffect(() => {
     if (weeks.length === 0) {
@@ -88,6 +188,13 @@ export function WeeklyListPage() {
       const hasCurrentYearData = weeks.some((week) => week.startsWith(`${prev}-W`))
       return hasCurrentYearData ? prev : latestYear
     })
+    const latestMonth = latest ? monthIdFromWeekId(latest) : null
+    if (latestMonth) {
+      setCalendarMonth((prev) => {
+        const hasCurrentMonthData = weeks.some((week) => monthIdFromWeekId(week) === prev)
+        return hasCurrentMonthData ? prev : latestMonth
+      })
+    }
   }, [weeks])
 
   const refreshWeeklySummary = useCallback(async (week: string) => {
@@ -309,6 +416,10 @@ export function WeeklyListPage() {
   }
 
   const yearWeekCells = useMemo(() => weekIdsForYear(calendarYear), [calendarYear])
+  const monthWeekCells = useMemo(() => weekIdsForMonth(calendarMonth), [calendarMonth])
+  const calendarCells = calendarView === 'year' ? yearWeekCells : monthWeekCells
+  const calendarColumns = calendarView === 'year' ? 13 : 4
+  const calendarLabel = calendarView === 'year' ? String(calendarYear) : calendarMonth
 
   const completionCellClass = (percent: number | null) => {
     if (percent == null) {
@@ -333,7 +444,40 @@ export function WeeklyListPage() {
       <article className="dt-panel space-y-3 p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-slate-900 sm:text-base">{t('weeklyList.calendarTitle')}</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <label className="dt-badge gap-2">
+              <span>{t('weeklyList.calendarView')}</span>
+              <select
+                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+                value={calendarView}
+                onChange={(event) => {
+                  const nextView = event.target.value as WeeklyCalendarView
+                  setCalendarView(nextView)
+                  if (preferencesLoading) {
+                    return
+                  }
+                  void updatePreferences({
+                    ...preferences,
+                    ui: {
+                      ...preferences.ui,
+                      weeklyCalendarView: nextView,
+                    },
+                  })
+                }}
+              >
+                <option value="month">{t('weeklyList.calendarViewMonth')}</option>
+                <option value="year">{t('weeklyList.calendarViewYear')}</option>
+              </select>
+            </label>
+            {calendarView === 'month' ? (
+              <button
+                className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
+                type="button"
+                onClick={() => setCalendarMonth(currentMonthIdUtc())}
+              >
+                {t('weeklyList.calendarJumpCurrentMonth')}
+              </button>
+            ) : (
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
@@ -341,6 +485,7 @@ export function WeeklyListPage() {
             >
               {t('weeklyList.calendarJumpCurrentYear')}
             </button>
+            )}
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
@@ -351,30 +496,44 @@ export function WeeklyListPage() {
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
-              onClick={() => setCalendarYear((prev) => prev - 1)}
+              onClick={() => {
+                if (calendarView === 'month') {
+                  setCalendarMonth((prev) => shiftMonthId(prev, -1))
+                  return
+                }
+                setCalendarYear((prev) => prev - 1)
+              }}
             >
-              {t('weeklyList.calendarPrev')}
+              {calendarView === 'month' ? t('weeklyList.calendarPrevMonth') : t('weeklyList.calendarPrev')}
             </button>
-            <span className="text-xs font-medium text-slate-700">{calendarYear}</span>
+            <span className="text-xs font-medium text-slate-700">{calendarLabel}</span>
             <button
               className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
               type="button"
-              onClick={() => setCalendarYear((prev) => prev + 1)}
+              onClick={() => {
+                if (calendarView === 'month') {
+                  setCalendarMonth((prev) => shiftMonthId(prev, 1))
+                  return
+                }
+                setCalendarYear((prev) => prev + 1)
+              }}
             >
-              {t('weeklyList.calendarNext')}
+              {calendarView === 'month' ? t('weeklyList.calendarNextMonth') : t('weeklyList.calendarNext')}
             </button>
           </div>
         </div>
-        <p className="text-xs text-slate-600">{t('weeklyList.calendarHint')}</p>
-        <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(13, minmax(0, 1fr))' }}>
-          {yearWeekCells.map((weekId) => {
+        <p className="text-xs text-slate-600">
+          {calendarView === 'month' ? t('weeklyList.calendarHintMonth') : t('weeklyList.calendarHint')}
+        </p>
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${calendarColumns}, minmax(0, 1fr))` }}>
+          {calendarCells.map((weekId) => {
             const percent = metadata[weekId]?.summary.percent ?? null
             const shortWeek = weekId.slice(-3)
             const isCurrentWeek = weekId === currentWeek
             return (
               <Link
                 key={weekId}
-                className={`flex h-8 items-center justify-center rounded-md text-[11px] font-medium transition hover:brightness-95 ${completionCellClass(percent)} ${isCurrentWeek ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}
+                className={`flex h-9 items-center justify-center rounded-lg px-1 text-xs font-semibold tracking-wide transition hover:brightness-95 sm:h-10 sm:text-[13px] ${completionCellClass(percent)} ${isCurrentWeek ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}
                 to={`/weekly/${weekId}`}
                 title={percent == null
                   ? t('weeklyList.calendarNoEntry', { week: weekId })

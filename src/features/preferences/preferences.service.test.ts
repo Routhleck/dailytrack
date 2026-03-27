@@ -21,6 +21,7 @@ describe('preferences normalization', () => {
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
     expect(normalized.ui.showOnlyChanges.body).toBe(false)
     expect(normalized.ui.mobile.showSyncBanner).toBe(true)
+    expect(normalized.ui.weeklyCalendarView).toBe('month')
     expect(normalized.daily.showOptional).toBe(true)
     expect(normalized.weekly.sections.Body).toBe(true)
     expect(normalized.body.weight).toBe(true)
@@ -43,6 +44,7 @@ describe('preferences normalization', () => {
         typographyScale: 'lg',
         showOnlyChanges: { daily: true, weekly: false },
         mobile: { showSyncBanner: false },
+        weeklyCalendarView: 'year',
       },
       body: {
         display: {
@@ -66,6 +68,7 @@ describe('preferences normalization', () => {
     expect(normalized.ui.showOnlyChanges.weekly).toBe(false)
     expect(normalized.ui.showOnlyChanges.body).toBe(false)
     expect(normalized.ui.mobile.showSyncBanner).toBe(false)
+    expect(normalized.ui.weeklyCalendarView).toBe('year')
     expect(normalized.body.display.weight.unit).toBe('kg')
     expect(normalized.body.display.weight.decimals).toBe(3)
     expect(normalized.body.goals.weight.enabled).toBe(true)

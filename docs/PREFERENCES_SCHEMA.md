@@ -6,15 +6,15 @@
 
 ## Versioning
 
-- Current schema version: `5`
+- Current schema version: `7`
 - Field: `schemaVersion` (number)
 - Rule: app normalizes missing/invalid fields to defaults on load and writes normalized JSON back to disk.
 
-## Schema (v5)
+## Schema (v7)
 
 ```json
 {
-  "schemaVersion": 5,
+  "schemaVersion": 7,
   "sync": {
     "mode": "watch"
   },
@@ -27,7 +27,8 @@
     },
     "mobile": {
       "showSyncBanner": true
-    }
+    },
+    "weeklyCalendarView": "month"
   },
   "daily": {
     "showOptional": true
@@ -80,6 +81,8 @@
   - controls per-page default filter behavior for structured views.
 - `ui.mobile.showSyncBanner`:
   - controls visibility of mobile compact sync status banner.
+- `ui.weeklyCalendarView`:
+  - `month | year`, stores Weekly Notes calendar density preference.
 - `body.display.<metric>.decimals`:
   - normalized range: `0..3`.
 - `body.goals.<metric>`:
@@ -91,4 +94,4 @@
 ## Compatibility
 
 - v1/v2 or partially missing files are accepted.
-- App upgrades config in-memory and writes back normalized v5 JSON on next save/load.
+- App upgrades config in-memory and writes back normalized v7 JSON on next save/load.

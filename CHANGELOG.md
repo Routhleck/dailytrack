@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-03-27
+
+### Changed
+- Improved Weekly Notes calendar readability on small screens:
+  - enlarged week-cell label typography and spacing
+  - added calendar view switch (`By month` / `By year`)
+  - added month navigation controls to reduce information density when browsing weekly history.
+  - persisted selected weekly calendar view in profile preferences (`preferences.json`) so users keep their chosen density mode.
+
 ## [1.1.0] - 2026-03-27
 
 ### Added
