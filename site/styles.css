@@ -126,11 +126,18 @@ body {
   text-decoration: none;
   color: var(--muted);
   font-weight: 600;
-  transition: color 180ms ease;
+  border-radius: 999px;
+  padding: 6px 10px;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
 }
 
 .nav-links a:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.82);
+  transform: translateY(-1px);
 }
 
 .nav-actions {
@@ -193,8 +200,8 @@ main {
 
 .hero {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: 24px;
+  grid-template-columns: 1fr 1.03fr;
+  gap: 34px;
   align-items: center;
   overflow: hidden;
 }
@@ -223,7 +230,13 @@ main {
   color: var(--primary);
   font-size: 0.79rem;
   font-weight: 700;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  background: rgba(240, 253, 250, 0.85);
+  border-radius: 999px;
+  padding: 6px 10px;
 }
 
 h1,
@@ -235,7 +248,7 @@ h3 {
 
 h1 {
   font-size: clamp(2rem, 4.4vw, 3.3rem);
-  line-height: 1.08;
+  line-height: 1.03;
   margin-top: 10px;
 }
 
@@ -299,14 +312,14 @@ h1 {
 
 .hero-visual {
   position: relative;
-  min-height: 360px;
+  min-height: 400px;
   display: grid;
   place-items: center;
 }
 
 .mockup-shell {
   width: 100%;
-  max-width: 520px;
+  max-width: 580px;
   border-radius: 18px;
   overflow: hidden;
   background: #0f172a;
@@ -401,24 +414,23 @@ h1 {
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .feature-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: rgba(248, 250, 252, 0.9);
+  border: 0;
   border-radius: 18px;
   padding: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   transition:
     transform 220ms ease,
-    box-shadow 220ms ease,
-    border-color 220ms ease;
+    box-shadow 220ms ease;
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(15, 118, 110, 0.32);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.13);
 }
 
 .feature-icon {
@@ -542,14 +554,39 @@ h1 {
 
 .shot {
   margin: 0;
+  position: relative;
+  padding-top: 32px;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   transition:
     transform 200ms ease,
     box-shadow 200ms ease,
     border-color 200ms ease;
+}
+
+.shot::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 32px;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shot::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #f97316;
+  box-shadow:
+    12px 0 0 #22c55e,
+    24px 0 0 #60a5fa;
 }
 
 .shot:hover {
@@ -558,12 +595,24 @@ h1 {
   border-color: rgba(14, 165, 160, 0.3);
 }
 
-.span-8 {
-  grid-column: span 8;
+.span-12 {
+  grid-column: span 12;
+}
+
+.span-6 {
+  grid-column: span 6;
+}
+
+.span-5 {
+  grid-column: span 5;
 }
 
 .span-4 {
   grid-column: span 4;
+}
+
+.span-3 {
+  grid-column: span 3;
 }
 
 .shot img {
@@ -577,21 +626,37 @@ figcaption {
   padding: 9px 10px 11px;
   font-size: 0.86rem;
   color: #334155;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .cta {
   text-align: center;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.88), rgba(220, 252, 231, 0.48));
+  background: linear-gradient(155deg, #0f172a, #0f3c3d);
+  border-color: rgba(148, 163, 184, 0.26);
 }
 
 .cta p {
   margin: 10px auto 0;
   max-width: 760px;
-  color: var(--muted);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.cta h2 {
+  color: #f8fafc;
 }
 
 .cta .hero-cta {
   justify-content: center;
+}
+
+.cta .btn-primary {
+  box-shadow: 0 14px 30px rgba(14, 165, 160, 0.45);
+}
+
+.cta .btn-ghost {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.35);
+  border-color: rgba(226, 232, 240, 0.3);
 }
 
 .site-footer {
@@ -679,8 +744,11 @@ figcaption {
     display: none;
   }
 
-  .span-8,
-  .span-4 {
+  .span-12,
+  .span-6,
+  .span-5,
+  .span-4,
+  .span-3 {
     grid-column: span 6;
   }
 }
@@ -723,8 +791,11 @@ figcaption {
     grid-template-columns: 1fr;
   }
 
-  .span-8,
-  .span-4 {
+  .span-12,
+  .span-6,
+  .span-5,
+  .span-4,
+  .span-3 {
     grid-column: span 1;
   }
 

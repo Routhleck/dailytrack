@@ -34,6 +34,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - tutorial steps switched to timeline-style numbered flow
   - screenshot section moved to bento layout with Daily/Weekly history prominently included
   - footer expanded with project/support/explore navigation groups.
+- Fine-tuned homepage UI polish pass based on usability feedback:
+  - increased hero breathing room and enlarged screenshot mockup for stronger first-screen clarity
+  - adjusted eyebrow badge typography and heading rhythm for cleaner hierarchy
+  - refined feature cards to borderless soft-shadow surfaces
+  - upgraded gallery to a more staggered bento composition with consistent window-shell framing
+  - strengthened final CTA section with high-contrast dark theme and clearer button hierarchy.
 
 ### Fixed
 - Removed homepage screenshot lightbox interaction to avoid blocking-page states on gallery clicks; gallery now stays as stable static preview cards.
