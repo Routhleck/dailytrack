@@ -6,6 +6,7 @@
 ![Windows](https://img.shields.io/badge/Windows-supported-0078D4?logo=windows&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=black)
 ![Android](https://img.shields.io/badge/Android-APK%20sideload-34A853?logo=android&logoColor=white)
+[<img src="https://badges.ws/badge/Buy_Me_a_Coffee-ff813f?icon=buymeacoffee" />](https://buymeacoffee.com/forrestcai6)
 
 Local-first life tracker for Markdown and CSV users.
 

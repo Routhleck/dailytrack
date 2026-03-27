@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Added `Buy Me a Coffee` support link:
+  - README top badges area
+  - homepage footer support section.
+
 ### Changed
 - Improved homepage showcase performance by preloading all tab screenshots on initial page load to reduce first-switch lag.
 - Added simple click-to-zoom preview for the showcase main screenshot (supports close button, backdrop click, and `Esc`).
-- Updated homepage static asset cache-bust version to `v=20260327-3`.
+- Updated homepage static asset cache-bust version to `v=20260327-4`.
 
 ## [1.0.1] - 2026-03-27
 
