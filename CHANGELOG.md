@@ -15,7 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improved homepage showcase performance by preloading all tab screenshots on initial page load to reduce first-switch lag.
 - Added simple click-to-zoom preview for the showcase main screenshot (supports close button, backdrop click, and `Esc`).
 - Updated showcase tab switching to explicit clear-and-replace behavior with a loading skeleton state to make transitions visually obvious.
-- Updated homepage static asset cache-bust version to `v=20260327-5`.
+- Improved mobile portrait homepage layout clarity:
+  - switched tutorial/showcase tabs from horizontal swipe rails to grid buttons
+  - hid hero floating chips on phones to reduce clutter.
+- Updated homepage static asset cache-bust version to `v=20260327-6`.
 
 ## [1.0.1] - 2026-03-27
 

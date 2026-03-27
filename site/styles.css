@@ -947,31 +947,27 @@ h1 {
   }
 
   .tutorial-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .tab-btn {
-    white-space: nowrap;
-    flex: 0 0 auto;
+    white-space: normal;
+    width: 100%;
+    text-align: center;
+    min-height: 40px;
   }
 
   .showcase-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    padding-bottom: 2px;
     order: 2;
   }
 
   .showcase-tab {
-    min-width: 178px;
-    flex: 0 0 auto;
+    min-width: 0;
     padding: 10px 11px;
   }
 
@@ -981,6 +977,10 @@ h1 {
 
   .showcase-caption {
     font-size: 0.95rem;
+  }
+
+  .hero-chip {
+    display: none;
   }
 
   .nav-actions .btn {
@@ -1031,6 +1031,11 @@ h1 {
     font-size: 0.82rem;
   }
 
+  .tutorial-tabs,
+  .showcase-tabs {
+    grid-template-columns: 1fr;
+  }
+
   .step-list li {
     grid-template-columns: 26px 1fr;
     gap: 8px;
@@ -1040,10 +1045,6 @@ h1 {
     width: 26px;
     height: 26px;
     font-size: 0.78rem;
-  }
-
-  .showcase-tab {
-    min-width: 166px;
   }
 
   .zoom-close {
