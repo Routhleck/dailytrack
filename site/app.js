@@ -75,7 +75,6 @@ const translations = {
     galleryTitle: 'Interface Gallery',
     galleryLink: 'View source screenshots',
     galleryPreviewLabel: 'Focused Interface Preview',
-    galleryAutoHint: 'Auto rotates every 5s. Click a tab to focus.',
     gDashboard: 'Dashboard',
     gDaily: 'Daily Note',
     gDailyHistory: 'Daily History',
@@ -178,7 +177,6 @@ const translations = {
     galleryTitle: '界面截图',
     galleryLink: '查看截图源文件',
     galleryPreviewLabel: '核心界面预览',
-    galleryAutoHint: '默认每 5 秒自动轮播，可点击标签固定查看。',
     gDashboard: '仪表盘',
     gDaily: '每日记录',
     gDailyHistory: '每日历史',
@@ -331,24 +329,11 @@ function setupShowcase() {
     body: { src: './assets/screenshots/body.png', labelKey: 'gBody' },
   }
 
-  const cycleMs = 5000
   let activeIndex = Math.max(
     tabs.findIndex((tab) => tab.classList.contains('active')),
     0
   )
-  let rotateTimer = null
   let swapTimer = null
-
-  const restartProgress = (activeTab) => {
-    tabs.forEach((tab) => {
-      const bar = tab.querySelector('.showcase-progress span')
-      if (!bar) return
-      bar.style.animation = 'none'
-      if (tab !== activeTab) return
-      void bar.offsetWidth
-      bar.style.animation = `showcase-progress-fill ${cycleMs}ms linear forwards`
-    })
-  }
 
   const activate = (index) => {
     if (index < 0 || index >= tabs.length) return
@@ -361,8 +346,8 @@ function setupShowcase() {
       const active = itemIndex === index
       item.classList.toggle('active', active)
       item.setAttribute('aria-selected', active ? 'true' : 'false')
+      item.setAttribute('tabindex', active ? '0' : '-1')
     })
-    restartProgress(tab)
 
     clearTimeout(swapTimer)
     stage.classList.add('is-switching')
@@ -378,33 +363,22 @@ function setupShowcase() {
     }, 120)
   }
 
-  const startRotate = () => {
-    clearInterval(rotateTimer)
-    rotateTimer = setInterval(() => {
-      activate((activeIndex + 1) % tabs.length)
-    }, cycleMs)
-  }
-
-  const stopRotate = () => {
-    clearInterval(rotateTimer)
-  }
-
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
       activate(index)
-      startRotate()
+    })
+
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+      event.preventDefault()
+      const delta = event.key === 'ArrowRight' ? 1 : -1
+      const next = (index + delta + tabs.length) % tabs.length
+      activate(next)
+      tabs[next].focus()
     })
   })
 
-  stage.addEventListener('mouseenter', stopRotate)
-  stage.addEventListener('mouseleave', startRotate)
-
-  const tabList = document.querySelector('.showcase-tabs')
-  tabList?.addEventListener('mouseenter', stopRotate)
-  tabList?.addEventListener('mouseleave', startRotate)
-
   activate(activeIndex)
-  startRotate()
 }
 
 setupLangSwitch()
