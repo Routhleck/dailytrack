@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import { preloadRoutePages, router } from './app/router'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { StartupProgressGate } from './components/StartupProgressGate'
 import { ToastProvider, ToastViewport } from './features/feedback/ToastContext'
 import { I18nProvider } from './features/i18n/I18nContext'
 import { PreferencesProvider } from './features/preferences/PreferencesContext'
@@ -83,7 +84,9 @@ function App() {
               <ToastProvider>
                 {bridgesReady ? <FilesystemWatchBridge /> : null}
                 {bridgesReady ? <WebdavSyncBridge /> : null}
-                <RouterProvider router={router} />
+                <StartupProgressGate bridgesReady={bridgesReady}>
+                  <RouterProvider router={router} />
+                </StartupProgressGate>
                 <ToastViewport />
               </ToastProvider>
             </PreferencesProvider>

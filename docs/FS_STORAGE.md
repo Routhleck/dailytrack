@@ -76,6 +76,11 @@ On startup:
 - Body writes on submit/delete.
 - Structured mode writes normalized format.
 - Raw mode writes user text directly.
+- Runtime now uses memory-first updates with write-behind flush:
+  - edits are applied to in-memory cache immediately for responsive UI
+  - disk writes are queued and flushed in idle windows
+  - max-delay guard forces queued writes to disk (no unbounded buffering)
+  - lifecycle events (`hidden` / `beforeunload`) trigger best-effort flush.
 - Profile template update flow supports:
   - `merge` (default): preserve existing checklist items and append missing preset items
   - `overwrite`: replace templates with selected preset variants

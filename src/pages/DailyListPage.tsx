@@ -147,7 +147,7 @@ export function DailyListPage() {
 
     loadingRef.current = true
     try {
-      const next = await listDailyDates(dataRoot)
+      const next = await listDailyDates(dataRoot, { fresh: true })
       setDates(next)
       setMetadata((prev) => {
         const kept: Record<string, DailyListMeta> = {}

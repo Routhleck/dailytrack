@@ -26,6 +26,11 @@ export const enMessages = {
   'shell.profile': 'Profile',
   'shell.activeRoot': 'Active root',
   'shell.initError': 'Initialization error',
+  'startup.loadingTitle': 'Preparing workspace...',
+  'startup.stageDataRoot': 'Checking local data root...',
+  'startup.stagePreferences': 'Loading profile preferences...',
+  'startup.stageServices': 'Starting background services...',
+  'startup.stageRender': 'Finalizing first screen...',
 
   'common.open': 'Open',
   'common.saving': 'Saving...',
@@ -894,6 +899,11 @@ export const zhMessages: Record<MessageKey, string> = {
   'shell.profile': '档案',
   'shell.activeRoot': '当前路径',
   'shell.initError': '初始化错误',
+  'startup.loadingTitle': '正在准备工作区...',
+  'startup.stageDataRoot': '正在检查本地数据目录...',
+  'startup.stagePreferences': '正在加载档案偏好...',
+  'startup.stageServices': '正在启动后台服务...',
+  'startup.stageRender': '正在完成首屏渲染...',
 
   'common.open': '打开',
   'common.saving': '保存中...',

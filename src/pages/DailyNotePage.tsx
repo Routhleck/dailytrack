@@ -226,7 +226,7 @@ export function DailyNotePage() {
       }
 
       pollBusyRef.current = true
-      void getDailyNote(dataRoot, activeDate)
+      void getDailyNote(dataRoot, activeDate, { fresh: true })
         .then((remote) => {
           if (remote.raw === savedRawRef.current) {
             return

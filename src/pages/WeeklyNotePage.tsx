@@ -228,7 +228,7 @@ export function WeeklyNotePage() {
       }
 
       pollBusyRef.current = true
-      void getWeeklyNote(dataRoot, activeWeekId)
+      void getWeeklyNote(dataRoot, activeWeekId, { fresh: true })
         .then((remote) => {
           if (remote.raw === savedRawRef.current) {
             return

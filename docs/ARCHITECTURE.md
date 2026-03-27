@@ -8,6 +8,9 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 - Feature Layer (`src/features/*`): profile, preference, note, and body domain logic.
 - Domain Parsing Layer (`*.parser.ts`, `*.serializer.ts`): convert between files and typed state.
 - Local Storage Layer (`src/lib/fs` + Tauri commands): read/write local files only.
+- Runtime Memory Layer (`src/lib/state`, `src/lib/fs/writeBehindQueue.ts`):
+  - in-session daily/weekly/body cache to reduce repeated `invoke` + disk reads
+  - write-behind queue for text writes (idle flush + max-delay guard + lifecycle flush hooks).
 
 ## App-Level Contexts
 - `DataRootContext`:
@@ -30,14 +33,18 @@ Implement a local-first desktop app that makes Markdown/CSV tracking files easie
 ## Data Flow
 1. Resolve base root path.
 2. Ensure profile storage and active profile root.
-3. Read target local file from active profile root.
-4. Parse content into typed state.
+3. Read target local file from active profile root (cache-hit first, disk fallback).
+4. Parse content into typed state and update runtime cache.
 5. Render structured UI.
 6. User edits structured fields or raw Markdown/CSV.
-7. Serialize (or raw write) back to file.
-8. Re-read and parse to refresh UI consistency.
+7. Serialize (or raw write) to runtime cache immediately.
+8. Queue write-behind flush to disk during idle time, with max-delay/lifecycle forced flush.
+9. Filesystem watch events invalidate affected cache keys to keep external edits consistent.
 
 ## Responsive Shell
+- Startup gate:
+  - staged startup overlay is shown before initial interaction (`data root -> preferences -> services -> first render`)
+  - router mounts in parallel so first usable frame appears immediately after gate exits.
 - Desktop: fixed-height shell with left sidebar + independent main-content scroll.
 - Narrow/mobile-like windows:
   - bottom 4-tab nav (`Dashboard` / `Record` / `History` / `More`)

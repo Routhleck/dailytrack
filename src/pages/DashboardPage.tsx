@@ -105,11 +105,11 @@ export function DashboardPage() {
     let failed = false
     try {
       const [todayResult, weekResult, bodyResult, dailyResult, weeklyResult] = await Promise.allSettled([
-        getTodayNote(dataRoot),
-        getCurrentWeekNote(dataRoot),
-        getBodyRecords(dataRoot),
-        listDailyDates(dataRoot),
-        listWeeklyIds(dataRoot),
+        getTodayNote(dataRoot, { fresh: true }),
+        getCurrentWeekNote(dataRoot, { fresh: true }),
+        getBodyRecords(dataRoot, { fresh: true }),
+        listDailyDates(dataRoot, { fresh: true }),
+        listWeeklyIds(dataRoot, { fresh: true }),
       ])
 
       if (todayResult.status !== 'fulfilled') {

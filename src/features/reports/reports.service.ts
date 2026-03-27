@@ -2,6 +2,7 @@ import { compareIsoDateDesc, currentMonthId, todayDateString } from '../../lib/d
 import { weekIdFromIsoDate, currentWeekId } from '../../lib/date/week'
 import { joinPath } from '../../lib/fs/pathApi'
 import { writeTextFile, generateLlmReport } from '../../lib/fs/fileApi'
+import { flushQueuedTextWrites } from '../../lib/fs/writeBehindQueue'
 import { getBodyRecords } from '../body/body.service'
 import { summarizeChecklist } from '../dashboard/dashboard.service'
 import { getDailyNote, listDailyDates } from '../daily/daily.service'
@@ -587,10 +588,11 @@ export async function buildAndSaveAiReport(
   provider: ReportProviderConfig,
   input: BuildReportInput,
 ): Promise<BuildReportResult> {
+  await flushQueuedTextWrites('build-report')
   const language = normalizeReportLanguage(input.language)
-  const allDates = await listDailyDates(dataRoot)
-  const allWeeks = await listWeeklyIds(dataRoot)
-  const allBody = await getBodyRecords(dataRoot)
+  const allDates = await listDailyDates(dataRoot, { fresh: true })
+  const allWeeks = await listWeeklyIds(dataRoot, { fresh: true })
+  const allBody = await getBodyRecords(dataRoot, { fresh: true })
   const currentData = await loadPeriodData(dataRoot, input.period, input.targetId, allDates, allWeeks, allBody)
   const context = buildContextMarkdown(
     input.period,

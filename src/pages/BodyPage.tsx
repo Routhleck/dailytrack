@@ -312,7 +312,7 @@ export function BodyPage() {
       }
 
       syncingRef.current = true
-      void getBodyRecords(dataRoot)
+      void getBodyRecords(dataRoot, { fresh: true })
         .then((latest) => {
           if (!areBodyRecordsEqual(recordsRef.current, latest)) {
             setRecords(latest)

@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { readFile, writeFile } from '@tauri-apps/plugin-fs'
+import { flushQueuedTextWrites } from './writeBehindQueue'
 
 export type EnsureDataRootInfo = {
   root: string
@@ -227,6 +228,7 @@ export async function generateLlmReport(
   userPrompt: string,
   temperature?: number,
 ): Promise<GenerateLlmReportResult> {
+  await flushQueuedTextWrites('generate-llm-report')
   return invoke<GenerateLlmReportResult>('generate_llm_report', {
     baseUrl,
     apiKey,
@@ -241,6 +243,7 @@ export async function exportDataBundle(
   dataRoot: string,
   destinationDir: string,
 ): Promise<ExportDataBundleResult> {
+  await flushQueuedTextWrites('export-data-bundle')
   return invoke<ExportDataBundleResult>('export_data_bundle', { dataRoot, destinationDir })
 }
 
@@ -249,6 +252,7 @@ export async function importDataBundle(
   dataRoot: string,
   overwrite = true,
 ): Promise<ImportDataBundleResult> {
+  await flushQueuedTextWrites('import-data-bundle')
   return invoke<ImportDataBundleResult>('import_data_bundle', { sourceDir, dataRoot, overwrite })
 }
 
@@ -257,6 +261,7 @@ export async function importDataBundleZip(
   dataRoot: string,
   overwrite = true,
 ): Promise<ImportDataBundleResult> {
+  await flushQueuedTextWrites('import-data-bundle-zip')
   return invoke<ImportDataBundleResult>('import_data_bundle_zip', {
     zipBytes: Array.from(zipBytes),
     dataRoot,
@@ -295,6 +300,7 @@ export async function migrateDataRoot(
   destinationRoot: string,
   overwrite = false,
 ): Promise<MigrateDataRootResult> {
+  await flushQueuedTextWrites('migrate-data-root')
   return invoke<MigrateDataRootResult>('migrate_data_root', {
     sourceRoot,
     destinationRoot,
@@ -303,6 +309,7 @@ export async function migrateDataRoot(
 }
 
 export async function resetTrackerData(dataRoot: string): Promise<string> {
+  await flushQueuedTextWrites('reset-tracker-data')
   return invoke<string>('reset_tracker_data', { dataRoot })
 }
 
@@ -326,6 +333,7 @@ export async function pushWebdavSnapshot(
   dataRoot: string,
   note?: string,
 ): Promise<WebdavPushResult> {
+  await flushQueuedTextWrites('webdav-push-snapshot')
   return invoke<WebdavPushResult>('webdav_push_snapshot', { dataRoot, note })
 }
 
@@ -335,6 +343,7 @@ export async function pullWebdavSnapshot(
   overwrite = true,
   backupBeforePull = true,
 ): Promise<WebdavPullResult> {
+  await flushQueuedTextWrites('webdav-pull-snapshot')
   return invoke<WebdavPullResult>('webdav_pull_snapshot', {
     dataRoot,
     snapshotId,
@@ -357,6 +366,7 @@ export async function webdavRealtimeSyncNow(
   dataRoot: string,
   direction: 'push' | 'pull' | 'both' = 'both',
 ): Promise<RealtimeSyncResult> {
+  await flushQueuedTextWrites('webdav-realtime-sync')
   return invoke<RealtimeSyncResult>('webdav_realtime_sync_now', { dataRoot, direction })
 }
 

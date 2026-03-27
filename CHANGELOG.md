@@ -6,12 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-27
+
 ### Added
 - Added `Buy Me a Coffee` support link:
   - README top badges area
   - homepage footer support section.
 
 ### Changed
+- Added staged startup progress overlay (data root -> preferences -> services -> first render) to improve first-load clarity and avoid accidental non-responsive perception before app is ready.
+- Refactored runtime data flow to reduce editor/list stutter on larger local datasets:
+  - added in-memory daily/weekly/body cache in frontend service layer
+  - added write-behind text flush queue (idle-first with max-delay and lifecycle flush hooks)
+  - added filesystem-watch cache invalidation bridge to keep external edits consistent
+  - kept poll paths `fresh` for external-change detection when watcher mode is unavailable.
 - Improved homepage showcase performance by preloading all tab screenshots on initial page load to reduce first-switch lag.
 - Added simple click-to-zoom preview for the showcase main screenshot (supports close button, backdrop click, and `Esc`).
 - Updated showcase tab switching to explicit clear-and-replace behavior with a loading skeleton state to make transitions visually obvious.

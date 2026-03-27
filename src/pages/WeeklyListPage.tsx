@@ -125,7 +125,7 @@ export function WeeklyListPage() {
 
     loadingRef.current = true
     try {
-      const next = await listWeeklyIds(dataRoot)
+      const next = await listWeeklyIds(dataRoot, { fresh: true })
       setWeeks(next)
       setMetadata((prev) => {
         const kept: Record<string, WeeklyListMeta> = {}

@@ -7,6 +7,7 @@ import {
   type FsChangedEventPayload,
 } from '../../lib/fs/fileApi'
 import { emitDataChanged, FS_CHANGED_EVENT_NAME } from '../../lib/liveSync'
+import { invalidateTrackerMemoryByFsEvent } from '../../lib/state/trackerMemoryStore'
 import { usePreferences } from '../preferences/PreferencesContext'
 import { useDataRoot } from './DataRootContext'
 
@@ -26,6 +27,7 @@ export function FilesystemWatchBridge() {
         await startDataRootWatch(dataRoot)
         unlisten = await listen<FsChangedEventPayload>(FS_CHANGED_EVENT_NAME, (event) => {
           const payload = event.payload
+          invalidateTrackerMemoryByFsEvent(dataRoot, payload.scope, payload.path)
           emitDataChanged({
             scope: payload.scope,
             path: payload.path,
