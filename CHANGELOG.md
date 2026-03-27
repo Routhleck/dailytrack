@@ -41,6 +41,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - refined feature cards to borderless soft-shadow surfaces
   - upgraded gallery to a more staggered bento composition with consistent window-shell framing
   - strengthened final CTA section with high-contrast dark theme and clearer button hierarchy.
+- Reworked homepage gallery from dense multi-card layout to focused interactive showcase:
+  - tab-driven feature navigation (Dashboard/Daily/History/Weekly/Body)
+  - large single mockup viewport with smooth fade transition
+  - auto-rotation with per-tab progress indicator and manual override support.
 - Updated platform messaging/docs to include Linux support:
   - homepage platform badge now shows macOS / Windows / Linux / Android
   - README badges and download artifact section now list Linux AppImage/DEB

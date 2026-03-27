@@ -74,6 +74,8 @@ const translations = {
 
     galleryTitle: 'Interface Gallery',
     galleryLink: 'View source screenshots',
+    galleryPreviewLabel: 'Focused Interface Preview',
+    galleryAutoHint: 'Auto rotates every 5s. Click a tab to focus.',
     gDashboard: 'Dashboard',
     gDaily: 'Daily Note',
     gDailyHistory: 'Daily History',
@@ -175,6 +177,8 @@ const translations = {
 
     galleryTitle: '界面截图',
     galleryLink: '查看截图源文件',
+    galleryPreviewLabel: '核心界面预览',
+    galleryAutoHint: '默认每 5 秒自动轮播，可点击标签固定查看。',
     gDashboard: '仪表盘',
     gDaily: '每日记录',
     gDailyHistory: '每日历史',
@@ -219,6 +223,12 @@ function applyLanguage(lang) {
   document.querySelectorAll('.lang-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-lang') === lang)
   })
+
+  const showcaseImage = document.querySelector('.showcase-image')
+  const showcaseLabelKey = showcaseImage?.getAttribute('data-label-key')
+  if (showcaseImage && showcaseLabelKey && Object.prototype.hasOwnProperty.call(dict, showcaseLabelKey)) {
+    showcaseImage.alt = dict[showcaseLabelKey]
+  }
 
   localStorage.setItem('dailytrack-site-lang', lang)
 }
@@ -305,6 +315,99 @@ function setupReveal() {
   nodes.forEach((node) => observer.observe(node))
 }
 
+function setupShowcase() {
+  const tabs = Array.from(document.querySelectorAll('.showcase-tab'))
+  const stage = document.querySelector('.showcase-stage')
+  const image = document.querySelector('.showcase-image')
+  const caption = document.querySelector('.showcase-caption')
+  if (!tabs.length || !stage || !image || !caption) return
+
+  const shots = {
+    dashboard: { src: './assets/screenshots/dashboard.png', labelKey: 'gDashboard' },
+    'daily-note': { src: './assets/screenshots/daily-note.png', labelKey: 'gDaily' },
+    'daily-history': { src: './assets/screenshots/daily-history.png', labelKey: 'gDailyHistory' },
+    'weekly-note': { src: './assets/screenshots/weekly-note.png', labelKey: 'gWeekly' },
+    'weekly-history': { src: './assets/screenshots/weekly-history.png', labelKey: 'gWeeklyHistory' },
+    body: { src: './assets/screenshots/body.png', labelKey: 'gBody' },
+  }
+
+  const cycleMs = 5000
+  let activeIndex = Math.max(
+    tabs.findIndex((tab) => tab.classList.contains('active')),
+    0
+  )
+  let rotateTimer = null
+  let swapTimer = null
+
+  const restartProgress = (activeTab) => {
+    tabs.forEach((tab) => {
+      const bar = tab.querySelector('.showcase-progress span')
+      if (!bar) return
+      bar.style.animation = 'none'
+      if (tab !== activeTab) return
+      void bar.offsetWidth
+      bar.style.animation = `showcase-progress-fill ${cycleMs}ms linear forwards`
+    })
+  }
+
+  const activate = (index) => {
+    if (index < 0 || index >= tabs.length) return
+    const tab = tabs[index]
+    const shotKey = tab.getAttribute('data-shot')
+    if (!shotKey || !shots[shotKey]) return
+
+    activeIndex = index
+    tabs.forEach((item, itemIndex) => {
+      const active = itemIndex === index
+      item.classList.toggle('active', active)
+      item.setAttribute('aria-selected', active ? 'true' : 'false')
+    })
+    restartProgress(tab)
+
+    clearTimeout(swapTimer)
+    stage.classList.add('is-switching')
+    swapTimer = setTimeout(() => {
+      const shot = shots[shotKey]
+      const dict = translations[currentLanguage] || translations.en
+      image.src = shot.src
+      image.setAttribute('data-label-key', shot.labelKey)
+      image.alt = dict[shot.labelKey] || ''
+      caption.setAttribute('data-i18n', shot.labelKey)
+      caption.textContent = dict[shot.labelKey] || ''
+      stage.classList.remove('is-switching')
+    }, 120)
+  }
+
+  const startRotate = () => {
+    clearInterval(rotateTimer)
+    rotateTimer = setInterval(() => {
+      activate((activeIndex + 1) % tabs.length)
+    }, cycleMs)
+  }
+
+  const stopRotate = () => {
+    clearInterval(rotateTimer)
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => {
+      activate(index)
+      startRotate()
+    })
+  })
+
+  stage.addEventListener('mouseenter', stopRotate)
+  stage.addEventListener('mouseleave', startRotate)
+
+  const tabList = document.querySelector('.showcase-tabs')
+  tabList?.addEventListener('mouseenter', stopRotate)
+  tabList?.addEventListener('mouseleave', startRotate)
+
+  activate(activeIndex)
+  startRotate()
+}
+
 setupLangSwitch()
 setupTutorialTabs()
 setupReveal()
+setupShowcase()

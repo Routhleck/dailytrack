@@ -198,47 +198,53 @@
           <a href="https://github.com/Routhleck/dailytrack/tree/master/docs/assets/screenshots" target="_blank" rel="noreferrer" data-i18n="galleryLink">View source screenshots</a>
         </div>
 
-        <div class="bento-grid">
-          <figure class="shot span-12">
-            <img src="./assets/screenshots/dashboard.png" alt="Dashboard" />
-            <figcaption data-i18n="gDashboard">Dashboard</figcaption>
-          </figure>
-          <figure class="shot span-5">
-            <img src="./assets/screenshots/daily-note.png" alt="Daily Note" />
-            <figcaption data-i18n="gDaily">Daily Note</figcaption>
-          </figure>
-          <figure class="shot span-3">
-            <img src="./assets/screenshots/daily-history.png" alt="Daily History" />
-            <figcaption data-i18n="gDailyHistory">Daily History</figcaption>
-          </figure>
-          <figure class="shot span-4">
-            <img src="./assets/screenshots/weekly-note.png" alt="Weekly Note" />
-            <figcaption data-i18n="gWeekly">Weekly Note</figcaption>
-          </figure>
-          <figure class="shot span-4">
-            <img src="./assets/screenshots/weekly-history.png" alt="Weekly History" />
-            <figcaption data-i18n="gWeeklyHistory">Weekly History</figcaption>
-          </figure>
-          <figure class="shot span-4">
-            <img src="./assets/screenshots/body.png" alt="Body" />
-            <figcaption data-i18n="gBody">Body</figcaption>
-          </figure>
-          <figure class="shot span-4">
-            <img src="./assets/screenshots/settings.png" alt="Settings" />
-            <figcaption data-i18n="gSettings">Settings</figcaption>
-          </figure>
-          <figure class="shot span-3">
-            <img src="./assets/screenshots/profiles.png" alt="Profiles" />
-            <figcaption data-i18n="gProfiles">Profiles</figcaption>
-          </figure>
-          <figure class="shot span-3">
-            <img src="./assets/screenshots/sync.png" alt="Sync" />
-            <figcaption data-i18n="gSync">Sync</figcaption>
-          </figure>
-          <figure class="shot span-6">
-            <img src="./assets/screenshots/onboarding.png" alt="Onboarding" />
-            <figcaption data-i18n="gOnboarding">Onboarding</figcaption>
-          </figure>
+        <div class="showcase-wrap">
+          <div class="showcase-tabs" role="tablist" aria-label="interface showcase tabs">
+            <button class="showcase-tab active" data-shot="dashboard" role="tab" aria-selected="true">
+              <span class="showcase-icon" aria-hidden="true">DB</span>
+              <span data-i18n="gDashboard">Dashboard</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+            <button class="showcase-tab" data-shot="daily-note" role="tab" aria-selected="false">
+              <span class="showcase-icon" aria-hidden="true">DN</span>
+              <span data-i18n="gDaily">Daily Note</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+            <button class="showcase-tab" data-shot="daily-history" role="tab" aria-selected="false">
+              <span class="showcase-icon" aria-hidden="true">DH</span>
+              <span data-i18n="gDailyHistory">Daily History</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+            <button class="showcase-tab" data-shot="weekly-note" role="tab" aria-selected="false">
+              <span class="showcase-icon" aria-hidden="true">WN</span>
+              <span data-i18n="gWeekly">Weekly Note</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+            <button class="showcase-tab" data-shot="weekly-history" role="tab" aria-selected="false">
+              <span class="showcase-icon" aria-hidden="true">WH</span>
+              <span data-i18n="gWeeklyHistory">Weekly History</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+            <button class="showcase-tab" data-shot="body" role="tab" aria-selected="false">
+              <span class="showcase-icon" aria-hidden="true">BD</span>
+              <span data-i18n="gBody">Body</span>
+              <span class="showcase-progress" aria-hidden="true"><span></span></span>
+            </button>
+          </div>
+
+          <div class="showcase-stage" role="tabpanel" aria-live="polite">
+            <div class="mockup-shell showcase-shell">
+              <div class="mockup-head">
+                <span></span>
+                <span></span>
+                <span></span>
+                <p data-i18n="galleryPreviewLabel">Focused Interface Preview</p>
+              </div>
+              <img class="showcase-image" src="./assets/screenshots/dashboard.png" alt="Dashboard" />
+            </div>
+            <p class="showcase-caption" data-i18n="gDashboard">Dashboard</p>
+            <p class="showcase-meta" data-i18n="galleryAutoHint">Auto rotates every 5s. Click a tab to focus.</p>
+          </div>
         </div>
       </section>
 
