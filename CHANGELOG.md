@@ -16,7 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added tutorial docs hub and guide pages:
   - `docs/TUTORIALS.md`
   - `docs/tutorials/*`
-- Added screenshot lightbox preview interaction on the homepage gallery for full-size UI inspection.
 
 ### Changed
 - Redesigned the project homepage with a more promotional, campaign-style layout:
@@ -35,6 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - tutorial steps switched to timeline-style numbered flow
   - screenshot section moved to bento layout with Daily/Weekly history prominently included
   - footer expanded with project/support/explore navigation groups.
+
+### Fixed
+- Removed homepage screenshot lightbox interaction to avoid blocking-page states on gallery clicks; gallery now stays as stable static preview cards.
 
 ## [1.0.0] - 2026-03-26
 

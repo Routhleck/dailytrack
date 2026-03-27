@@ -91,7 +91,6 @@ const translations = {
     finalDownload: 'Download dailytrack',
     finalHelp: 'Troubleshooting',
 
-    closePreview: 'Close',
     footerText: 'Open source, local-first, built for long-term self-tracking reliability.',
     footerExplore: 'Explore',
     footerProject: 'Project',
@@ -192,7 +191,6 @@ const translations = {
     finalDownload: '下载 dailytrack',
     finalHelp: '故障排查',
 
-    closePreview: '关闭',
     footerText: '开源、本地优先，面向长期可靠的自我追踪。',
     footerExplore: '浏览',
     footerProject: '项目',
@@ -205,8 +203,6 @@ const translations = {
 }
 
 let currentLanguage = 'en'
-let openCaptionNode = null
-
 function applyLanguage(lang) {
   const dict = translations[lang] || translations.en
   currentLanguage = lang
@@ -223,12 +219,6 @@ function applyLanguage(lang) {
   document.querySelectorAll('.lang-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-lang') === lang)
   })
-
-  if (openCaptionNode) {
-    const caption = openCaptionNode.textContent || ''
-    const captionNode = document.querySelector('.lightbox-caption')
-    if (captionNode) captionNode.textContent = caption
-  }
 
   localStorage.setItem('dailytrack-site-lang', lang)
 }
@@ -292,53 +282,6 @@ function setupTutorialTabs() {
   if (initialTopic) activate(initialTopic)
 }
 
-function setupLightbox() {
-  const lightbox = document.querySelector('.lightbox')
-  const imageNode = lightbox?.querySelector('img')
-  const captionNode = lightbox?.querySelector('.lightbox-caption')
-  const closeNode = lightbox?.querySelector('.lightbox-close')
-  if (!lightbox || !imageNode || !captionNode || !closeNode) return
-
-  const openLightbox = (img, captionSource) => {
-    imageNode.src = img.src
-    imageNode.alt = img.alt
-    captionNode.textContent = captionSource.textContent || ''
-    openCaptionNode = captionSource
-    lightbox.hidden = false
-    lightbox.setAttribute('aria-hidden', 'false')
-    document.body.classList.add('lightbox-open')
-  }
-
-  const closeLightbox = () => {
-    lightbox.hidden = true
-    lightbox.setAttribute('aria-hidden', 'true')
-    document.body.classList.remove('lightbox-open')
-    openCaptionNode = null
-  }
-
-  document.querySelectorAll('.shot-trigger').forEach((trigger) => {
-    trigger.addEventListener('click', () => {
-      const figure = trigger.closest('figure')
-      const img = trigger.querySelector('img')
-      const caption = figure?.querySelector('figcaption')
-      if (!img || !caption) return
-      openLightbox(img, caption)
-    })
-  })
-
-  closeNode.addEventListener('click', closeLightbox)
-
-  lightbox.addEventListener('click', (event) => {
-    if (event.target === lightbox) closeLightbox()
-  })
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !lightbox.hidden) {
-      closeLightbox()
-    }
-  })
-}
-
 function setupReveal() {
   const nodes = Array.from(document.querySelectorAll('.reveal'))
   if (!nodes.length) return
@@ -364,5 +307,4 @@ function setupReveal() {
 
 setupLangSwitch()
 setupTutorialTabs()
-setupLightbox()
 setupReveal()
