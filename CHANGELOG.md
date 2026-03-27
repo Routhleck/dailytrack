@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added tutorial docs hub and guide pages:
   - `docs/TUTORIALS.md`
   - `docs/tutorials/*`
+- Added screenshot lightbox preview interaction on the homepage gallery for full-size UI inspection.
 
 ### Changed
 - Redesigned the project homepage with a more promotional, campaign-style layout:
@@ -27,6 +28,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - brand lockup in top navigation
   - logo block in hero section
   - favicon set to project logo.
+- Upgraded homepage visual system and interaction polish:
+  - hero now includes product mockup shell with contextual feature chips
+  - removed numeric stats strip and replaced with richer visual hierarchy
+  - feature cards now use icon-led design with hover lift motion
+  - tutorial steps switched to timeline-style numbered flow
+  - screenshot section moved to bento layout with Daily/Weekly history prominently included
+  - footer expanded with project/support/explore navigation groups.
 
 ## [1.0.0] - 2026-03-26
 

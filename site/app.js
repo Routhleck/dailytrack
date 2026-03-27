@@ -14,12 +14,13 @@ const translations = {
     badgeLocal: 'Local files as source of truth',
     badgeRecover: 'Soft-delete + undo recovery',
     badgeCross: 'macOS / Windows / Android',
-
-    stat1: 'Local Markdown/CSV ownership',
-    stat2: 'Editing modes (Structured + Raw)',
-    stat3: 'Core tutorials on this page',
+    heroPreviewLabel: 'Daily OS Preview',
+    heroChipA: 'Daily note autosave',
+    heroChipB: 'Weekly review workflow',
+    heroChipC: 'History for daily + weekly',
 
     featuresTitle: 'Why teams and solo builders like dailytrack',
+    featuresSubtitle: 'Built to feel modern, while keeping your files transparent and durable.',
     f1Title: 'File ownership first',
     f1Body: 'No hidden app database. Your real data is visible on disk.',
     f2Title: 'Fast daily operations',
@@ -89,7 +90,16 @@ const translations = {
       'Start with local files, add structure where it helps, and keep long-term trust in your data.',
     finalDownload: 'Download dailytrack',
     finalHelp: 'Troubleshooting',
+
+    closePreview: 'Close',
     footerText: 'Open source, local-first, built for long-term self-tracking reliability.',
+    footerExplore: 'Explore',
+    footerProject: 'Project',
+    footerSupport: 'Support',
+    footerIssues: 'Issues',
+    footerLicense: 'MIT License',
+    footerTutorialDocs: 'Tutorial Docs',
+    footerCopy: 'Copyright © 2026 dailytrack. Built for reliable personal operations.',
   },
   zh: {
     navFeatures: '功能',
@@ -106,12 +116,13 @@ const translations = {
     badgeLocal: '本地文件就是唯一数据真相',
     badgeRecover: '软删除 + 撤销恢复',
     badgeCross: 'macOS / Windows / Android',
-
-    stat1: '本地 Markdown/CSV 数据归属',
-    stat2: '编辑模式（结构化 + 原文）',
-    stat3: '本页内置核心教程数',
+    heroPreviewLabel: '产品界面预览',
+    heroChipA: '每日记录自动保存',
+    heroChipB: '每周复盘工作流',
+    heroChipC: '每日/每周历史视图',
 
     featuresTitle: '为什么 dailytrack 适合长期使用',
+    featuresSubtitle: '现代界面体验与可验证文件归属并存。',
     f1Title: '文件归属优先',
     f1Body: '没有隐藏数据库，数据可直接在磁盘上查看。',
     f2Title: '高频记录效率',
@@ -180,12 +191,25 @@ const translations = {
     finalBody: '保持本地文件归属，在需要处获得结构化效率，并持续信任你的长期数据。',
     finalDownload: '下载 dailytrack',
     finalHelp: '故障排查',
+
+    closePreview: '关闭',
     footerText: '开源、本地优先，面向长期可靠的自我追踪。',
+    footerExplore: '浏览',
+    footerProject: '项目',
+    footerSupport: '支持',
+    footerIssues: '问题反馈',
+    footerLicense: 'MIT 许可',
+    footerTutorialDocs: '教程文档',
+    footerCopy: 'Copyright © 2026 dailytrack. 为可靠的个人运营而构建。',
   },
 }
 
+let currentLanguage = 'en'
+let openCaptionNode = null
+
 function applyLanguage(lang) {
   const dict = translations[lang] || translations.en
+  currentLanguage = lang
   document.documentElement.lang = lang
 
   document.querySelectorAll('[data-i18n]').forEach((node) => {
@@ -199,6 +223,12 @@ function applyLanguage(lang) {
   document.querySelectorAll('.lang-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-lang') === lang)
   })
+
+  if (openCaptionNode) {
+    const caption = openCaptionNode.textContent || ''
+    const captionNode = document.querySelector('.lightbox-caption')
+    if (captionNode) captionNode.textContent = caption
+  }
 
   localStorage.setItem('dailytrack-site-lang', lang)
 }
@@ -221,22 +251,118 @@ function setupTutorialTabs() {
   const panels = Array.from(document.querySelectorAll('.tutorial-panel'))
 
   const activate = (topic) => {
-    buttons.forEach((btn) => {
-      btn.classList.toggle('active', btn.getAttribute('data-topic') === topic)
+    buttons.forEach((btn, index) => {
+      const active = btn.getAttribute('data-topic') === topic
+      btn.classList.toggle('active', active)
+      btn.setAttribute('aria-selected', active ? 'true' : 'false')
+      btn.setAttribute('tabindex', active ? '0' : '-1')
+      if (active) {
+        panels[index]?.removeAttribute('hidden')
+      }
     })
+
     panels.forEach((panel) => {
-      panel.classList.toggle('active', panel.getAttribute('data-topic') === topic)
+      const active = panel.getAttribute('data-topic') === topic
+      panel.classList.toggle('active', active)
+      panel.hidden = !active
     })
   }
 
-  buttons.forEach((btn) => {
+  buttons.forEach((btn, index) => {
     btn.addEventListener('click', () => {
       const topic = btn.getAttribute('data-topic')
       if (!topic) return
       activate(topic)
     })
+
+    btn.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+      event.preventDefault()
+      const delta = event.key === 'ArrowRight' ? 1 : -1
+      const next = (index + delta + buttons.length) % buttons.length
+      const nextButton = buttons[next]
+      const topic = nextButton.getAttribute('data-topic')
+      if (!topic) return
+      activate(topic)
+      nextButton.focus()
+    })
   })
+
+  const initialTopic = buttons.find((btn) => btn.classList.contains('active'))?.getAttribute('data-topic')
+  if (initialTopic) activate(initialTopic)
+}
+
+function setupLightbox() {
+  const lightbox = document.querySelector('.lightbox')
+  const imageNode = lightbox?.querySelector('img')
+  const captionNode = lightbox?.querySelector('.lightbox-caption')
+  const closeNode = lightbox?.querySelector('.lightbox-close')
+  if (!lightbox || !imageNode || !captionNode || !closeNode) return
+
+  const openLightbox = (img, captionSource) => {
+    imageNode.src = img.src
+    imageNode.alt = img.alt
+    captionNode.textContent = captionSource.textContent || ''
+    openCaptionNode = captionSource
+    lightbox.hidden = false
+    lightbox.setAttribute('aria-hidden', 'false')
+    document.body.classList.add('lightbox-open')
+  }
+
+  const closeLightbox = () => {
+    lightbox.hidden = true
+    lightbox.setAttribute('aria-hidden', 'true')
+    document.body.classList.remove('lightbox-open')
+    openCaptionNode = null
+  }
+
+  document.querySelectorAll('.shot-trigger').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const figure = trigger.closest('figure')
+      const img = trigger.querySelector('img')
+      const caption = figure?.querySelector('figcaption')
+      if (!img || !caption) return
+      openLightbox(img, caption)
+    })
+  })
+
+  closeNode.addEventListener('click', closeLightbox)
+
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) closeLightbox()
+  })
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !lightbox.hidden) {
+      closeLightbox()
+    }
+  })
+}
+
+function setupReveal() {
+  const nodes = Array.from(document.querySelectorAll('.reveal'))
+  if (!nodes.length) return
+
+  if (!('IntersectionObserver' in window)) {
+    nodes.forEach((node) => node.classList.add('is-visible'))
+    return
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        entry.target.classList.add('is-visible')
+        observer.unobserve(entry.target)
+      })
+    },
+    { threshold: 0.15 }
+  )
+
+  nodes.forEach((node) => observer.observe(node))
 }
 
 setupLangSwitch()
 setupTutorialTabs()
+setupLightbox()
+setupReveal()
