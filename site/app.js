@@ -75,6 +75,7 @@ const translations = {
     galleryTitle: 'Interface Gallery',
     galleryLink: 'View source screenshots',
     galleryPreviewLabel: 'Focused Interface Preview',
+    zoomClose: 'Close',
     gDashboard: 'Dashboard',
     gDaily: 'Daily Note',
     gDailyHistory: 'Daily History',
@@ -177,6 +178,7 @@ const translations = {
     galleryTitle: '界面截图',
     galleryLink: '查看截图源文件',
     galleryPreviewLabel: '核心界面预览',
+    zoomClose: '关闭',
     gDashboard: '仪表盘',
     gDaily: '每日记录',
     gDailyHistory: '每日历史',
@@ -320,6 +322,11 @@ function setupShowcase() {
   const caption = document.querySelector('.showcase-caption')
   if (!tabs.length || !stage || !image || !caption) return
 
+  const zoomModal = document.querySelector('.zoom-modal')
+  const zoomImage = zoomModal?.querySelector('.zoom-image')
+  const zoomCaption = zoomModal?.querySelector('.zoom-caption')
+  const zoomClose = zoomModal?.querySelector('.zoom-close')
+
   const shots = {
     dashboard: { src: './assets/screenshots/dashboard.png', labelKey: 'gDashboard' },
     'daily-note': { src: './assets/screenshots/daily-note.png', labelKey: 'gDaily' },
@@ -328,6 +335,12 @@ function setupShowcase() {
     'weekly-history': { src: './assets/screenshots/weekly-history.png', labelKey: 'gWeeklyHistory' },
     body: { src: './assets/screenshots/body.png', labelKey: 'gBody' },
   }
+
+  // Preload all showcase screenshots to avoid first-switch lag.
+  Object.values(shots).forEach((shot) => {
+    const preloaded = new Image()
+    preloaded.src = shot.src
+  })
 
   let activeIndex = Math.max(
     tabs.findIndex((tab) => tab.classList.contains('active')),
@@ -375,6 +388,36 @@ function setupShowcase() {
       tabs[next].focus()
     })
   })
+
+  if (zoomModal && zoomImage && zoomCaption && zoomClose) {
+    const openZoom = () => {
+      zoomImage.setAttribute('src', image.getAttribute('src') || '')
+      zoomImage.setAttribute('alt', image.getAttribute('alt') || '')
+      zoomCaption.textContent = caption.textContent || ''
+      zoomModal.hidden = false
+      zoomModal.setAttribute('aria-hidden', 'false')
+      document.body.style.overflow = 'hidden'
+    }
+
+    const closeZoom = () => {
+      zoomModal.hidden = true
+      zoomModal.setAttribute('aria-hidden', 'true')
+      document.body.style.overflow = ''
+    }
+
+    image.addEventListener('click', openZoom)
+    zoomClose.addEventListener('click', closeZoom)
+
+    zoomModal.addEventListener('click', (event) => {
+      if (event.target === zoomModal) closeZoom()
+    })
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !zoomModal.hidden) {
+        closeZoom()
+      }
+    })
+  }
 
   activate(activeIndex)
 }
