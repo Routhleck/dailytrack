@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/github/license/Routhleck/dailytrack)](./LICENSE)
 ![macOS](https://img.shields.io/badge/macOS-supported-1f2937?logo=apple&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-supported-0078D4?logo=windows&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=black)
 ![Android](https://img.shields.io/badge/Android-APK%20sideload-34A853?logo=android&logoColor=white)
 
 Local-first life tracker for Markdown and CSV users.
@@ -50,6 +51,7 @@ Pick your installer from the latest release page:
 - macOS (Apple Silicon): `dailytrack_*_aarch64.dmg`
 - macOS (Intel): `dailytrack_*_x64.dmg`
 - Windows: `dailytrack_*_x64_en-US.msi` or `dailytrack_*_x64-setup.exe`
+- Linux: `dailytrack_*_amd64.AppImage` and `dailytrack_*_amd64.deb`
 - Android: `dailytrack_*_aarch64.apk` (and optional `x86_64` build)
 
 Install/trust policy docs:

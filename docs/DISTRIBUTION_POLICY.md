@@ -11,12 +11,14 @@ This document defines how `dailytrack` binaries are distributed and what trust e
 - Goal: highest-trust install path for long-term users.
 - macOS: signed + notarized app bundles.
 - Windows: Authenticode-signed installers.
+- Linux: signed repository packages (future target).
 - Updater metadata/signatures are published with each stable release.
 
 ### Testing channel (unsigned)
 
 - Purpose: fast validation builds before full signing/notarization is available.
 - macOS/Windows installers may show OS trust warnings on first launch.
+- Linux builds are published as unsigned AppImage/DEB artifacts for manual validation.
 - Users should verify release origin from the official GitHub repo and release page.
 
 ### Current status
@@ -79,6 +81,24 @@ Install flow:
 2. Open APK and allow installs from unknown sources for your file manager/browser.
 3. Continue install (Play Protect may show a warning for non-Play-distributed builds).
 4. Launch app and verify data root bootstrap completes.
+
+### Linux (testing channel)
+
+Artifacts:
+
+- `dailytrack_*_amd64.AppImage`
+- `dailytrack_*_amd64.deb`
+
+Expected behavior:
+
+- AppImage may require executable permission (`chmod +x`) before launch.
+- DEB install may require manual dependency fixups on older distributions.
+
+User action:
+
+1. Download from the official GitHub Releases page.
+2. For AppImage: run `chmod +x <artifact>.AppImage` then launch.
+3. For DEB: install with `sudo apt install ./<artifact>.deb`.
 
 ## In-App Updater Policy
 

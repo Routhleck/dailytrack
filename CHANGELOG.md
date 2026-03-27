@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added tutorial docs hub and guide pages:
   - `docs/TUTORIALS.md`
   - `docs/tutorials/*`
+- Added Linux desktop release packaging in CI (`publish.yml`) with `x86_64-unknown-linux-gnu` target and Linux runner dependencies.
 
 ### Changed
 - Redesigned the project homepage with a more promotional, campaign-style layout:
@@ -40,6 +41,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - refined feature cards to borderless soft-shadow surfaces
   - upgraded gallery to a more staggered bento composition with consistent window-shell framing
   - strengthened final CTA section with high-contrast dark theme and clearer button hierarchy.
+- Updated platform messaging/docs to include Linux support:
+  - homepage platform badge now shows macOS / Windows / Linux / Android
+  - README badges and download artifact section now list Linux AppImage/DEB
+  - release/distribution checklists now include Linux artifacts and install expectations.
+- Upgraded Pages workflow actions to Node24-ready major versions:
+  - `actions/configure-pages@v6`
+  - `actions/upload-pages-artifact@v4`
+  - `actions/deploy-pages@v5`.
 
 ### Fixed
 - Removed homepage screenshot lightbox interaction to avoid blocking-page states on gallery clicks; gallery now stays as stable static preview cards.

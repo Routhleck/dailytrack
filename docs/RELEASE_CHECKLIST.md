@@ -48,7 +48,7 @@
   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (optional)
 - [ ] GitHub Actions `publish` workflow green for target tag.
 - [ ] `publish` workflow `verify-frontend` job green (single-run lint/test/build gate).
-- [ ] Draft release contains Windows + macOS artifacts.
+- [ ] Draft release contains Windows + macOS + Linux artifacts.
 - [ ] If Android packaging is enabled for this release, `android-apk` workflow green and APK artifacts uploaded/reviewed.
 - [ ] Unsigned macOS install guidance in release notes/docs points to Privacy & Security -> Open Anyway flow (and optional `xattr` fallback).
 - [ ] If updater secrets are set, draft release contains updater metadata (`latest.json` and signatures).
