@@ -58,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed homepage screenshot lightbox interaction to avoid blocking-page states on gallery clicks; gallery now stays as stable static preview cards.
 - Stabilized homepage tab showcase interaction by removing auto-rotation/progress behavior and keeping deterministic manual tab switching.
 - Removed gallery helper copy text (`Auto rotates every 5s...`) per UX simplification request.
+- Improved tab showcase click responsiveness by switching to immediate image swap logic and added cache-busting query params for homepage CSS/JS to avoid stale client bundles.
 
 ## [1.0.0] - 2026-03-26
 

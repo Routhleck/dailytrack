@@ -333,7 +333,6 @@ function setupShowcase() {
     tabs.findIndex((tab) => tab.classList.contains('active')),
     0
   )
-  let swapTimer = null
 
   const activate = (index) => {
     if (index < 0 || index >= tabs.length) return
@@ -349,18 +348,17 @@ function setupShowcase() {
       item.setAttribute('tabindex', active ? '0' : '-1')
     })
 
-    clearTimeout(swapTimer)
     stage.classList.add('is-switching')
-    swapTimer = setTimeout(() => {
-      const shot = shots[shotKey]
-      const dict = translations[currentLanguage] || translations.en
-      image.src = shot.src
-      image.setAttribute('data-label-key', shot.labelKey)
-      image.alt = dict[shot.labelKey] || ''
-      caption.setAttribute('data-i18n', shot.labelKey)
-      caption.textContent = dict[shot.labelKey] || ''
+    const shot = shots[shotKey]
+    const dict = translations[currentLanguage] || translations.en
+    image.src = shot.src
+    image.setAttribute('data-label-key', shot.labelKey)
+    image.alt = dict[shot.labelKey] || ''
+    caption.setAttribute('data-i18n', shot.labelKey)
+    caption.textContent = dict[shot.labelKey] || ''
+    requestAnimationFrame(() => {
       stage.classList.remove('is-switching')
-    }, 120)
+    })
   }
 
   tabs.forEach((tab, index) => {
