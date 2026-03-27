@@ -85,6 +85,7 @@ body {
   backdrop-filter: blur(14px);
   background: rgba(248, 251, 255, 0.8);
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 .nav {
@@ -763,14 +764,69 @@ h1 {
     padding-right: 14px;
   }
 
+  .nav {
+    gap: 8px;
+  }
+
+  .brand {
+    letter-spacing: 0.05em;
+    gap: 8px;
+  }
+
+  .brand-logo {
+    width: 27px;
+    height: 27px;
+  }
+
+  .lang-switch {
+    gap: 6px;
+  }
+
+  .lang-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
   .card {
     border-radius: 18px;
     padding: 18px;
   }
 
+  .hero {
+    gap: 16px;
+  }
+
+  h1 {
+    font-size: clamp(1.65rem, 8vw, 2.1rem);
+    line-height: 1.08;
+  }
+
+  .subtitle {
+    font-size: 0.94rem;
+    line-height: 1.58;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    padding: 5px 8px;
+  }
+
   .btn {
     width: 100%;
     text-align: center;
+  }
+
+  .hero-badges {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .hero-badges span {
+    width: 100%;
+    text-align: center;
+    font-size: 0.8rem;
   }
 
   .hero-chip {
@@ -789,8 +845,51 @@ h1 {
     max-width: 100%;
   }
 
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-head a {
+    font-size: 0.9rem;
+  }
+
+  .tutorial-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
   .showcase-tabs {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 2px;
+    order: 2;
+  }
+
+  .showcase-tab {
+    min-width: 178px;
+    flex: 0 0 auto;
+    padding: 10px 11px;
+  }
+
+  .showcase-stage {
+    order: 1;
+  }
+
+  .showcase-caption {
+    font-size: 0.95rem;
   }
 
   .nav-actions .btn {
@@ -802,12 +901,68 @@ h1 {
   }
 }
 
+@media (max-width: 420px) {
+  main,
+  .nav,
+  .site-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .card {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .hero-logo-wrap {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+  }
+
+  .hero-logo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mockup-head {
+    height: 34px;
+    padding: 0 10px;
+  }
+
+  .mockup-head p {
+    font-size: 0.7rem;
+    margin-left: 6px;
+  }
+
+  .tab-btn {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+  }
+
+  .step-list li {
+    grid-template-columns: 26px 1fr;
+    gap: 8px;
+  }
+
+  .step-list span {
+    width: 26px;
+    height: 26px;
+    font-size: 0.78rem;
+  }
+
+  .showcase-tab {
+    min-width: 166px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .feature-card,
-  .shot,
   .btn,
-  .tab-btn {
+  .tab-btn,
+  .showcase-tab,
+  .showcase-image {
     transition: none;
   }
 

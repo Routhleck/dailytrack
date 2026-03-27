@@ -45,6 +45,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - tab-driven feature navigation (Dashboard/Daily/History/Weekly/Body)
   - large single mockup viewport with smooth fade transition
   - auto-rotation with per-tab progress indicator and manual override support.
+- Added dedicated mobile portrait homepage polish:
+  - tighter hero rhythm and typography for narrow screens
+  - horizontally scrollable tutorial/showcase tab rails with larger touch targets
+  - reordered showcase stack (preview first, tabs second) on phones
+  - safe-area and compact spacing adjustments for small-screen navigation/footer readability.
 - Updated platform messaging/docs to include Linux support:
   - homepage platform badge now shows macOS / Windows / Linux / Android
   - README badges and download artifact section now list Linux AppImage/DEB
