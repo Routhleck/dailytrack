@@ -97,6 +97,10 @@ function parseNullableNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+function nowMillis(): number {
+  return Date.now()
+}
+
 function bodyRecordSignature(record: BodyRecord): string {
   return [
     record.date,
@@ -193,6 +197,8 @@ export function BodyPage() {
 
   const recordsRef = useRef<BodyRecord[]>([])
   const editingIndexRef = useRef<number | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const dateInputRef = useRef<HTMLInputElement | null>(null)
   const syncingRef = useRef(false)
   const formFocusedRef = useRef(false)
   const lastFormInteractionAtRef = useRef(0)
@@ -203,7 +209,7 @@ export function BodyPage() {
   useEffect(() => { tRef.current = t }, [t])
 
   function markFormInteraction() {
-    lastFormInteractionAtRef.current = Date.now()
+    lastFormInteractionAtRef.current = nowMillis()
   }
 
   function isFormInteracting(): boolean {
@@ -211,7 +217,7 @@ export function BodyPage() {
       return true
     }
 
-    const now = Date.now()
+    const now = nowMillis()
     if (now < resumePollAfterRef.current) {
       return true
     }
@@ -242,11 +248,11 @@ export function BodyPage() {
   }, [highlightedSignature])
 
   useEffect(() => {
-    resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+    resumePollAfterRef.current = nowMillis() + RESUME_POLL_GRACE_MS
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        resumePollAfterRef.current = Date.now() + RESUME_POLL_GRACE_MS
+        resumePollAfterRef.current = nowMillis() + RESUME_POLL_GRACE_MS
         return
       }
 
@@ -422,7 +428,22 @@ export function BodyPage() {
     if (editingIndex === index) {
       setForm(toFormState())
       setEditingIndex(null)
+      return
     }
+
+    if (editingIndex != null && index < editingIndex) {
+      setEditingIndex(editingIndex - 1)
+    }
+  }
+
+  function beginEdit(index: number, record: BodyRecord) {
+    markFormInteraction()
+    setEditingIndex(index)
+    setForm(toFormState(record))
+    window.requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      dateInputRef.current?.focus()
+    })
   }
 
   const chartData = useMemo(
@@ -436,30 +457,27 @@ export function BodyPage() {
   const showOnlyChanges = preferences.ui.showOnlyChanges.body
   const recordDiffs = useMemo(() => records.map((record) => diffBodyRecord(record)), [records])
   const enabledNumericMetrics = BODY_NUMERIC_METRICS.filter((metric) => preferences.body[metric.key])
-  const metricDeltas = useMemo(() => {
+  const metricDeltas = (() => {
     const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
     for (const metric of enabledNumericMetrics) {
       next[metric.key] = metricDeltaFromLatest(records, metric.key)
     }
     return next
-  }, [enabledNumericMetrics, records])
-  const metricGoals = useMemo(() => {
+  })()
+  const metricGoals = (() => {
     const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
     for (const metric of enabledNumericMetrics) {
       const goal = preferences.body.goals[metric.key]
       next[metric.key] = goal.enabled ? goal.value : null
     }
     return next
-  }, [enabledNumericMetrics, preferences.body.goals])
-  const visibleNumericMetrics = useMemo(
-    () =>
-      showOnlyChanges
-        ? enabledNumericMetrics.filter((metric) =>
-          records.some((_, index) => recordDiffs[index].changedMetrics[metric.key]),
-        )
-        : enabledNumericMetrics,
-    [enabledNumericMetrics, recordDiffs, records, showOnlyChanges],
-  )
+  })()
+  const visibleNumericMetrics =
+    showOnlyChanges
+      ? enabledNumericMetrics.filter((metric) =>
+        records.some((_, index) => recordDiffs[index].changedMetrics[metric.key]),
+      )
+      : enabledNumericMetrics
   const showNote = preferences.body.note
   const showNoteColumn = useMemo(
     () => showNote && (!showOnlyChanges || records.some((_, index) => recordDiffs[index].noteChanged)),
@@ -560,10 +578,12 @@ export function BodyPage() {
       ) : null}
 
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         className="dt-panel-soft grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4"
       >
         <input
+          ref={dateInputRef}
           className="dt-input"
           type="date"
           value={form.date}
@@ -758,11 +778,7 @@ export function BodyPage() {
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
-                  onClick={() => {
-                    markFormInteraction()
-                    setEditingIndex(entry.index)
-                    setForm(toFormState(entry.record))
-                  }}
+                  onClick={() => beginEdit(entry.index, entry.record)}
                   type="button"
                 >
                   {t('common.edit')}
@@ -816,11 +832,7 @@ export function BodyPage() {
                     <div className="flex gap-2">
                       <button
                         className="dt-btn dt-btn-secondary px-2 py-1 text-xs"
-                        onClick={() => {
-                          markFormInteraction()
-                          setEditingIndex(entry.index)
-                          setForm(toFormState(entry.record))
-                        }}
+                        onClick={() => beginEdit(entry.index, entry.record)}
                         type="button"
                       >
                         {t('common.edit')}

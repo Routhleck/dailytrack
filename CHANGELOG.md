@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-03-27
+
 ### Added
 - Added in-page tutorial center on the project homepage (`site/`) with five interactive guide tracks:
   - quick start
@@ -43,8 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - strengthened final CTA section with high-contrast dark theme and clearer button hierarchy.
 - Reworked homepage gallery from dense multi-card layout to focused interactive showcase:
   - tab-driven feature navigation (Dashboard/Daily/History/Weekly/Body)
-  - large single mockup viewport with smooth fade transition
-  - auto-rotation with per-tab progress indicator and manual override support.
+  - large single mockup viewport with smooth fade transition and manual tab switching.
 - Added dedicated mobile portrait homepage polish:
   - tighter hero rhythm and typography for narrow screens
   - horizontally scrollable tutorial/showcase tab rails with larger touch targets
@@ -64,6 +65,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Stabilized homepage tab showcase interaction by removing auto-rotation/progress behavior and keeping deterministic manual tab switching.
 - Removed gallery helper copy text (`Auto rotates every 5s...`) per UX simplification request.
 - Improved tab showcase click responsiveness by switching to immediate image swap logic and added cache-busting query params for homepage CSS/JS to avoid stale client bundles.
+- Fixed Body Progress edit flow reliability:
+  - tapping `Edit` now scrolls to and focuses the form so edit state is visible on mobile/long pages
+  - deleting entries while editing now keeps editing index aligned to the correct record.
 
 ## [1.0.0] - 2026-03-26
 
