@@ -613,6 +613,7 @@ h1 {
 
 .showcase-shell {
   max-width: 100%;
+  position: relative;
 }
 
 .showcase-image {
@@ -623,6 +624,37 @@ h1 {
 .showcase-stage.is-switching .showcase-image {
   opacity: 0.2;
   transform: translateY(4px);
+}
+
+.showcase-shell::after {
+  content: '';
+  position: absolute;
+  inset: 38px 0 0;
+  border-radius: 0 0 18px 18px;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(15, 23, 42, 0.12) 20%,
+      rgba(148, 163, 184, 0.35) 40%,
+      rgba(15, 23, 42, 0.12) 60%
+    );
+  background-size: 240% 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes showcase-skeleton {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.showcase-stage.is-loading .showcase-shell::after {
+  opacity: 1;
+  animation: showcase-skeleton 900ms linear infinite;
 }
 
 .showcase-caption {

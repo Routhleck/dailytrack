@@ -346,6 +346,7 @@ function setupShowcase() {
     tabs.findIndex((tab) => tab.classList.contains('active')),
     0
   )
+  let switchToken = 0
 
   const activate = (index) => {
     if (index < 0 || index >= tabs.length) return
@@ -361,18 +362,47 @@ function setupShowcase() {
       item.setAttribute('tabindex', active ? '0' : '-1')
     })
 
-    stage.classList.add('is-switching')
     const shot = shots[shotKey]
     const dict = translations[currentLanguage] || translations.en
-    image.src = shot.src
-    image.setAttribute('data-label-key', shot.labelKey)
-    image.alt = dict[shot.labelKey] || ''
+    const nextAlt = dict[shot.labelKey] || ''
+    const currentToken = ++switchToken
+
+    // Clear current frame first so users can always perceive a state change.
+    stage.classList.add('is-switching')
+    stage.classList.add('is-loading')
+    image.setAttribute('src', '')
+    image.setAttribute('alt', '')
+
     caption.setAttribute('data-i18n', shot.labelKey)
-    caption.textContent = dict[shot.labelKey] || ''
-    requestAnimationFrame(() => {
-      stage.classList.remove('is-switching')
-    })
+    caption.textContent = nextAlt
+
+    const nextImage = new Image()
+    const applyLoaded = () => {
+      if (currentToken !== switchToken) return
+      image.setAttribute('src', shot.src)
+      image.setAttribute('data-label-key', shot.labelKey)
+      image.setAttribute('alt', nextAlt)
+      stage.classList.remove('is-loading')
+      requestAnimationFrame(() => {
+        stage.classList.remove('is-switching')
+      })
+    }
+
+    nextImage.onload = applyLoaded
+    nextImage.onerror = applyLoaded
+    nextImage.src = shot.src
+
+    if (nextImage.complete) {
+      applyLoaded()
+    }
   }
+
+  image.addEventListener('load', () => {
+    if (image.getAttribute('src')) {
+      stage.classList.remove('is-loading')
+      stage.classList.remove('is-switching')
+    }
+  })
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
@@ -391,7 +421,9 @@ function setupShowcase() {
 
   if (zoomModal && zoomImage && zoomCaption && zoomClose) {
     const openZoom = () => {
-      zoomImage.setAttribute('src', image.getAttribute('src') || '')
+      const currentSrc = image.getAttribute('src') || ''
+      if (!currentSrc) return
+      zoomImage.setAttribute('src', currentSrc)
       zoomImage.setAttribute('alt', image.getAttribute('alt') || '')
       zoomCaption.textContent = caption.textContent || ''
       zoomModal.hidden = false
