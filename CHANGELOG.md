@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - README badges and download artifact section now list Linux AppImage/DEB
   - release/distribution checklists now include Linux artifacts and install expectations.
 - Upgraded Pages workflow actions to Node24-ready major versions:
-  - `actions/configure-pages@v6`
+  - `actions/configure-pages@v5` (latest resolvable major tag)
   - `actions/upload-pages-artifact@v4`
   - `actions/deploy-pages@v5`.
 
