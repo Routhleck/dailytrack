@@ -34,7 +34,8 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 
 [profile.release]
-opt-level = "s"
+opt-level = "z"
 lto = true
 codegen-units = 1
 strip = "symbols"
+panic = "abort"

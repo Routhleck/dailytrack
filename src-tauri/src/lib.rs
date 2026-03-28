@@ -1560,7 +1560,8 @@ pub fn run() {
         app.handle().plugin(updater.build())?;
       }
 
-      if cfg!(debug_assertions) {
+      #[cfg(debug_assertions)]
+      {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()
             .level(log::LevelFilter::Info)

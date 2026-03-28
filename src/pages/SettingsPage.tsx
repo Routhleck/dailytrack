@@ -7,6 +7,10 @@ import { useDataRoot } from '../features/settings/DataRootContext'
 import { emitTutorialOpen } from '../features/tutorial/tutorial.events'
 import { useUpdater } from '../features/updater/UpdaterContext'
 import {
+  checkLatestAndroidRelease,
+  type AndroidReleaseUpdate,
+} from '../features/updater/androidRelease.service'
+import {
   deleteWebdavSnapshot,
   exportDataBundle,
   getWebdavConfig,
@@ -89,6 +93,8 @@ function perfDiagnosticFileName() {
   return `perf-diagnostic-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
 }
 
+const LATEST_RELEASE_URL = 'https://github.com/Routhleck/dailytrack/releases/latest'
+
 type WebdavNumericField =
   | 'autoPushIntervalMin'
   | 'autoPullIntervalSec'
@@ -170,6 +176,10 @@ export function SettingsPage() {
   const [resetBusy, setResetBusy] = useState(false)
   const [perfExportBusy, setPerfExportBusy] = useState(false)
   const [perfExportMessage, setPerfExportMessage] = useState('')
+  const [androidReleaseChecking, setAndroidReleaseChecking] = useState(false)
+  const [androidReleaseStatus, setAndroidReleaseStatus] = useState('')
+  const [androidReleaseError, setAndroidReleaseError] = useState('')
+  const [androidReleaseUpdate, setAndroidReleaseUpdate] = useState<AndroidReleaseUpdate | null>(null)
 
   const [webdavConfig, setWebdavConfig] = useState<WebdavConfig>(defaultWebdavConfig())
   const [webdavSnapshots, setWebdavSnapshots] = useState<WebdavSnapshot[]>([])
@@ -840,6 +850,50 @@ export function SettingsPage() {
     }
   }
 
+  function openExternalLink(url: string) {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const popup = window.open(url, '_blank', 'noopener,noreferrer')
+    if (!popup) {
+      window.location.assign(url)
+    }
+  }
+
+  function handleOpenLatestRelease() {
+    const url = androidReleaseUpdate?.releaseUrl || LATEST_RELEASE_URL
+    openExternalLink(url)
+  }
+
+  function handleDownloadAndroidApk() {
+    if (!androidReleaseUpdate) {
+      return
+    }
+    openExternalLink(androidReleaseUpdate.apkUrl)
+  }
+
+  async function handleCheckAndroidRelease() {
+    setAndroidReleaseChecking(true)
+    setAndroidReleaseError('')
+    setAndroidReleaseStatus('')
+
+    try {
+      const result = await checkLatestAndroidRelease(currentVersion)
+      setAndroidReleaseUpdate(result)
+      if (result.isUpdateAvailable) {
+        setAndroidReleaseStatus(t('settings.androidUpdaterAvailable', { version: result.latestVersion }))
+      } else {
+        setAndroidReleaseStatus(t('settings.androidUpdaterUpToDate', { version: result.latestVersion }))
+      }
+    } catch (error) {
+      const text = error instanceof Error ? error.message : t('settings.androidUpdaterCheckFailed')
+      setAndroidReleaseError(text)
+    } finally {
+      setAndroidReleaseChecking(false)
+    }
+  }
+
   return (
     <section className="dt-page">
       <PageHeader
@@ -894,67 +948,116 @@ export function SettingsPage() {
 
       <section className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">
         <h2 className="text-base font-semibold text-slate-900">{t('settings.updater')}</h2>
-        <p className="text-sm text-slate-600">{t('settings.updaterDescription')}</p>
-        <p className="text-sm text-slate-700">
-          {t('settings.currentVersion')}: <span className="font-medium">{currentVersion}</span>
-        </p>
-        <p className="text-sm text-slate-700">
-          {t('settings.updaterSupported')}:{' '}
-          <span className={`font-medium ${updaterSupported ? 'text-teal-700' : 'text-slate-500'}`}>
-            {updaterResolved ? (updaterSupported ? t('common.yes') : t('common.no')) : t('common.loading')}
-          </span>
-        </p>
-        <p className="text-sm text-slate-700">
-          {t('settings.updaterConfigured')}:{' '}
-          <span className={`font-medium ${updaterConfigured ? 'text-teal-700' : 'text-amber-700'}`}>
-            {updaterResolved ? (updaterConfigured ? t('common.yes') : t('common.no')) : t('common.loading')}
-          </span>
-        </p>
-        {!updaterSupported && updaterResolved ? (
-          <p className="text-sm text-slate-600">{t('updater.notSupported')}</p>
-        ) : null}
-        {!updaterConfigured && updaterSupported && updaterResolved ? (
-          <p className="text-sm text-amber-700">{t('updater.notConfigured')}</p>
-        ) : null}
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoCheckEnabled}
-            onChange={(event) => setAutoCheckEnabled(event.target.checked)}
-            disabled={!updaterSupported || !updaterConfigured || updaterInstalling}
-          />
-          {t('settings.autoCheckUpdates')}
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
-            disabled={!updaterSupported || !updaterConfigured || updaterChecking || updaterInstalling}
-            onClick={() => void checkForUpdates(true)}
-          >
-            {updaterChecking ? t('updater.checking') : t('settings.checkUpdatesNow')}
-          </button>
-          {availableUpdate ? (
-            <button
-              type="button"
-              className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
-              disabled={updaterInstalling || updaterChecking}
-              onClick={() => void installUpdate()}
-            >
-              {updaterInstalling ? t('updater.installing') : t('updater.installAndRestart')}
-            </button>
-          ) : null}
-        </div>
-        {downloadPercent != null ? (
-          <p className="text-sm text-slate-700">{t('updater.downloadProgress', { percent: downloadPercent })}</p>
-        ) : null}
-        {availableUpdate ? (
-          <p className="text-sm text-slate-700">
-            {t('settings.latestVersion')}: <span className="font-medium">{availableUpdate.version}</span>
-          </p>
-        ) : null}
-        {updaterStatus ? <p className="text-sm text-slate-700">{updaterStatus}</p> : null}
-        {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
+        {isAndroidRuntime ? (
+          <>
+            <p className="text-sm text-slate-600">{t('settings.androidUpdaterDescription')}</p>
+            <p className="text-sm text-slate-700">
+              {t('settings.currentVersion')}: <span className="font-medium">{currentVersion}</span>
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
+                disabled={androidReleaseChecking}
+                onClick={() => void handleCheckAndroidRelease()}
+              >
+                {androidReleaseChecking ? t('settings.androidUpdaterChecking') : t('settings.checkAndroidUpdates')}
+              </button>
+              <button
+                type="button"
+                className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60 sm:w-auto"
+                onClick={handleOpenLatestRelease}
+              >
+                {t('settings.openLatestRelease')}
+              </button>
+              {androidReleaseUpdate?.isUpdateAvailable ? (
+                <button
+                  type="button"
+                  className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
+                  onClick={handleDownloadAndroidApk}
+                >
+                  {t('settings.downloadAndroidApk')}
+                </button>
+              ) : null}
+            </div>
+            {androidReleaseUpdate ? (
+              <>
+                <p className="text-sm text-slate-700">
+                  {t('settings.latestVersion')}: <span className="font-medium">{androidReleaseUpdate.latestVersion}</span>
+                </p>
+                <p className="text-sm text-slate-700">
+                  {t('settings.androidUpdaterLatestApk')}: <span className="font-medium break-all">{androidReleaseUpdate.apkName}</span>
+                </p>
+              </>
+            ) : null}
+            {androidReleaseStatus ? <p className="text-sm text-slate-700">{androidReleaseStatus}</p> : null}
+            {androidReleaseError ? <p className="text-sm text-rose-700">{androidReleaseError}</p> : null}
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-slate-600">{t('settings.updaterDescription')}</p>
+            <p className="text-sm text-slate-700">
+              {t('settings.currentVersion')}: <span className="font-medium">{currentVersion}</span>
+            </p>
+            <p className="text-sm text-slate-700">
+              {t('settings.updaterSupported')}:{' '}
+              <span className={`font-medium ${updaterSupported ? 'text-teal-700' : 'text-slate-500'}`}>
+                {updaterResolved ? (updaterSupported ? t('common.yes') : t('common.no')) : t('common.loading')}
+              </span>
+            </p>
+            <p className="text-sm text-slate-700">
+              {t('settings.updaterConfigured')}:{' '}
+              <span className={`font-medium ${updaterConfigured ? 'text-teal-700' : 'text-amber-700'}`}>
+                {updaterResolved ? (updaterConfigured ? t('common.yes') : t('common.no')) : t('common.loading')}
+              </span>
+            </p>
+            {!updaterSupported && updaterResolved ? (
+              <p className="text-sm text-slate-600">{t('updater.notSupported')}</p>
+            ) : null}
+            {!updaterConfigured && updaterSupported && updaterResolved ? (
+              <p className="text-sm text-amber-700">{t('updater.notConfigured')}</p>
+            ) : null}
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={autoCheckEnabled}
+                onChange={(event) => setAutoCheckEnabled(event.target.checked)}
+                disabled={!updaterSupported || !updaterConfigured || updaterInstalling}
+              />
+              {t('settings.autoCheckUpdates')}
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
+                disabled={!updaterSupported || !updaterConfigured || updaterChecking || updaterInstalling}
+                onClick={() => void checkForUpdates(true)}
+              >
+                {updaterChecking ? t('updater.checking') : t('settings.checkUpdatesNow')}
+              </button>
+              {availableUpdate ? (
+                <button
+                  type="button"
+                  className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 sm:w-auto"
+                  disabled={updaterInstalling || updaterChecking}
+                  onClick={() => void installUpdate()}
+                >
+                  {updaterInstalling ? t('updater.installing') : t('updater.installAndRestart')}
+                </button>
+              ) : null}
+            </div>
+            {downloadPercent != null ? (
+              <p className="text-sm text-slate-700">{t('updater.downloadProgress', { percent: downloadPercent })}</p>
+            ) : null}
+            {availableUpdate ? (
+              <p className="text-sm text-slate-700">
+                {t('settings.latestVersion')}: <span className="font-medium">{availableUpdate.version}</span>
+              </p>
+            ) : null}
+            {updaterStatus ? <p className="text-sm text-slate-700">{updaterStatus}</p> : null}
+            {updaterError ? <p className="text-sm text-rose-700">{updaterError}</p> : null}
+          </>
+        )}
       </section>
 
       <section className="dt-panel w-full max-w-3xl space-y-3 p-3 sm:p-4">

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-03-28
+
+### Added
+- Added Android release check flow in Settings:
+  - checks latest GitHub release metadata from app
+  - resolves preferred Android APK asset
+  - provides direct APK download/open-latest-release actions for sideload updates.
+
+### Changed
+- Reduced release binary size footprint for desktop bundles by tightening Rust release profile:
+  - switched to `opt-level = "z"`
+  - switched release panic strategy to `abort`
+  - compiled debug logging plugin path only in debug builds.
+
 ## [1.1.1] - 2026-03-27
 
 ### Changed

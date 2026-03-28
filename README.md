@@ -31,6 +31,7 @@ Local-first life tracker for Markdown and CSV users.
 - Daily/Weekly note editing with autosave and template-delta focus mode
 - Weekly history calendar now supports `By month` / `By year` views for lower-density browsing on mobile screens
 - Body tracking via local `body.csv` with chart + trend support
+- Android `Settings -> App Updates` can check GitHub latest release and open the matching APK download link
 - Memory-first runtime cache + idle write-behind sync for smoother editing on larger datasets
 - Startup progress gate with staged loading feedback before entering the workspace
 - WebDAV snapshots + realtime sync (optional)
@@ -56,7 +57,11 @@ Pick your installer from the latest release page:
 - macOS (Intel): `dailytrack_*_x64.dmg`
 - Windows: `dailytrack_*_x64_en-US.msi` or `dailytrack_*_x64-setup.exe`
 - Linux: `dailytrack_*_amd64.AppImage` and `dailytrack_*_amd64.deb`
-- Android: `dailytrack_*_aarch64.apk` (and optional `x86_64` build)
+- Android: `dailytrack_*_android_*.apk` (usually `*_android_universal-release.apk`)
+
+Linux note:
+- AppImage is self-contained and usually much larger than `.deb`.
+- If you prioritize smaller download size on Debian/Ubuntu-based systems, prefer the `.deb` package.
 
 Install/trust policy docs:
 

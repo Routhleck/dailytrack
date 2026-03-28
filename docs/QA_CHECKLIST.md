@@ -68,6 +68,7 @@
 - [ ] Available update can be installed via install-and-restart action.
 - [ ] Auto-check preference persists across app restarts.
 - [ ] If updater secrets are missing in CI, release still succeeds without updater artifacts.
+- [ ] On Android builds, Settings can check latest GitHub release and open the matching APK download link.
 
 ## Sync Mode
 - [ ] `Preferences -> Live Sync -> Watch` pushes external file edits into UI without waiting for poll interval.

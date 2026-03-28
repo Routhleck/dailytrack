@@ -92,6 +92,7 @@ Artifacts:
 Expected behavior:
 
 - AppImage may require executable permission (`chmod +x`) before launch.
+- AppImage is intentionally larger because it bundles runtime dependencies for portability.
 - DEB install may require manual dependency fixups on older distributions.
 
 User action:
