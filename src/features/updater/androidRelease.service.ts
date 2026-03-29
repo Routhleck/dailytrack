@@ -51,6 +51,10 @@ async function fetchWithTauriHttp(url: string, options?: RequestInit): Promise<F
   }
 }
 
+function isTauriEnvironment(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
 function normalizeVersion(value: string): string {
   return value.trim().replace(/^v/i, '')
 }
@@ -191,11 +195,32 @@ export async function checkLatestAndroidRelease(
   const repo = options.repo ?? DEFAULT_REPO
 
   const endpoint = `https://api.github.com/repos/${owner}/${repo}/releases/latest`
-  const response = await fetchWithTauriHttp(endpoint, {
-    headers: {
-      Accept: 'application/vnd.github+json',
-    },
-  })
+
+  let response: FetchResponseLike
+  if (options.fetchImpl) {
+    response = await options.fetchImpl(endpoint, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+      },
+    })
+  } else if (isTauriEnvironment()) {
+    response = await fetchWithTauriHttp(endpoint, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+      },
+    })
+  } else {
+    const res = await globalThis.fetch(endpoint, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+      },
+    })
+    response = {
+      ok: res.ok,
+      status: res.status,
+      json: () => res.json(),
+    }
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to fetch latest release: HTTP ${response.status}.`)
