@@ -38,6 +38,19 @@ type CheckAndroidReleaseOptions = {
 const DEFAULT_OWNER = 'Routhleck'
 const DEFAULT_REPO = 'dailytrack'
 
+async function fetchWithTauriHttp(url: string, options?: RequestInit): Promise<FetchResponseLike> {
+  const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http')
+  const response = await tauriFetch(url, {
+    method: options?.method || 'GET',
+    headers: options?.headers,
+  })
+  return {
+    ok: response.ok,
+    status: response.status,
+    json: () => (response as Response).json(),
+  }
+}
+
 function normalizeVersion(value: string): string {
   return value.trim().replace(/^v/i, '')
 }
@@ -176,14 +189,9 @@ export async function checkLatestAndroidRelease(
 ): Promise<AndroidReleaseUpdate> {
   const owner = options.owner ?? DEFAULT_OWNER
   const repo = options.repo ?? DEFAULT_REPO
-  const fetchImpl = options.fetchImpl ?? (globalThis.fetch as FetchLike | undefined)
-
-  if (!fetchImpl) {
-    throw new Error('Fetch is not available in this runtime.')
-  }
 
   const endpoint = `https://api.github.com/repos/${owner}/${repo}/releases/latest`
-  const response = await fetchImpl(endpoint, {
+  const response = await fetchWithTauriHttp(endpoint, {
     headers: {
       Accept: 'application/vnd.github+json',
     },

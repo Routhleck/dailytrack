@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Converted `webdav_realtime_sync_now` and related Tauri commands to async
   - This prevents HTTP blocking from stuttering the UI on Android devices
 
+### Fixed
+- Fixed Android release updater "failed to fetch" error by using Tauri HTTP plugin instead of browser fetch (fixes CORS/rate-limit issues on mobile)
+- Fixed external link opening on Android by using `@tauri-apps/plugin-shell` instead of `window.open` (now properly opens system browser)
+
 ## [1.1.2] - 2026-03-28
 
 ### Added

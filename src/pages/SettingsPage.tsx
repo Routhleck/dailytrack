@@ -43,6 +43,7 @@ import {
 } from '../features/webdav/webdav.service'
 import { joinPath } from '../lib/fs/pathApi'
 import { captureRuntimePerfSnapshot } from '../lib/perf/runtimePerf'
+import { open } from '@tauri-apps/plugin-shell'
 
 function parentPath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -850,14 +851,11 @@ export function SettingsPage() {
     }
   }
 
-  function openExternalLink(url: string) {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const popup = window.open(url, '_blank', 'noopener,noreferrer')
-    if (!popup) {
-      window.location.assign(url)
+  async function openExternalLink(url: string) {
+    try {
+      await open(url)
+    } catch {
+      window.location.href = url
     }
   }
 
