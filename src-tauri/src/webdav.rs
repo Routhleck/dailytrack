@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use reqwest::blocking::Client;
+use reqwest::Client;
 use reqwest::header::{ETAG, IF_MATCH, IF_NONE_MATCH};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -729,18 +729,18 @@ fn save_state_error(
   save_realtime_state(app, data_root, &state)
 }
 
-fn realtime_sync_once(
+async fn realtime_sync_once(
   app: &AppHandle,
   data_root: &Path,
   direction: RealtimeSyncDirection,
 ) -> Result<RealtimeSyncResult, String> {
   let config = load_webdav_config(app)?;
   let client = WebdavClient::new(&config)?;
-  client.ensure_remote_layout()?;
-  client.ensure_realtime_layout()?;
+  client.ensure_remote_layout().await?;
+  client.ensure_realtime_layout().await?;
 
   let mut state = load_realtime_state(app, data_root)?;
-  let manifest_with_etag = client.get_realtime_manifest(config.device_id.as_str())?;
+  let manifest_with_etag = client.get_realtime_manifest(config.device_id.as_str()).await?;
   let mut remote_manifest = manifest_with_etag.manifest.clone();
   let mut remote_map = manifest_to_map(remote_manifest.files.as_slice());
   let base_map = manifest_to_map(state.base_files.as_slice());
@@ -772,7 +772,7 @@ fn realtime_sync_once(
       }
 
       let conflict_copy_path = if remote_map.contains_key(path.as_str()) {
-        let bytes = client.download_realtime_file(path.as_str())?;
+        let bytes = client.download_realtime_file(path.as_str()).await?;
         let relative_conflict_path = build_conflict_copy_relative_path(path.as_str(), config.device_id.as_str());
         let absolute = data_root.join(relative_conflict_path.as_str());
         write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
@@ -797,7 +797,7 @@ fn realtime_sync_once(
       if let Some(local_meta) = local_map.get(path.as_str()) {
         let bytes = fs::read(data_root.join(path.as_str()).as_path())
           .map_err(|err| format!("Failed to read local file {} for push: {err}", path))?;
-        client.upload_realtime_file(path.as_str(), bytes)?;
+        client.upload_realtime_file(path.as_str(), bytes).await?;
         remote_map.insert(
           path.clone(),
           RealtimeFileEntry {
@@ -810,7 +810,7 @@ fn realtime_sync_once(
           },
         );
       } else {
-        let _ = client.delete_realtime_file(path.as_str())?;
+        let _ = client.delete_realtime_file(path.as_str()).await?;
         remote_map.remove(path.as_str());
       }
       pushed += 1;
@@ -820,7 +820,7 @@ fn realtime_sync_once(
 
     if remote_changed && direction.allows_pull() {
       if remote_map.contains_key(path.as_str()) {
-        let bytes = client.download_realtime_file(path.as_str())?;
+        let bytes = client.download_realtime_file(path.as_str()).await?;
         let absolute = data_root.join(path.as_str());
         write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
       } else {
@@ -842,7 +842,7 @@ fn realtime_sync_once(
     remote_manifest.updated_at = now_ms;
     remote_manifest.updated_by = config.device_id.clone();
 
-    client.put_realtime_manifest(&remote_manifest, manifest_with_etag.etag.as_deref())?;
+    client.put_realtime_manifest(&remote_manifest, manifest_with_etag.etag.as_deref()).await?;
   }
 
   let latest_manifest = if remote_touched {
@@ -950,7 +950,7 @@ impl WebdavClient {
       .map_err(|err| format!("Failed to resolve WebDAV URL for {relative}: {err}"))
   }
 
-  fn request(&self, method: reqwest::Method, relative: &str) -> Result<reqwest::blocking::RequestBuilder, String> {
+  fn request(&self, method: reqwest::Method, relative: &str) -> Result<reqwest::RequestBuilder, String> {
     let url = self.url_for(relative)?;
     Ok(
       self
@@ -961,12 +961,13 @@ impl WebdavClient {
     )
   }
 
-  fn mkcol(&self, relative: &str) -> Result<(), String> {
+  async fn mkcol(&self, relative: &str) -> Result<(), String> {
     let method = reqwest::Method::from_bytes(b"MKCOL")
       .map_err(|err| format!("Failed to build MKCOL method: {err}"))?;
     let response = self
       .request(method, relative)?
       .send()
+      .await
       .map_err(|err| format!("Failed to MKCOL {relative}: {err}"))?;
 
     let status = response.status();
@@ -978,20 +979,21 @@ impl WebdavClient {
       return Ok(());
     }
 
-    let body = response.text().unwrap_or_else(|_| "".to_string());
+    let body = response.text().await.unwrap_or_else(|_| "".to_string());
     Err(format!("WebDAV MKCOL failed for {relative}: {status} {body}"))
   }
 
-  fn ensure_remote_layout(&self) -> Result<(), String> {
-    self.mkcol("")?;
-    self.mkcol("snapshots/")?;
+  async fn ensure_remote_layout(&self) -> Result<(), String> {
+    self.mkcol("").await?;
+    self.mkcol("snapshots/").await?;
     Ok(())
   }
 
-  fn get_meta(&self) -> Result<MetaWithEtag, String> {
+  async fn get_meta(&self) -> Result<MetaWithEtag, String> {
     let response = self
       .request(reqwest::Method::GET, WEBDAV_META_FILE_NAME)?
       .send()
+      .await
       .map_err(|err| format!("Failed to GET WebDAV meta.json: {err}"))?;
 
     if response.status() == StatusCode::NOT_FOUND {
@@ -1008,7 +1010,7 @@ impl WebdavClient {
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV GET meta.json failed: {status} {body}"));
     }
 
@@ -1020,12 +1022,13 @@ impl WebdavClient {
 
     let meta: WebdavMeta = response
       .json()
+      .await
       .map_err(|err| format!("Failed to parse WebDAV meta.json: {err}"))?;
 
     Ok(MetaWithEtag { meta, etag })
   }
 
-  fn put_meta(&self, meta: &WebdavMeta, etag: Option<&str>) -> Result<(), String> {
+  async fn put_meta(&self, meta: &WebdavMeta, etag: Option<&str>) -> Result<(), String> {
     let payload = serde_json::to_vec_pretty(meta)
       .map_err(|err| format!("Failed to serialize WebDAV meta.json: {err}"))?;
     let mut request = self
@@ -1041,6 +1044,7 @@ impl WebdavClient {
 
     let response = request
       .send()
+      .await
       .map_err(|err| format!("Failed to PUT WebDAV meta.json: {err}"))?;
 
     if response.status() == StatusCode::PRECONDITION_FAILED {
@@ -1049,55 +1053,59 @@ impl WebdavClient {
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV PUT meta.json failed: {status} {body}"));
     }
 
     Ok(())
   }
 
-  fn upload_snapshot(&self, file_name: &str, bytes: Vec<u8>) -> Result<(), String> {
+  async fn upload_snapshot(&self, file_name: &str, bytes: Vec<u8>) -> Result<(), String> {
     let relative = format!("{WEBDAV_SNAPSHOTS_DIR}/{file_name}");
     let response = self
       .request(reqwest::Method::PUT, relative.as_str())?
       .header(reqwest::header::CONTENT_TYPE, "application/zip")
       .body(bytes)
       .send()
+      .await
       .map_err(|err| format!("Failed to upload WebDAV snapshot {file_name}: {err}"))?;
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV upload failed for {file_name}: {status} {body}"));
     }
 
     Ok(())
   }
 
-  fn download_snapshot(&self, file_name: &str) -> Result<Vec<u8>, String> {
+  async fn download_snapshot(&self, file_name: &str) -> Result<Vec<u8>, String> {
     let relative = format!("{WEBDAV_SNAPSHOTS_DIR}/{file_name}");
     let response = self
       .request(reqwest::Method::GET, relative.as_str())?
       .send()
+      .await
       .map_err(|err| format!("Failed to download WebDAV snapshot {file_name}: {err}"))?;
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV download failed for {file_name}: {status} {body}"));
     }
 
-    response
+    let bytes = response
       .bytes()
-      .map(|bytes| bytes.to_vec())
-      .map_err(|err| format!("Failed to read downloaded snapshot bytes: {err}"))
+      .await
+      .map_err(|err| format!("Failed to read downloaded snapshot bytes: {err}"))?;
+    Ok(bytes.to_vec())
   }
 
-  fn delete_snapshot_file(&self, file_name: &str) -> Result<bool, String> {
+  async fn delete_snapshot_file(&self, file_name: &str) -> Result<bool, String> {
     let relative = format!("{WEBDAV_SNAPSHOTS_DIR}/{file_name}");
     let response = self
       .request(reqwest::Method::DELETE, relative.as_str())?
       .send()
+      .await
       .map_err(|err| format!("Failed to delete WebDAV snapshot {file_name}: {err}"))?;
 
     if response.status().is_success() {
@@ -1108,17 +1116,17 @@ impl WebdavClient {
     }
 
     let status = response.status();
-    let body = response.text().unwrap_or_else(|_| "".to_string());
+    let body = response.text().await.unwrap_or_else(|_| "".to_string());
     Err(format!("WebDAV delete failed for {file_name}: {status} {body}"))
   }
 
-  fn ensure_realtime_layout(&self) -> Result<(), String> {
-    self.mkcol(WEBDAV_REALTIME_DIR)?;
-    self.mkcol(WEBDAV_REALTIME_FILES_DIR)?;
+  async fn ensure_realtime_layout(&self) -> Result<(), String> {
+    self.mkcol(WEBDAV_REALTIME_DIR).await?;
+    self.mkcol(WEBDAV_REALTIME_FILES_DIR).await?;
     Ok(())
   }
 
-  fn ensure_realtime_file_parent_dirs(&self, relative_path: &str) -> Result<(), String> {
+  async fn ensure_realtime_file_parent_dirs(&self, relative_path: &str) -> Result<(), String> {
     let normalized = normalize_relative_path(relative_path);
     let parent = Path::new(normalized.as_str()).parent();
     let Some(parent) = parent else {
@@ -1133,16 +1141,17 @@ impl WebdavClient {
       }
       current.push('/');
       current.push_str(value.as_ref());
-      self.mkcol(current.as_str())?;
+      self.mkcol(current.as_str()).await?;
     }
 
     Ok(())
   }
 
-  fn get_realtime_manifest(&self, device_id: &str) -> Result<ManifestWithEtag, String> {
+  async fn get_realtime_manifest(&self, device_id: &str) -> Result<ManifestWithEtag, String> {
     let response = self
       .request(reqwest::Method::GET, WEBDAV_REALTIME_MANIFEST_FILE)?
       .send()
+      .await
       .map_err(|err| format!("Failed to GET WebDAV realtime manifest: {err}"))?;
 
     if response.status() == StatusCode::NOT_FOUND {
@@ -1154,7 +1163,7 @@ impl WebdavClient {
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV GET realtime manifest failed: {status} {body}"));
     }
 
@@ -1166,6 +1175,7 @@ impl WebdavClient {
 
     let mut manifest: RealtimeManifest = response
       .json()
+      .await
       .map_err(|err| format!("Failed to parse realtime manifest: {err}"))?;
     if manifest.schema_version != WEBDAV_SCHEMA_VERSION {
       manifest.schema_version = WEBDAV_SCHEMA_VERSION;
@@ -1174,7 +1184,7 @@ impl WebdavClient {
     Ok(ManifestWithEtag { manifest, etag })
   }
 
-  fn put_realtime_manifest(
+  async fn put_realtime_manifest(
     &self,
     manifest: &RealtimeManifest,
     etag: Option<&str>,
@@ -1194,6 +1204,7 @@ impl WebdavClient {
 
     let response = request
       .send()
+      .await
       .map_err(|err| format!("Failed to PUT realtime manifest: {err}"))?;
 
     if response.status() == StatusCode::PRECONDITION_FAILED {
@@ -1202,59 +1213,63 @@ impl WebdavClient {
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV PUT realtime manifest failed: {status} {body}"));
     }
 
     Ok(())
   }
 
-  fn upload_realtime_file(&self, relative_path: &str, bytes: Vec<u8>) -> Result<(), String> {
+  async fn upload_realtime_file(&self, relative_path: &str, bytes: Vec<u8>) -> Result<(), String> {
     let normalized = normalize_relative_path(relative_path);
-    self.ensure_realtime_file_parent_dirs(normalized.as_str())?;
+    self.ensure_realtime_file_parent_dirs(normalized.as_str()).await?;
     let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
     let response = self
       .request(reqwest::Method::PUT, remote_file.as_str())?
       .header(reqwest::header::CONTENT_TYPE, "application/octet-stream")
       .body(bytes)
       .send()
+      .await
       .map_err(|err| format!("Failed to upload realtime file {normalized}: {err}"))?;
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV upload realtime file failed for {normalized}: {status} {body}"));
     }
 
     Ok(())
   }
 
-  fn download_realtime_file(&self, relative_path: &str) -> Result<Vec<u8>, String> {
+  async fn download_realtime_file(&self, relative_path: &str) -> Result<Vec<u8>, String> {
     let normalized = normalize_relative_path(relative_path);
     let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
     let response = self
       .request(reqwest::Method::GET, remote_file.as_str())?
       .send()
+      .await
       .map_err(|err| format!("Failed to download realtime file {normalized}: {err}"))?;
 
     if !response.status().is_success() {
       let status = response.status();
-      let body = response.text().unwrap_or_else(|_| "".to_string());
+      let body = response.text().await.unwrap_or_else(|_| "".to_string());
       return Err(format!("WebDAV download realtime file failed for {normalized}: {status} {body}"));
     }
 
-    response
+    let bytes = response
       .bytes()
-      .map(|bytes| bytes.to_vec())
-      .map_err(|err| format!("Failed to read downloaded realtime file bytes: {err}"))
+      .await
+      .map_err(|err| format!("Failed to read downloaded realtime file bytes: {err}"))?;
+    Ok(bytes.to_vec())
   }
 
-  fn delete_realtime_file(&self, relative_path: &str) -> Result<bool, String> {
+  async fn delete_realtime_file(&self, relative_path: &str) -> Result<bool, String> {
     let normalized = normalize_relative_path(relative_path);
     let remote_file = format!("{WEBDAV_REALTIME_FILES_DIR}/{normalized}");
     let response = self
       .request(reqwest::Method::DELETE, remote_file.as_str())?
       .send()
+      .await
       .map_err(|err| format!("Failed to delete realtime file {normalized}: {err}"))?;
 
     if response.status().is_success() {
@@ -1265,7 +1280,7 @@ impl WebdavClient {
     }
 
     let status = response.status();
-    let body = response.text().unwrap_or_else(|_| "".to_string());
+    let body = response.text().await.unwrap_or_else(|_| "".to_string());
     Err(format!("WebDAV delete realtime file failed for {normalized}: {status} {body}"))
   }
 }
@@ -1488,13 +1503,13 @@ fn sort_snapshots_desc(snapshots: &mut [WebdavSnapshot]) {
   snapshots.sort_by(|left, right| right.created_at.cmp(&left.created_at));
 }
 
-fn persist_meta_with_retry(client: &WebdavClient, mut meta: WebdavMeta, etag: Option<String>) -> Result<(), String> {
+async fn persist_meta_with_retry(client: &WebdavClient, mut meta: WebdavMeta, etag: Option<String>) -> Result<(), String> {
   let mut current_etag = etag;
   for _ in 0..2 {
-    match client.put_meta(&meta, current_etag.as_deref()) {
+    match client.put_meta(&meta, current_etag.as_deref()).await {
       Ok(()) => return Ok(()),
       Err(err) if err == "WEBDAV_META_ETAG_CONFLICT" => {
-        let latest = client.get_meta()?;
+        let latest = client.get_meta().await?;
         let mut merged = latest.meta;
         for snapshot in &meta.snapshots {
           if !merged.snapshots.iter().any(|item| item.id == snapshot.id) {
@@ -1524,11 +1539,11 @@ pub fn save_webdav_config(app: AppHandle, config: WebdavConfig) -> Result<Webdav
 }
 
 #[tauri::command]
-pub fn test_webdav_connection(app: AppHandle) -> Result<WebdavTestResult, String> {
+pub async fn test_webdav_connection(app: AppHandle) -> Result<WebdavTestResult, String> {
   let config = load_webdav_config(&app)?;
   let client = WebdavClient::new(&config)?;
-  client.ensure_remote_layout()?;
-  let _ = client.get_meta()?;
+  client.ensure_remote_layout().await?;
+  let _ = client.get_meta().await?;
   Ok(WebdavTestResult {
     ok: true,
     message: "WebDAV connection succeeded".to_string(),
@@ -1536,16 +1551,16 @@ pub fn test_webdav_connection(app: AppHandle) -> Result<WebdavTestResult, String
 }
 
 #[tauri::command]
-pub fn webdav_list_snapshots(app: AppHandle) -> Result<Vec<WebdavSnapshot>, String> {
+pub async fn webdav_list_snapshots(app: AppHandle) -> Result<Vec<WebdavSnapshot>, String> {
   let config = load_webdav_config(&app)?;
   let client = WebdavClient::new(&config)?;
-  let mut meta = client.get_meta()?.meta;
+  let mut meta = client.get_meta().await?.meta;
   sort_snapshots_desc(meta.snapshots.as_mut_slice());
   Ok(meta.snapshots)
 }
 
 #[tauri::command]
-pub fn webdav_push_snapshot(
+pub async fn webdav_push_snapshot(
   app: AppHandle,
   data_root: String,
   note: Option<String>,
@@ -1553,7 +1568,7 @@ pub fn webdav_push_snapshot(
   let root = canonicalize_existing_dir(data_root.as_str())?;
   let config = load_webdav_config(&app)?;
   let client = WebdavClient::new(&config)?;
-  client.ensure_remote_layout()?;
+  client.ensure_remote_layout().await?;
 
   let work_dir = create_temp_work_dir("webdav-push")?;
   let snapshot_id = build_snapshot_id(config.device_id.as_str());
@@ -1565,9 +1580,9 @@ pub fn webdav_push_snapshot(
     .map_err(|err| format!("Failed to read built snapshot {}: {err}", zip_path.display()))?;
   let sha256 = sha256_hex(bytes.as_slice());
 
-  client.upload_snapshot(file_name.as_str(), bytes)?;
+  client.upload_snapshot(file_name.as_str(), bytes).await?;
 
-  let mut meta_with_etag = client.get_meta()?;
+  let mut meta_with_etag = client.get_meta().await?;
   let snapshot = WebdavSnapshot {
     id: snapshot_id,
     created_at: now_unix_millis(),
@@ -1590,12 +1605,12 @@ pub fn webdav_push_snapshot(
     let keep = config.max_snapshots as usize;
     let removed: Vec<WebdavSnapshot> = meta_with_etag.meta.snapshots.drain(keep..).collect();
     for old in removed {
-      let _ = client.delete_snapshot_file(old.file_name.as_str());
+      let _ = client.delete_snapshot_file(old.file_name.as_str()).await;
       pruned_snapshot_ids.push(old.id);
     }
   }
 
-  persist_meta_with_retry(&client, meta_with_etag.meta, meta_with_etag.etag)?;
+  persist_meta_with_retry(&client, meta_with_etag.meta, meta_with_etag.etag).await?;
 
   let _ = fs::remove_dir_all(work_dir.as_path());
 
@@ -1606,7 +1621,7 @@ pub fn webdav_push_snapshot(
 }
 
 #[tauri::command]
-pub fn webdav_pull_snapshot(
+pub async fn webdav_pull_snapshot(
   app: AppHandle,
   data_root: String,
   snapshot_id: Option<String>,
@@ -1619,7 +1634,7 @@ pub fn webdav_pull_snapshot(
   let config = load_webdav_config(&app)?;
   let client = WebdavClient::new(&config)?;
 
-  let mut meta = client.get_meta()?.meta;
+  let mut meta = client.get_meta().await?.meta;
   if meta.snapshots.is_empty() {
     return Err("No WebDAV snapshots available".to_string());
   }
@@ -1642,7 +1657,7 @@ pub fn webdav_pull_snapshot(
 
   let work_dir = create_temp_work_dir("webdav-pull")?;
   let zip_path = work_dir.join(target_snapshot.file_name.as_str());
-  let bytes = client.download_snapshot(target_snapshot.file_name.as_str())?;
+  let bytes = client.download_snapshot(target_snapshot.file_name.as_str()).await?;
   let checksum = sha256_hex(bytes.as_slice());
   if !target_snapshot.sha256.trim().is_empty() && checksum != target_snapshot.sha256 {
     return Err(format!(
@@ -1691,7 +1706,7 @@ pub fn webdav_pull_snapshot(
 }
 
 #[tauri::command]
-pub fn webdav_delete_snapshot(app: AppHandle, snapshot_id: String) -> Result<WebdavDeleteSnapshotResult, String> {
+pub async fn webdav_delete_snapshot(app: AppHandle, snapshot_id: String) -> Result<WebdavDeleteSnapshotResult, String> {
   let id = snapshot_id.trim();
   if id.is_empty() {
     return Err("Snapshot ID is required".to_string());
@@ -1700,7 +1715,7 @@ pub fn webdav_delete_snapshot(app: AppHandle, snapshot_id: String) -> Result<Web
   let config = load_webdav_config(&app)?;
   let client = WebdavClient::new(&config)?;
 
-  let mut meta_with_etag = client.get_meta()?;
+  let mut meta_with_etag = client.get_meta().await?;
   let before_len = meta_with_etag.meta.snapshots.len();
   let mut removed_file_name: Option<String> = None;
   meta_with_etag.meta.snapshots.retain(|snapshot| {
@@ -1717,10 +1732,10 @@ pub fn webdav_delete_snapshot(app: AppHandle, snapshot_id: String) -> Result<Web
   }
 
   meta_with_etag.meta.updated_at = now_unix_millis();
-  persist_meta_with_retry(&client, meta_with_etag.meta, meta_with_etag.etag)?;
+  persist_meta_with_retry(&client, meta_with_etag.meta, meta_with_etag.etag).await?;
 
   if let Some(file_name) = removed_file_name {
-    let _ = client.delete_snapshot_file(file_name.as_str());
+    let _ = client.delete_snapshot_file(file_name.as_str()).await;
   }
 
   Ok(WebdavDeleteSnapshotResult { deleted: true })
@@ -1735,7 +1750,7 @@ pub fn webdav_realtime_status(app: AppHandle, data_root: String) -> Result<Realt
 }
 
 #[tauri::command]
-pub fn webdav_realtime_sync_now(
+pub async fn webdav_realtime_sync_now(
   app: AppHandle,
   data_root: String,
   direction: Option<String>,
@@ -1745,7 +1760,7 @@ pub fn webdav_realtime_sync_now(
   let parsed_direction = parse_realtime_sync_direction(direction)?;
   let attempted_at = now_unix_millis();
 
-  match realtime_sync_once(&app, root.as_path(), parsed_direction) {
+  match realtime_sync_once(&app, root.as_path(), parsed_direction).await {
     Ok(result) => Ok(result),
     Err(error) => {
       let _ = save_state_error(&app, root.as_path(), state, attempted_at, error.clone());
