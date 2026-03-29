@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-29
+
+### Changed
+- Converted WebDAV sync operations from synchronous to asynchronous to improve Android performance:
+  - Changed `reqwest::blocking::Client` to async `reqwest::Client`
+  - Made all HTTP methods (get/put/upload/download) async with `.await`
+  - Converted `webdav_realtime_sync_now` and related Tauri commands to async
+  - This prevents HTTP blocking from stuttering the UI on Android devices
+
 ## [1.1.2] - 2026-03-28
 
 ### Added
