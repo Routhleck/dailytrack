@@ -11,6 +11,8 @@ export type BodyMetricGoal = {
   value: number | null
 }
 
+export type WeightDisplayMode = 'raw' | 'filtered' | 'both'
+
 export type SyncMode = 'watch' | 'poll'
 export type TypographyScale = 'sm' | 'md' | 'lg'
 export type WeeklyCalendarView = 'month' | 'year'
@@ -56,5 +58,6 @@ export type TrackerPreferences = {
     note: boolean
     display: Record<BodyNumericMetricKey, BodyMetricDisplay>
     goals: Record<BodyNumericMetricKey, BodyMetricGoal>
+    weightDisplayMode: WeightDisplayMode
   }
 }

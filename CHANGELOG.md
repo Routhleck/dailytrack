@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-03-30
+
+### Added
+- Kalman filter smoothing for body metrics (weight, waist, body fat, muscle mass, chest, hip):
+  - Added `kalmanFilter.ts` utility with configurable process/measurement noise
+  - All body metric charts now support smoothed (Kalman-filtered) display
+  - User can switch between "Raw", "Smoothed", or "Both" display modes
+  - Chart Y-axis auto-adjusts to data range (min/max with 10% padding) instead of starting from 0
+- New i18n keys: `body.weightDisplayMode`, `body.weightDisplayMode.filtered`, `body.weightDisplayMode.raw`, `body.weightDisplayMode.both`
+
 ## [1.2.0] - 2026-03-29
 
 ### Changed

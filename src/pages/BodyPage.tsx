@@ -12,7 +12,9 @@ import {
 import { MeasuredChartContainer } from '../components/MeasuredChartContainer'
 import { PageHeader } from '../components/PageHeader'
 import {
+  applyKalmanToBodyRecords,
   filterBodyRecordsByRangeTyped,
+  kalmanMetricDelta,
   metricDeltaFromLatest,
   type BodyChartRange,
 } from '../features/body/body.analytics'
@@ -446,10 +448,14 @@ export function BodyPage() {
     })
   }
 
-  const chartData = useMemo(
-    () => [...records].reverse().map((record) => ({ ...record, _signature: bodyRecordSignature(record) })),
-    [records],
-  )
+  const chartData = useMemo(() => {
+    const reversed = [...records].reverse()
+    const kalmanData = applyKalmanToBodyRecords(reversed)
+    return kalmanData.map((record) => ({
+      ...record,
+      _signature: bodyRecordSignature(record),
+    }))
+  }, [records])
   const rangedChartData = useMemo(
     () => filterBodyRecordsByRangeTyped(chartData, chartRange),
     [chartData, chartRange],
@@ -460,7 +466,12 @@ export function BodyPage() {
   const metricDeltas = (() => {
     const next: Partial<Record<BodyNumericMetricKey, number | null>> = {}
     for (const metric of enabledNumericMetrics) {
-      next[metric.key] = metricDeltaFromLatest(records, metric.key)
+      // Use Kalman-filtered delta if display mode is filtered
+      if (preferences.body.weightDisplayMode === 'filtered') {
+        next[metric.key] = kalmanMetricDelta(records, metric.key)
+      } else {
+        next[metric.key] = metricDeltaFromLatest(records, metric.key)
+      }
     }
     return next
   })()
@@ -472,6 +483,45 @@ export function BodyPage() {
     }
     return next
   })()
+  const metricDomains = useMemo(() => {
+    const next: Partial<Record<BodyNumericMetricKey, [number, number]>> = {}
+    for (const metric of enabledNumericMetrics) {
+      const values: number[] = []
+      const kalmanKey = `kalman${metric.key.charAt(0).toUpperCase() + metric.key.slice(1)}`
+      const goal = preferences.body.goals[metric.key]
+      const goalValue = goal.enabled ? goal.value : null
+
+      for (const record of rangedChartData) {
+        // Raw value
+        const raw = record[metric.key as keyof typeof record] as number | null
+        if (raw != null) values.push(raw)
+        // Kalman value (if showing filtered or both)
+        if (preferences.body.weightDisplayMode !== 'raw') {
+          const kalman = record[kalmanKey as keyof typeof record] as number | null
+          if (kalman != null) values.push(kalman)
+        }
+      }
+
+      // Include goal if set
+      if (goalValue != null) {
+        values.push(goalValue)
+      }
+
+      if (values.length === 0) {
+        next[metric.key] = [0, 100] // fallback
+      } else {
+        const min = Math.min(...values)
+        const max = Math.max(...values)
+        const padding = (max - min) * 0.1 // 10% padding
+        next[metric.key] = [
+          Math.max(0, min - padding),
+          max + padding,
+        ]
+      }
+    }
+    return next
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  }, [enabledNumericMetrics, rangedChartData, preferences.body.goals, preferences.body.weightDisplayMode])
   const visibleNumericMetrics =
     showOnlyChanges
       ? enabledNumericMetrics.filter((metric) =>
@@ -554,6 +604,31 @@ export function BodyPage() {
               </button>
             ))}
           </div>
+          {enabledNumericMetrics.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-600">{t('body.weightDisplayMode')}</span>
+              {(['filtered', 'raw', 'both'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`dt-btn px-2.5 py-1 text-xs ${
+                    preferences.body.weightDisplayMode === mode ? 'bg-slate-900 text-white' : 'dt-btn-secondary'
+                  }`}
+                  onClick={() => {
+                    void updatePreferences({
+                      ...preferences,
+                      body: {
+                        ...preferences.body,
+                        weightDisplayMode: mode,
+                      },
+                    })
+                  }}
+                >
+                  {t(`body.weightDisplayMode.${mode}`)}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             {enabledNumericMetrics.map((metric) => {
               const delta = metricDeltas[metric.key]
@@ -684,6 +759,7 @@ export function BodyPage() {
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={24} interval="preserveStartEnd" />
                     <YAxis
                       width={48}
+                      domain={metricDomains[metric.key]}
                       tick={{ fontSize: 11 }}
                       tickFormatter={(value) => {
                         const numeric = Number(value)
@@ -715,7 +791,11 @@ export function BodyPage() {
                     ) : null}
                     <Line
                       type="monotone"
-                      dataKey={metric.key}
+                      dataKey={
+                        preferences.body.weightDisplayMode === 'filtered'
+                          ? `kalman${metric.key.charAt(0).toUpperCase() + metric.key.slice(1)}`
+                          : metric.key
+                      }
                       stroke={metric.stroke}
                       strokeWidth={2}
                       dot={({ cx, cy, payload }) => {
@@ -732,6 +812,16 @@ export function BodyPage() {
                         return null
                       }}
                     />
+                    {preferences.body.weightDisplayMode === 'both' ? (
+                      <Line
+                        type="monotone"
+                        dataKey={`kalman${metric.key.charAt(0).toUpperCase() + metric.key.slice(1)}`}
+                        stroke="#888888"
+                        strokeWidth={1.5}
+                        strokeDasharray="5 4"
+                        dot={false}
+                      />
+                    ) : null}
                   </LineChart>
                 )}
               </MeasuredChartContainer>

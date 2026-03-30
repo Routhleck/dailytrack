@@ -12,6 +12,7 @@ import type {
   TrackerPreferences,
   TypographyScale,
   WeeklyCalendarView,
+  WeightDisplayMode,
 } from '../../types/preferences'
 import type { BodyNumericMetricKey } from '../../types/tracker'
 import type { WeeklySectionKey } from '../../types/tracker'
@@ -20,6 +21,7 @@ const WEEKLY_KEYS: WeeklySectionKey[] = ['Body', 'Research', 'Life', 'Output', '
 const SYNC_MODES: SyncMode[] = ['watch', 'poll']
 const TYPOGRAPHY_SCALES: TypographyScale[] = ['sm', 'md', 'lg']
 const WEEKLY_CALENDAR_VIEWS: WeeklyCalendarView[] = ['month', 'year']
+const WEIGHT_DISPLAY_MODES: WeightDisplayMode[] = ['raw', 'filtered', 'both']
 export const PREFERENCES_SCHEMA_VERSION = 7
 
 const DEFAULT_PREFERENCES: TrackerPreferences = {
@@ -67,6 +69,7 @@ const DEFAULT_PREFERENCES: TrackerPreferences = {
     note: true,
     display: cloneDefaultBodyMetricDisplay(),
     goals: cloneDefaultBodyMetricGoals(),
+    weightDisplayMode: 'filtered' as WeightDisplayMode,
   },
 }
 
@@ -97,6 +100,12 @@ function toTypographyScale(value: unknown, fallback: TypographyScale): Typograph
 function toWeeklyCalendarView(value: unknown, fallback: WeeklyCalendarView): WeeklyCalendarView {
   return typeof value === 'string' && WEEKLY_CALENDAR_VIEWS.includes(value as WeeklyCalendarView)
     ? (value as WeeklyCalendarView)
+    : fallback
+}
+
+function toWeightDisplayMode(value: unknown, fallback: WeightDisplayMode): WeightDisplayMode {
+  return typeof value === 'string' && WEIGHT_DISPLAY_MODES.includes(value as WeightDisplayMode)
+    ? (value as WeightDisplayMode)
     : fallback
 }
 
@@ -219,6 +228,10 @@ export function normalizePreferences(raw: unknown): TrackerPreferences {
       note: toBoolean(bodyRaw.note, DEFAULT_PREFERENCES.body.note),
       display: bodyDisplay,
       goals: bodyGoals,
+      weightDisplayMode: toWeightDisplayMode(
+        bodyRaw.weightDisplayMode,
+        DEFAULT_PREFERENCES.body.weightDisplayMode,
+      ),
     },
   }
 }
