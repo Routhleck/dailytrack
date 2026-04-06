@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-04-06
+
+### Fixed
+- Fixed multi-device sync file loss bug: when local file is missing but base has record, now pulls from remote instead of deleting remote file
+- Added ETag conflict auto-retry mechanism (up to 3 retries, 200ms wait between each)
+- Added detailed sync process logging for better troubleshooting
+
+### Added
+- Sync operation logs: sync start/end, file push/pull/delete operations, conflict detection, incomplete pull recovery
+
 ## [1.2.1] - 2026-03-30
 
 ### Added
