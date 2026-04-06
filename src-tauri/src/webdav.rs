@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use log;
 use reqwest::Client;
 use reqwest::header::{ETAG, IF_MATCH, IF_NONE_MATCH};
 use reqwest::StatusCode;
@@ -633,7 +634,7 @@ fn summarize_realtime_status(
   }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum RealtimeSyncDirection {
   Push,
   Pull,
@@ -734,6 +735,7 @@ async fn realtime_sync_once(
   data_root: &Path,
   direction: RealtimeSyncDirection,
 ) -> Result<RealtimeSyncResult, String> {
+  log::info!("[Sync] Starting realtime sync, direction: {:?}", direction);
   let config = load_webdav_config(app)?;
   let client = WebdavClient::new(&config)?;
   client.ensure_remote_layout().await?;
@@ -752,6 +754,9 @@ async fn realtime_sync_once(
   let mut skipped_conflicts: u64 = 0;
   let mut remote_touched = false;
   let now_ms = now_unix_millis();
+
+  log::debug!("[Sync] base_files: {}, local_files: {}, remote_files: {}, base_revision: {}",
+    base_map.len(), local_map.len(), remote_map.len(), state.base_revision);
 
   for path in list_sorted_union_paths(&base_map, &local_map, &remote_map) {
     if unresolved.contains(path.as_str()) {
@@ -789,12 +794,14 @@ async fn realtime_sync_once(
         conflict_copy_path,
         remote_map.contains_key(path.as_str()),
       );
+      log::warn!("[Sync] Conflict detected for file: {} (local_sha={:?}, remote_sha={:?})", path, local_sha, remote_sha);
       conflicts += 1;
       continue;
     }
 
     if local_changed && direction.allows_push() {
       if let Some(local_meta) = local_map.get(path.as_str()) {
+        log::debug!("[Sync] Pushing file: {}", path);
         let bytes = fs::read(data_root.join(path.as_str()).as_path())
           .map_err(|err| format!("Failed to read local file {} for push: {err}", path))?;
         client.upload_realtime_file(path.as_str(), bytes).await?;
@@ -809,21 +816,40 @@ async fn realtime_sync_once(
             updated_at: now_ms,
           },
         );
+        pushed += 1;
+        remote_touched = true;
       } else {
-        let _ = client.delete_realtime_file(path.as_str()).await?;
-        remote_map.remove(path.as_str());
+        // Local file does not exist, but base has a record (meaning it existed on remote before)
+        // Need to determine: is this a real local delete, or was the pull operation incomplete?
+        if remote_map.contains_key(path.as_str()) {
+          // Remote has the file, but local does not
+          // This usually means the previous pull operation did not complete successfully
+          // Should re-pull from remote instead of deleting the remote file
+          log::info!("[Sync] Detected incomplete pull for file {} (local missing but remote exists), retrying pull", path);
+          let bytes = client.download_realtime_file(path.as_str()).await?;
+          let absolute = data_root.join(path.as_str());
+          write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
+          pulled += 1;
+        } else {
+          // Remote no longer exists either, this is a real delete
+          log::debug!("[Sync] Deleting remote file (local and remote both deleted): {}", path);
+          let _ = client.delete_realtime_file(path.as_str()).await?;
+          remote_map.remove(path.as_str());
+          pushed += 1;
+          remote_touched = true;
+        }
       }
-      pushed += 1;
-      remote_touched = true;
       continue;
     }
 
     if remote_changed && direction.allows_pull() {
       if remote_map.contains_key(path.as_str()) {
+        log::debug!("[Sync] Pulling file: {}", path);
         let bytes = client.download_realtime_file(path.as_str()).await?;
         let absolute = data_root.join(path.as_str());
         write_bytes_atomic(absolute.as_path(), bytes.as_slice())?;
       } else {
+        log::debug!("[Sync] Removing local file (remote deleted): {}", path);
         let absolute = data_root.join(path.as_str());
         if absolute.exists() {
           fs::remove_file(absolute.as_path())
@@ -870,6 +896,9 @@ async fn realtime_sync_once(
   save_realtime_state(app, data_root, &state)?;
 
   let status = summarize_realtime_status(&state, &latest_local);
+
+  log::info!("[Sync] Completed: pushed={}, pulled={}, conflicts={}, new_revision={}",
+    pushed, pulled, conflicts, state.base_revision);
 
   Ok(RealtimeSyncResult {
     pushed,
@@ -1760,13 +1789,42 @@ pub async fn webdav_realtime_sync_now(
   let parsed_direction = parse_realtime_sync_direction(direction)?;
   let attempted_at = now_unix_millis();
 
-  match realtime_sync_once(&app, root.as_path(), parsed_direction).await {
-    Ok(result) => Ok(result),
-    Err(error) => {
-      let _ = save_state_error(&app, root.as_path(), state, attempted_at, error.clone());
-      Err(error)
+  // ETag conflict retry count
+  const MAX_ETAG_CONFLICT_RETRIES: u32 = 3;
+
+  let mut last_error = String::new();
+
+  for attempt in 0..MAX_ETAG_CONFLICT_RETRIES {
+    match realtime_sync_once(&app, root.as_path(), parsed_direction.clone()).await {
+      Ok(result) => return Ok(result),
+      Err(error) => {
+        last_error = error.clone();
+
+        // Only retry on ETAG_CONFLICT errors
+        if error.contains("WEBDAV_REALTIME_ETAG_CONFLICT") || error.contains("WEBDAV_META_ETAG_CONFLICT") {
+          // Reload state before retry, as other devices may have modified the manifest
+          if attempt < MAX_ETAG_CONFLICT_RETRIES - 1 {
+            log::warn!("[Sync] ETag conflict detected, retrying ({}/{})...", attempt + 2, MAX_ETAG_CONFLICT_RETRIES);
+            // Brief wait to let other devices complete their sync
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            continue;
+          } else {
+            log::error!("[Sync] ETag conflict persisted after {} retries", MAX_ETAG_CONFLICT_RETRIES);
+          }
+        }
+
+        // Non-ETag conflict errors, return failure directly
+        log::error!("[Sync] Sync failed: {}", error);
+        let _ = save_state_error(&app, root.as_path(), state.clone(), attempted_at, error.clone());
+        return Err(error);
+      }
     }
   }
+
+  // Max retries exceeded
+  log::error!("[Sync] Max retries exceeded for ETag conflict");
+  let _ = save_state_error(&app, root.as_path(), state, attempted_at, last_error.clone());
+  Err(last_error)
 }
 
 #[tauri::command]
