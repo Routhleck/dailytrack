@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-04-13
+
+### Added
+- Show full text preview above input field when content overflows, so users don't need to scroll horizontally to read long text in "一句话", mood/energy tags, and weekly reflection fields
+
+### Changed
+- Added CLAUDE.md with project guidance for Claude Code and extended command permissions
+
 ## [1.2.2] - 2026-04-06
 
 ### Fixed
