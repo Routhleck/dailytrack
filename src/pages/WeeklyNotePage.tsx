@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { ExpandableInput } from '../components/ExpandableInput'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
@@ -516,7 +517,7 @@ export function WeeklyNotePage() {
                       return null
                     }
                     return (
-                      <input
+                      <ExpandableInput
                       key={`good-${index}`}
                       className="dt-input"
                       value={value}
@@ -538,7 +539,7 @@ export function WeeklyNotePage() {
                       return null
                     }
                     return (
-                      <input
+                      <ExpandableInput
                       key={`next-${index}`}
                       className="dt-input"
                       value={value}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { ExpandableInput } from '../components/ExpandableInput'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressBar } from '../components/ProgressBar'
@@ -478,7 +479,7 @@ export function DailyNotePage() {
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1">
                   <span className="text-xs text-slate-600">{t('dailyNote.moodTag')}</span>
-                  <input
+                  <ExpandableInput
                     className="dt-input"
                     value={note.moodTag}
                     onChange={(event) => {
@@ -490,7 +491,7 @@ export function DailyNotePage() {
                 </label>
                 <label className="space-y-1">
                   <span className="text-xs text-slate-600">{t('dailyNote.energyTag')}</span>
-                  <input
+                  <ExpandableInput
                     className="dt-input"
                     value={note.energyTag}
                     onChange={(event) => {
@@ -507,7 +508,7 @@ export function DailyNotePage() {
           {showOneLineCard ? (
             <article className="dt-panel p-4">
               <h2 className="mb-3 text-base font-semibold text-slate-900">{t('dailyNote.oneLine')}</h2>
-              <input
+              <ExpandableInput
                 className="dt-input"
                 value={note.oneLine}
                 onChange={(event) => {
