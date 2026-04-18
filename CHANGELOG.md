@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-04-18
+
+### Added
+- Quantified habit tracking with +1/-1 counters:
+  - New checkbox format supports count suffix: `- [x] 运动⏴3`
+  - Daily and Weekly note pages display +1/-1 buttons for quantified items
+  - Unchecking an item resets its count to 0
+  - Dashboard and reports aggregate quantified counts
+  - Profile template editor supports creating items with initial count
+
 ## [1.3.0] - 2026-04-13
 
 ### Added
