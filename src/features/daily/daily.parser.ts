@@ -57,6 +57,7 @@ export function parseDailyMarkdown(markdown: string, date: string): DailyNote {
         id: checkboxId(currentSection, parsed.text, target.length),
         text: parsed.text,
         checked: parsed.checked,
+        count: parsed.count,
       })
       continue
     }

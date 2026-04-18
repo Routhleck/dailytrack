@@ -4,7 +4,7 @@ import { joinPath } from '../../lib/fs/pathApi'
 import { writeTextFile, generateLlmReport } from '../../lib/fs/fileApi'
 import { flushQueuedTextWrites } from '../../lib/fs/writeBehindQueue'
 import { getBodyRecords } from '../body/body.service'
-import { summarizeChecklist } from '../dashboard/dashboard.service'
+import { summarizeChecklist, getQuantifiedStats } from '../dashboard/dashboard.service'
 import { getDailyNote, listDailyDates } from '../daily/daily.service'
 import { getWeeklyNote, listWeeklyIds } from '../weekly/weekly.service'
 import type { BodyRecord, DailyNote, WeeklyNote } from '../../types/tracker'
@@ -141,32 +141,54 @@ function signedNumber(value: number | null, digits = 0, suffix = ''): string {
 }
 
 function formatDailySummary(note: DailyNote): string {
-  const core = summarizeChecklist(note.dailyCore)
-  const optional = summarizeChecklist(note.optional)
+  const core = getQuantifiedStats(note.dailyCore)
+  const optional = getQuantifiedStats(note.optional)
   const doneCore = note.dailyCore.filter((item) => item.checked).map((item) => item.text)
   const doneOptional = note.optional.filter((item) => item.checked).map((item) => item.text)
 
-  return [
+  const lines = [
     `### ${note.date}`,
     `- Daily Core: ${core.checked}/${core.total} (${core.percent}%)`,
     `- Optional: ${optional.checked}/${optional.total} (${optional.percent}%)`,
     `- One Line: ${note.oneLine || '-'}`,
     `- Done Core: ${doneCore.length > 0 ? doneCore.join(' | ') : '-'}`,
     `- Done Optional: ${doneOptional.length > 0 ? doneOptional.join(' | ') : '-'}`,
-  ].join('\n')
+  ]
+
+  // Add quantified counts if any
+  if (core.totalCount > 0 || optional.totalCount > 0) {
+    lines.push(`- Quantified Core: ${core.checkedCount}/${core.totalCount}`)
+    lines.push(`- Quantified Optional: ${optional.checkedCount}/${optional.totalCount}`)
+  }
+
+  return lines.join('\n')
 }
 
 function formatWeeklySummary(note: WeeklyNote): string {
-  const sectionLines = Object.entries(note.sections).map(([section, items]) => {
-    const summary = summarizeChecklist(items)
-    return `- ${section}: ${summary.checked}/${summary.total} (${summary.percent}%)`
-  })
-  return [
+  const sectionLines: string[] = []
+  let totalQuantifiedCount = 0
+  let checkedQuantifiedCount = 0
+
+  for (const [section, items] of Object.entries(note.sections)) {
+    const summary = getQuantifiedStats(items)
+    sectionLines.push(`- ${section}: ${summary.checked}/${summary.total} (${summary.percent}%)`)
+    totalQuantifiedCount += summary.totalCount
+    checkedQuantifiedCount += summary.checkedCount
+  }
+
+  const lines = [
     `### ${note.weekId}`,
     ...sectionLines,
     `- Good things: ${note.reflection.goodThings.filter(Boolean).join(' | ') || '-'}`,
     `- Next top 3: ${note.reflection.nextWeekTop3.filter(Boolean).join(' | ') || '-'}`,
-  ].join('\n')
+  ]
+
+  // Add quantified counts if any
+  if (totalQuantifiedCount > 0) {
+    lines.push(`- Quantified Total: ${checkedQuantifiedCount}/${totalQuantifiedCount}`)
+  }
+
+  return lines.join('\n')
 }
 
 function formatBodySummary(records: BodyRecord[]): string {

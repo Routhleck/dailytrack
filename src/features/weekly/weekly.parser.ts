@@ -85,6 +85,7 @@ export function parseWeeklyMarkdown(markdown: string, weekId: string): WeeklyNot
         id: checkboxId(currentSection, parsed.text, target.length),
         text: parsed.text,
         checked: parsed.checked,
+        count: parsed.count,
       })
       continue
     }

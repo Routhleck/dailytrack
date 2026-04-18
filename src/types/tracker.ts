@@ -2,6 +2,7 @@ export type CheckboxItem = {
   id: string
   text: string
   checked: boolean
+  count?: number
 }
 
 export type DailyNote = {

@@ -255,7 +255,7 @@ export function DailyNotePage() {
   function updateChecklist(
     section: DailySection,
     itemIndex: number,
-    patch: Partial<{ checked: boolean; text: string }>,
+    patch: Partial<{ checked: boolean; text: string; count: number }>,
   ) {
     setNote((prev) => {
       if (!prev) {
@@ -278,7 +278,42 @@ export function DailyNotePage() {
     if (index < 0) {
       return
     }
-    updateChecklist(section, index, { checked })
+    // When unchecking, reset count to 0
+    const patch: Partial<{ checked: boolean; text: string; count: number }> = { checked }
+    if (!checked) {
+      patch.count = 0
+    }
+    updateChecklist(section, index, patch)
+    scheduleAutosave()
+  }
+
+  function incrementCount(section: DailySection, itemId: string) {
+    const index = note?.[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    const item = note?.[section][index]
+    if (!item) {
+      return
+    }
+    updateChecklist(section, index, { count: (item.count ?? 0) + 1 })
+    scheduleAutosave()
+  }
+
+  function decrementCount(section: DailySection, itemId: string) {
+    const index = note?.[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    const item = note?.[section][index]
+    if (!item) {
+      return
+    }
+    const currentCount = item.count ?? 0
+    if (currentCount <= 0) {
+      return
+    }
+    updateChecklist(section, index, { count: currentCount - 1 })
     scheduleAutosave()
   }
 
@@ -428,6 +463,29 @@ export function DailyNotePage() {
                       scheduleAutosave()
                     }}
                   />
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="ml-auto rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+                      {item.count}
+                    </span>
+                  )}
+                  {item.count !== undefined && (
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                        onClick={() => decrementCount('dailyCore', item.id)}
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                        onClick={() => incrementCount('dailyCore', item.id)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -467,6 +525,29 @@ export function DailyNotePage() {
                         scheduleAutosave()
                       }}
                     />
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="ml-auto rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+                      {item.count}
+                    </span>
+                  )}
+                  {item.count !== undefined && (
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                        onClick={() => decrementCount('optional', item.id)}
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                        onClick={() => incrementCount('optional', item.id)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
                   </div>
                 ))}
               </div>

@@ -257,7 +257,7 @@ export function WeeklyNotePage() {
   function updateChecklist(
     section: WeeklySectionKey,
     itemIndex: number,
-    patch: Partial<{ checked: boolean; text: string }>,
+    patch: Partial<{ checked: boolean; text: string; count: number }>,
   ) {
     setNote((prev) => {
       if (!prev) {
@@ -280,6 +280,46 @@ export function WeeklyNotePage() {
       }
     })
     scheduleAutosave()
+  }
+
+  function toggleChecklistItem(section: WeeklySectionKey, itemId: string, checked: boolean) {
+    const index = note?.sections[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    const patch: Partial<{ checked: boolean; text: string; count: number }> = { checked }
+    if (!checked) {
+      patch.count = 0
+    }
+    updateChecklist(section, index, patch)
+  }
+
+  function incrementCount(section: WeeklySectionKey, itemId: string) {
+    const index = note?.sections[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    const item = note?.sections[section][index]
+    if (!item) {
+      return
+    }
+    updateChecklist(section, index, { count: (item.count ?? 0) + 1 })
+  }
+
+  function decrementCount(section: WeeklySectionKey, itemId: string) {
+    const index = note?.sections[section].findIndex((candidate) => candidate.id === itemId) ?? -1
+    if (index < 0) {
+      return
+    }
+    const item = note?.sections[section][index]
+    if (!item) {
+      return
+    }
+    const currentCount = item.count ?? 0
+    if (currentCount <= 0) {
+      return
+    }
+    updateChecklist(section, index, { count: currentCount - 1 })
   }
 
   function updateReflection(key: 'goodThings' | 'nextWeekTop3', index: number, value: string) {
@@ -484,10 +524,7 @@ export function WeeklyNotePage() {
                         <TaskCheckbox
                           checked={item.checked}
                           ariaLabel={item.text || `${section}-item`}
-                          onToggle={(next) => {
-                            const index = note.sections[section].findIndex((candidate) => candidate.id === item.id)
-                            updateChecklist(section, index, { checked: next })
-                          }}
+                          onToggle={(next) => toggleChecklistItem(section, item.id, next)}
                         />
                         <input
                           className={`w-full border-none bg-transparent text-sm outline-none ${
@@ -499,6 +536,29 @@ export function WeeklyNotePage() {
                             updateChecklist(section, index, { text: event.target.value })
                           }}
                         />
+                        {item.count !== undefined && item.count > 0 && (
+                          <span className="ml-auto rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+                            {item.count}
+                          </span>
+                        )}
+                        {item.count !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                              onClick={() => decrementCount(section, item.id)}
+                            >
+                              -
+                            </button>
+                            <button
+                              type="button"
+                              className="h-6 w-6 rounded bg-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-300"
+                              onClick={() => incrementCount(section, item.id)}
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

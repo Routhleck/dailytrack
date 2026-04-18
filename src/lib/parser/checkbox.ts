@@ -8,20 +8,38 @@ export function checkboxId(prefix: string, text: string, index: number): string 
   return `${prefix}-${slug || 'item'}-${index}`
 }
 
-export function parseCheckbox(line: string): { checked: boolean; text: string } | null {
+export function parseCheckbox(line: string): { checked: boolean; text: string; count: number } | null {
   const match = line.match(/^- \[( |x|X)\] (.*)$/)
   if (!match) {
     return null
   }
 
+  const checked = match[1].toLowerCase() === 'x'
+  const rawText = match[2].trim()
+
+  // Match count pattern: ⏴\d+ at the end of text
+  const countMatch = rawText.match(/^(.*)⏴(\d+)$/)
+  if (countMatch) {
+    return {
+      checked,
+      text: countMatch[1].trim(),
+      count: parseInt(countMatch[2], 10),
+    }
+  }
+
   return {
-    checked: match[1].toLowerCase() === 'x',
-    text: match[2].trim(),
+    checked,
+    text: rawText,
+    count: 0,
   }
 }
 
 export function serializeChecklist(
-  items: Array<Pick<CheckboxItem, 'checked' | 'text'>>,
+  items: Array<Pick<CheckboxItem, 'checked' | 'text' | 'count'>>,
 ): string[] {
-  return items.map((item) => `- [${item.checked ? 'x' : ' '}] ${item.text}`)
+  return items.map((item) => {
+    const count = item.count ?? 0
+    const text = count > 0 ? `${item.text}⏴${count}` : item.text
+    return `- [${item.checked ? 'x' : ' '}] ${text}`
+  })
 }

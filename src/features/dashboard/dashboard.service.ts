@@ -6,6 +6,11 @@ export type ProgressSummary = {
   percent: number
 }
 
+export type QuantifiedSummary = ProgressSummary & {
+  totalCount: number
+  checkedCount: number
+}
+
 export type ProgressTrend = 'up' | 'down' | 'flat' | 'na'
 
 export type ProgressComparison = {
@@ -25,6 +30,21 @@ export function summarizeChecklist(items: CheckboxItem[]): ProgressSummary {
   const percent = total === 0 ? 0 : Math.round((checked / total) * 100)
 
   return { checked, total, percent }
+}
+
+export function getQuantifiedStats(items: CheckboxItem[]): QuantifiedSummary {
+  const summary = summarizeChecklist(items)
+  const quantifiedItems = items.filter((item) => item.count !== undefined)
+  const totalCount = quantifiedItems.reduce((sum, item) => sum + (item.count ?? 0), 0)
+  const checkedCount = quantifiedItems
+    .filter((item) => item.checked)
+    .reduce((sum, item) => sum + (item.count ?? 0), 0)
+
+  return {
+    ...summary,
+    totalCount,
+    checkedCount,
+  }
 }
 
 export function isChecklistComplete(summary: ProgressSummary): boolean {

@@ -325,8 +325,43 @@ export function ProfilesPage() {
             id: `${section}-${Date.now()}`,
             text: '',
             checked: false,
+            count: 0,
           },
         ],
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function toggleNewDailyItemCount(section: DailyTemplateSection, index: number, enabled: boolean) {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].map((item, itemIndex) =>
+          itemIndex === index
+            ? { ...item, count: enabled ? 0 : undefined }
+            : item,
+        ),
+      }
+      setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateNewDailyItemCount(section: DailyTemplateSection, index: number, count: number) {
+    setNewDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].map((item, itemIndex) =>
+          itemIndex === index ? { ...item, count } : item,
+        ),
       }
       setNewDailyTemplate(serializeDailyTemplateMarkdown(next))
       return next
@@ -434,8 +469,49 @@ export function ProfilesPage() {
               id: `${section}-${Date.now()}`,
               text: '',
               checked: false,
+              count: 0,
             },
           ],
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function toggleNewWeeklyItemCount(section: WeeklySectionKey, index: number, enabled: boolean) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].map((item, itemIndex) =>
+            itemIndex === index
+              ? { ...item, count: enabled ? 0 : undefined }
+              : item,
+          ),
+        },
+      }
+      setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateNewWeeklyItemCount(section: WeeklySectionKey, index: number, count: number) {
+    setNewWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].map((item, itemIndex) =>
+            itemIndex === index ? { ...item, count } : item,
+          ),
         },
       }
       setNewWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -588,8 +664,43 @@ export function ProfilesPage() {
             id: `${section}-${Date.now()}`,
             text: '',
             checked: false,
+            count: 0,
           },
         ],
+      }
+      setCurrentDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function toggleDailyItemCount(section: DailyTemplateSection, index: number, enabled: boolean) {
+    setCurrentDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].map((item, itemIndex) =>
+          itemIndex === index
+            ? { ...item, count: enabled ? 0 : undefined }
+            : item,
+        ),
+      }
+      setCurrentDailyTemplate(serializeDailyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateDailyItemCount(section: DailyTemplateSection, index: number, count: number) {
+    setCurrentDailyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        [section]: prev[section].map((item, itemIndex) =>
+          itemIndex === index ? { ...item, count } : item,
+        ),
       }
       setCurrentDailyTemplate(serializeDailyTemplateMarkdown(next))
       return next
@@ -697,8 +808,49 @@ export function ProfilesPage() {
               id: `${section}-${Date.now()}`,
               text: '',
               checked: false,
+              count: 0,
             },
           ],
+        },
+      }
+      setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function toggleWeeklyItemCount(section: WeeklySectionKey, index: number, enabled: boolean) {
+    setCurrentWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].map((item, itemIndex) =>
+            itemIndex === index
+              ? { ...item, count: enabled ? 0 : undefined }
+              : item,
+          ),
+        },
+      }
+      setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
+      return next
+    })
+  }
+
+  function updateWeeklyItemCount(section: WeeklySectionKey, index: number, count: number) {
+    setCurrentWeeklyStructured((prev) => {
+      if (!prev) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [section]: prev.sections[section].map((item, itemIndex) =>
+            itemIndex === index ? { ...item, count } : item,
+          ),
         },
       }
       setCurrentWeeklyTemplate(serializeWeeklyTemplateMarkdown(next))
@@ -1089,13 +1241,32 @@ export function ProfilesPage() {
               <div className="mt-3 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.dailyCore')}</p>
                 {newDailyStructured?.dailyCore.map((item, index) => (
-                  <div key={item.id} className="flex gap-2">
+                  <div key={item.id} className="flex flex-wrap gap-2 items-center">
                     <input
-                      className="dt-input"
+                      className="dt-input flex-1 min-w-[200px]"
                       value={item.text}
                       onChange={(event) => updateNewDailyItem('dailyCore', index, event.target.value)}
                       disabled={createBusy}
                     />
+                    <label className="flex items-center gap-1 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={item.count !== undefined}
+                        onChange={(event) => toggleNewDailyItemCount('dailyCore', index, event.target.checked)}
+                        disabled={createBusy}
+                      />
+                      计数
+                    </label>
+                    {item.count !== undefined && (
+                      <input
+                        type="number"
+                        className="dt-input w-16"
+                        value={item.count}
+                        min={0}
+                        onChange={(event) => updateNewDailyItemCount('dailyCore', index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                        disabled={createBusy}
+                      />
+                    )}
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -1145,13 +1316,32 @@ export function ProfilesPage() {
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.optional')}</p>
                 {newDailyStructured?.optional.map((item, index) => (
-                  <div key={item.id} className="flex gap-2">
+                  <div key={item.id} className="flex flex-wrap gap-2 items-center">
                     <input
-                      className="dt-input"
+                      className="dt-input flex-1 min-w-[200px]"
                       value={item.text}
                       onChange={(event) => updateNewDailyItem('optional', index, event.target.value)}
                       disabled={createBusy}
                     />
+                    <label className="flex items-center gap-1 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={item.count !== undefined}
+                        onChange={(event) => toggleNewDailyItemCount('optional', index, event.target.checked)}
+                        disabled={createBusy}
+                      />
+                      计数
+                    </label>
+                    {item.count !== undefined && (
+                      <input
+                        type="number"
+                        className="dt-input w-16"
+                        value={item.count}
+                        min={0}
+                        onChange={(event) => updateNewDailyItemCount('optional', index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                        disabled={createBusy}
+                      />
+                    )}
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -1207,13 +1397,32 @@ export function ProfilesPage() {
                 <div key={section} className="mt-3 space-y-2">
                   <p className="text-sm font-medium text-slate-700">{t(`section.${section}`)}</p>
                   {newWeeklyStructured?.sections[section].map((item, index) => (
-                    <div key={item.id} className="flex gap-2">
+                    <div key={item.id} className="flex flex-wrap gap-2 items-center">
                       <input
-                        className="dt-input"
+                        className="dt-input flex-1 min-w-[200px]"
                         value={item.text}
                         onChange={(event) => updateNewWeeklyItem(section, index, event.target.value)}
                         disabled={createBusy}
                       />
+                      <label className="flex items-center gap-1 text-xs text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={item.count !== undefined}
+                          onChange={(event) => toggleNewWeeklyItemCount(section, index, event.target.checked)}
+                          disabled={createBusy}
+                        />
+                        计数
+                      </label>
+                      {item.count !== undefined && (
+                        <input
+                          type="number"
+                          className="dt-input w-16"
+                          value={item.count}
+                          min={0}
+                          onChange={(event) => updateNewWeeklyItemCount(section, index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                          disabled={createBusy}
+                        />
+                      )}
                       <div className="flex gap-1">
                         <button
                           type="button"
@@ -1530,13 +1739,32 @@ export function ProfilesPage() {
               <div className="mt-3 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.dailyCore')}</p>
                 {currentDailyStructured?.dailyCore.map((item, index) => (
-                  <div key={item.id} className="flex gap-2">
+                  <div key={item.id} className="flex flex-wrap gap-2 items-center">
                     <input
-                      className="dt-input"
+                      className="dt-input flex-1 min-w-[200px]"
                       value={item.text}
                       onChange={(event) => updateDailyItem('dailyCore', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
                     />
+                    <label className="flex items-center gap-1 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={item.count !== undefined}
+                        onChange={(event) => toggleDailyItemCount('dailyCore', index, event.target.checked)}
+                        disabled={templateBusy || !dataRoot}
+                      />
+                      计数
+                    </label>
+                    {item.count !== undefined && (
+                      <input
+                        type="number"
+                        className="dt-input w-16"
+                        value={item.count}
+                        min={0}
+                        onChange={(event) => updateDailyItemCount('dailyCore', index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                        disabled={templateBusy || !dataRoot}
+                      />
+                    )}
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -1586,13 +1814,32 @@ export function ProfilesPage() {
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium text-slate-700">{t('dailyNote.optional')}</p>
                 {currentDailyStructured?.optional.map((item, index) => (
-                  <div key={item.id} className="flex gap-2">
+                  <div key={item.id} className="flex flex-wrap gap-2 items-center">
                     <input
-                      className="dt-input"
+                      className="dt-input flex-1 min-w-[200px]"
                       value={item.text}
                       onChange={(event) => updateDailyItem('optional', index, event.target.value)}
                       disabled={templateBusy || !dataRoot}
                     />
+                    <label className="flex items-center gap-1 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={item.count !== undefined}
+                        onChange={(event) => toggleDailyItemCount('optional', index, event.target.checked)}
+                        disabled={templateBusy || !dataRoot}
+                      />
+                      计数
+                    </label>
+                    {item.count !== undefined && (
+                      <input
+                        type="number"
+                        className="dt-input w-16"
+                        value={item.count}
+                        min={0}
+                        onChange={(event) => updateDailyItemCount('optional', index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                        disabled={templateBusy || !dataRoot}
+                      />
+                    )}
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -1648,13 +1895,32 @@ export function ProfilesPage() {
                 <div key={section} className="mt-3 space-y-2">
                   <p className="text-sm font-medium text-slate-700">{t(`section.${section}`)}</p>
                   {currentWeeklyStructured?.sections[section].map((item, index) => (
-                    <div key={item.id} className="flex gap-2">
+                    <div key={item.id} className="flex flex-wrap gap-2 items-center">
                       <input
-                        className="dt-input"
+                        className="dt-input flex-1 min-w-[200px]"
                         value={item.text}
                         onChange={(event) => updateWeeklyItem(section, index, event.target.value)}
                         disabled={templateBusy || !dataRoot}
                       />
+                      <label className="flex items-center gap-1 text-xs text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={item.count !== undefined}
+                          onChange={(event) => toggleWeeklyItemCount(section, index, event.target.checked)}
+                          disabled={templateBusy || !dataRoot}
+                        />
+                        计数
+                      </label>
+                      {item.count !== undefined && (
+                        <input
+                          type="number"
+                          className="dt-input w-16"
+                          value={item.count}
+                          min={0}
+                          onChange={(event) => updateWeeklyItemCount(section, index, Math.max(0, parseInt(event.target.value, 10) || 0))}
+                          disabled={templateBusy || !dataRoot}
+                        />
+                      )}
                       <div className="flex gap-1">
                         <button
                           type="button"
